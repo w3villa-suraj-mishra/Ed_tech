@@ -57,3 +57,4 @@ gem 'omniauth'
 gem 'omniauth-google-oauth2'
 gem 'omniauth-github'
 gem 'dotenv-rails', groups: [:development, :test]
+gem 'cloudinary', '~> 2.0'

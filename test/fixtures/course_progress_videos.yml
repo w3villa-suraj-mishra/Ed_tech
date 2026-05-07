@@ -1,0 +1,9 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  course_progress: one
+  sub_section: one
+
+two:
+  course_progress: two
+  sub_section: two

@@ -21,4 +21,16 @@ class ApplicationController < ActionController::API
       render json: { success: false, message: "Authentication error" }, status: :unauthorized
     end
   end
+
+  def is_instructor
+    unless @current_user&.account_type == "Instructor"
+      render json: { success: false, message: "This is a protected route for Instructors" }, status: :forbidden
+    end
+  end
+
+  def is_admin
+    unless @current_user&.account_type == "Admin"
+      render json: { success: false, message: "This is a protected route for Admins" }, status: :forbidden
+    end
+  end
 end
