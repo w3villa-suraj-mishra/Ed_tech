@@ -103,9 +103,6 @@ function LoginForm() {
     }
 
     if (error) {
-      localStorage.removeItem("token")
-      localStorage.removeItem("user")
-      localStorage.removeItem("role")
       window.history.replaceState({}, document.title, "/login")
     }
   }, [])

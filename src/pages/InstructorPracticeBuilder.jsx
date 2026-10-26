@@ -4,7 +4,7 @@ import { apiConnector } from '../services/apiConnector';
 import { courseEndpoints, practiceEndpoints } from '../services/apis';
 import { toast } from 'react-hot-toast';
 import {
-  FaPlus, FaBook, FaClock, FaAward, FaSearch, FaFilter, FaCheckCircle,
+  FaPlus, FaBook, FaClock, FaAward, FaSearch, FaCheckCircle,
   FaTimesCircle, FaEye, FaEdit, FaTrash, FaListUl, FaQuestionCircle,
   FaUserGraduate, FaCode, FaCommentDots, FaArrowLeft,
 } from 'react-icons/fa';
@@ -380,31 +380,36 @@ export default function InstructorPracticeBuilder() {
   });
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-800 p-4 sm:p-8 font-sans space-y-8">
-      {/* Header Banner */}
-      <div className="bg-gradient-to-r from-[#0F172A] to-[#1E3A8A] rounded-2xl p-6 sm:p-8 flex flex-col md:flex-row justify-between items-center relative overflow-hidden shadow-lg text-white">
-        {/* Background decor */}
-        <div className="absolute right-0 top-0 bottom-0 w-1/3 bg-white/5 pointer-events-none rounded-l-full blur-3xl"></div>
-        
-        <div className="relative z-10 max-w-2xl text-left w-full">
-          <h1 className="text-2xl sm:text-3xl font-black flex items-center gap-3">
-            Practice Management 🎯
-          </h1>
-          <p className="text-xs sm:text-[13px] text-blue-200 mt-2 font-medium">
-            Manage course-specific tests, question banks, quizzes, and monitor student performance.
-          </p>
-        </div>
-
-        {/* Dynamic Instructor Course Selector */}
-        <div className="relative z-10 flex items-center gap-3 bg-white/10 backdrop-blur-md border border-white/20 p-2.5 px-5 rounded-xl mt-4 md:mt-0 shadow-sm whitespace-nowrap">
-          <span className="text-[11px] font-bold text-blue-100 uppercase tracking-wider">Active Course:</span>
+    <div className="instructor-practice-theme min-h-screen bg-slate-50 text-slate-800 p-4 sm:p-8 font-sans space-y-8">
+      {/* Navigation Tabs */}
+      <div className="flex flex-nowrap items-center gap-2 overflow-x-auto pb-2">
+        {[
+          { id: 'my-practice', label: 'My Practice', icon: <FaListUl /> },
+          { id: 'question-bank', label: 'Question Bank', icon: <FaQuestionCircle /> },
+          { id: 'create-test', label: 'Create Test / Quiz', icon: <FaPlus /> },
+          { id: 'create-question', label: 'Add Question', icon: <FaPlus /> },
+        ].map((tab) => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id)}
+            className={`flex shrink-0 items-center gap-2 px-4 py-2.5 rounded-full text-[12px] font-bold transition-all shadow-sm border ${
+              activeTab === tab.id
+                ? 'bg-blue-600 text-white border-blue-600'
+                : 'bg-white text-slate-600 border-slate-200 hover:border-blue-200 hover:text-blue-600'
+            }`}
+          >
+            {tab.icon} {tab.label}
+          </button>
+        ))}
+        <div className="flex shrink-0 items-center gap-2 bg-white border border-slate-200 p-2 px-3 rounded-xl shadow-sm whitespace-nowrap">
+          <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Active Course:</span>
           <select
             value={selectedCourseId}
             onChange={(e) => {
               setSelectedCourseId(e.target.value);
               setQForm((prev) => ({ ...prev, courseId: e.target.value }));
             }}
-            className="bg-transparent text-[13px] font-bold text-[#FFD60A] focus:outline-none cursor-pointer appearance-none pr-4"
+            className="max-w-44 bg-transparent text-[12px] font-bold text-slate-800 focus:outline-none cursor-pointer appearance-none pr-2"
           >
             {courses.length === 0 ? (
               <option value="" className="text-black">No Courses Created Yet</option>
@@ -419,39 +424,17 @@ export default function InstructorPracticeBuilder() {
         </div>
       </div>
 
-      {/* Navigation Tabs */}
-      <div className="flex flex-wrap gap-3 pb-2">
-        {[
-          { id: 'my-practice', label: 'My Practice', icon: <FaListUl /> },
-          { id: 'question-bank', label: 'Question Bank', icon: <FaQuestionCircle /> },
-          { id: 'create-test', label: 'Create Test / Quiz', icon: <FaPlus /> },
-          { id: 'create-question', label: 'Add Question', icon: <FaPlus /> },
-        ].map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
-            className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-[13px] font-bold transition-all shadow-sm border ${
-              activeTab === tab.id
-                ? 'bg-blue-600 text-white border-blue-600'
-                : 'bg-white text-slate-600 border-slate-200 hover:border-blue-200 hover:text-blue-600'
-            }`}
-          >
-            {tab.icon} {tab.label}
-          </button>
-        ))}
-      </div>
-
       {/* TAB 1: MY PRACTICE MANAGEMENT LIST */}
       {activeTab === 'my-practice' && (
         <div className="space-y-8">
           
           <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-nowrap gap-2 overflow-x-auto scrollbar-none">
               {['All', 'MCQ', 'Coding', 'Topic Practice', 'Mock Test', 'Interview Test', 'Daily Quiz'].map((cat) => (
                 <button
                   key={cat}
                   onClick={() => setQTypeFilter(cat === 'All' ? '' : cat)}
-                  className={`px-4 py-1.5 rounded-full text-[12px] font-bold transition-all border ${
+                  className={`shrink-0 px-4 py-1.5 rounded-full text-[12px] font-bold transition-all border ${
                     (qTypeFilter === cat || (cat === 'All' && !qTypeFilter))
                       ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
                       : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300'
@@ -471,9 +454,6 @@ export default function InstructorPracticeBuilder() {
                   className="w-full bg-white border border-slate-200 rounded-full pl-9 pr-4 py-2 text-[13px] text-slate-700 focus:outline-none focus:border-blue-500 shadow-sm"
                 />
               </div>
-              <button className="p-2.5 bg-white border border-slate-200 rounded-full text-slate-500 hover:text-blue-600 shadow-sm transition cursor-pointer">
-                <FaFilter size={14} />
-              </button>
             </div>
           </div>
 

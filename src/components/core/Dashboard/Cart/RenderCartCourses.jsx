@@ -32,10 +32,10 @@ export default function RenderCartCourses() {
                 {course?.category?.name}
               </p>
               <div className="flex items-center gap-2">
-                <span className="text-yellow-5">4.5</span>
+                <span className="text-yellow-5">{course?.averageRating || course?.rating || 0}</span>
                 <ReactStars
                   count={5}
-                  value={course?.ratingAndReviews?.length}
+                  value={course?.averageRating || course?.rating || 0}
                   size={20}
                   edit={false}
                   activeColor="#ffd700"
@@ -43,7 +43,7 @@ export default function RenderCartCourses() {
                   fullIcon={<FaStar />}
                 />
                 <span className="text-richblack-400">
-                  {course?.ratingAndReviews?.length} Ratings
+                  {course?.reviewsCount ?? course?.reviewCount ?? course?.ratingAndReviews?.length ?? 0} Ratings
                 </span>
               </div>
             </div>

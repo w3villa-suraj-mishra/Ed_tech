@@ -20,14 +20,14 @@ export default function AddCourse() {
         </div>
 
         {/* Right Sidebar */}
-        <div className="hidden xl:flex max-w-[360px] flex-1 flex-col gap-6">
+        <div className="hidden xl:flex sticky top-24 self-start max-w-[360px] flex-1 flex-col gap-6">
           
           {/* Course Upload Tips */}
-          <div className="rounded-2xl bg-gradient-to-br from-[#0c1328] to-[#121c3a] p-6 shadow-xl space-y-4">
-            <p className="text-lg font-bold text-white flex items-center gap-2">
-              <span className="text-yellow-400"><BsFillLightningChargeFill /></span> Course Upload Tips
+          <div className="rounded-2xl bg-white border border-slate-200 p-6 shadow-[0_8px_24px_rgba(15,23,42,0.06)] space-y-4">
+            <p className="text-lg font-bold text-slate-900 flex items-center gap-2">
+              <span className="text-blue-600"><BsFillLightningChargeFill /></span> Course Upload Tips
             </p>
-            <ul className="space-y-3 text-[13px] text-blue-100/80 font-medium">
+            <ul className="space-y-3 text-[13px] text-slate-600 font-medium">
               {[
                 "Set the Course Price option or make it free.",
                 "Use a clear and attractive course thumbnail (1024x576).",
@@ -40,7 +40,7 @@ export default function AddCourse() {
                 "You can edit all details later from your dashboard."
               ].map((tip, i) => (
                 <li key={i} className="flex items-start gap-2">
-                  <div className="mt-0.5 min-w-[14px] text-[#00d084]"><FaCheck size={12} /></div>
+                  <div className="mt-0.5 min-w-[14px] text-blue-500"><FaCheck size={12} /></div>
                   <span className="leading-snug">{tip}</span>
                 </li>
               ))}

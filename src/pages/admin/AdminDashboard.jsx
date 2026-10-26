@@ -12,12 +12,21 @@ export default function AdminDashboard() {
 function DashboardInner() {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
   const adminUser = JSON.parse(localStorage.getItem('adminUser') || '{}');
 
   useEffect(() => {
     getDashboardStats()
-      .then(({ data }) => setStats(data.data))
-      .catch(() => {})
+      .then(({ data }) => {
+        if (!data?.success || !data?.data) {
+          throw new Error(data?.message || 'The dashboard returned an invalid response.');
+        }
+        setStats(data.data);
+        setLoadError('');
+      })
+      .catch((error) => {
+        setLoadError(error.response?.data?.message || error.message || 'Could not load admin dashboard data.');
+      })
       .finally(() => setLoading(false));
   }, []);
 
@@ -32,6 +41,12 @@ function DashboardInner() {
         </h1>
         <p className="text-sm text-gray-500 mt-1">Here's what's happening on your platform today.</p>
       </div>
+
+      {loadError && (
+        <div role="alert" className="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          Could not load dashboard data: {loadError}
+        </div>
+      )}
 
       {/* Stat Cards */}
       {loading ? (

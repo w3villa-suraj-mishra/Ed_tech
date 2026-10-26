@@ -165,18 +165,18 @@ export default function Settings() {
   };
 
   return (
-    <div className="space-y-6 text-white max-w-6xl mx-auto pb-10">
+    <div className="space-y-6 text-slate-800 max-w-6xl mx-auto pb-10">
       
       {/* 1. HEADER TITLE */}
       <div>
-        <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">Settings</h1>
-        <p className="text-xs text-richblack-300 mt-1">
+        <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">Settings</h1>
+        <p className="text-xs text-slate-500 mt-1">
           Manage your account settings and preferences.
         </p>
       </div>
 
       {/* 2. NAVIGATION TABS (Matching screenshot capsule style) */}
-      <div className="flex items-center gap-6 border-b border-white/10 pb-2 overflow-x-auto">
+      <div className="flex items-center gap-6 border-b border-slate-200 pb-2 overflow-x-auto">
         {[
           { id: "profile", label: "Profile", icon: VscPerson },
           { id: "security", label: "Security", icon: VscLock },
@@ -191,7 +191,7 @@ export default function Settings() {
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               className={`flex items-center gap-2 text-xs font-bold transition-all relative pb-2 whitespace-nowrap ${
-                activeTab === tab.id ? "text-blue-400" : "text-richblack-400 hover:text-white"
+                activeTab === tab.id ? "text-blue-600" : "text-slate-500 hover:text-slate-900"
               }`}
             >
               <Icon className="text-sm" />
@@ -205,9 +205,9 @@ export default function Settings() {
       </div>
 
       {/* 3. PROFILE PICTURE CARD */}
-      <div className="bg-[#0e111f] border border-blue-500/20 rounded-2xl p-6 shadow-[0_0_20px_rgba(37, 99, 235,0.08)] flex flex-col sm:flex-row items-center justify-between gap-6">
+      <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-[0_8px_24px_rgba(15,23,42,0.05)] flex flex-col sm:flex-row items-center justify-between gap-6">
         <div className="flex items-center gap-4">
-          <div className="relative w-16 h-16 rounded-full overflow-hidden border-2 border-blue-500/40 bg-blue-950/30 shrink-0">
+          <div className="relative w-16 h-16 rounded-full overflow-hidden border-2 border-blue-500/40 bg-blue-50 shrink-0">
             <img
               src={previewSource || user?.image}
               alt={user?.firstName}
@@ -215,9 +215,9 @@ export default function Settings() {
             />
           </div>
           <div>
-            <h2 className="text-base font-bold text-white">{user?.firstName} {user?.lastName}</h2>
-            <p className="text-xs text-richblack-300">{user?.email}</p>
-            <span className="inline-block mt-1 text-[10px] font-bold bg-blue-950/40 text-blue-300 border border-blue-500/30 px-2 py-0.5 rounded-md">
+            <h2 className="text-base font-bold text-slate-900">{user?.firstName} {user?.lastName}</h2>
+            <p className="text-xs text-slate-500">{user?.email}</p>
+            <span className="inline-block mt-1 text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200 px-2 py-0.5 rounded-md">
               {user?.accountType} Student
             </span>
           </div>
@@ -237,7 +237,7 @@ export default function Settings() {
                 setImageFile(null);
                 setPreviewSource(null);
               }}
-              className="px-4 py-2 rounded-xl bg-blue-950/30 border border-blue-500/20 text-blue-300 text-xs font-semibold hover:bg-blue-600 hover:text-white transition-all"
+              className="px-4 py-2 rounded-xl bg-blue-50 border border-slate-200 text-blue-700 text-xs font-semibold hover:bg-blue-600 hover:text-white transition-all"
             >
               Remove
             </button>
@@ -251,7 +251,7 @@ export default function Settings() {
               }
             }}
             disabled={loadingPic}
-            className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-800 text-white text-xs font-bold transition-all shadow-[0_0_15px_rgba(37, 99, 235,0.3)] flex items-center gap-2"
+            className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-all shadow-[0_6px_16px_rgba(59,130,246,0.2)] flex items-center gap-2"
           >
             <FiUpload className="text-sm" />
             <span>{loadingPic ? "Uploading..." : imageFile ? "Upload New" : "Select Image"}</span>
@@ -261,49 +261,49 @@ export default function Settings() {
 
       {/* 4. PROFILE INFORMATION FORM */}
       {(activeTab === "profile" || activeTab === "account") && (
-        <form onSubmit={handleSubmitProfile(submitProfileForm)} className="bg-[#0e111f] border border-blue-500/20 rounded-2xl p-6 space-y-6 shadow-[0_0_20px_rgba(37, 99, 235,0.08)]">
-          <div className="flex items-center gap-2 border-b border-white/10 pb-3">
-            <VscPerson className="text-blue-400 text-lg" />
-            <h2 className="text-base font-bold text-white">Profile Information</h2>
+        <form onSubmit={handleSubmitProfile(submitProfileForm)} className="bg-white border border-slate-200 rounded-2xl p-6 space-y-6 shadow-[0_8px_24px_rgba(15,23,42,0.05)]">
+          <div className="flex items-center gap-2 border-b border-slate-200 pb-3">
+            <VscPerson className="text-blue-600 text-lg" />
+            <h2 className="text-base font-bold text-slate-900">Profile Information</h2>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
             <div className="space-y-1">
-              <label className="text-xs text-richblack-300 font-semibold">First Name</label>
+              <label className="text-xs text-slate-500 font-semibold">First Name</label>
               <input
                 type="text"
                 defaultValue={user?.firstName}
                 {...registerProfile("firstName", { required: true })}
-                className="w-full bg-[#141728] border border-blue-500/20 rounded-xl px-4 py-2.5 text-xs text-white placeholder-richblack-500 focus:outline-none focus:border-blue-500 transition-colors"
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-500 transition-colors"
               />
             </div>
 
             <div className="space-y-1">
-              <label className="text-xs text-richblack-300 font-semibold">Last Name</label>
+              <label className="text-xs text-slate-500 font-semibold">Last Name</label>
               <input
                 type="text"
                 defaultValue={user?.lastName}
                 {...registerProfile("lastName", { required: true })}
-                className="w-full bg-[#141728] border border-blue-500/20 rounded-xl px-4 py-2.5 text-xs text-white placeholder-richblack-500 focus:outline-none focus:border-blue-500 transition-colors"
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-500 transition-colors"
               />
             </div>
 
             <div className="space-y-1">
-              <label className="text-xs text-richblack-300 font-semibold">Date of Birth</label>
+              <label className="text-xs text-slate-500 font-semibold">Date of Birth</label>
               <input
                 type="date"
                 defaultValue={user?.additionalDetails?.dateOfBirth}
                 {...registerProfile("dateOfBirth")}
-                className="w-full bg-[#141728] border border-blue-500/20 rounded-xl px-4 py-2.5 text-xs text-white placeholder-richblack-500 focus:outline-none focus:border-blue-500 transition-colors"
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-500 transition-colors"
               />
             </div>
 
             <div className="space-y-1">
-              <label className="text-xs text-richblack-300 font-semibold">Gender</label>
+              <label className="text-xs text-slate-500 font-semibold">Gender</label>
               <select
                 defaultValue={user?.additionalDetails?.gender || "Male"}
                 {...registerProfile("gender")}
-                className="w-full bg-[#141728] border border-blue-500/20 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-blue-500 transition-colors"
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-blue-500 transition-colors"
               >
                 {genders.map((g) => (
                   <option key={g} value={g}>{g}</option>
@@ -312,32 +312,32 @@ export default function Settings() {
             </div>
 
             <div className="space-y-1">
-              <label className="text-xs text-richblack-300 font-semibold">Contact Number</label>
+              <label className="text-xs text-slate-500 font-semibold">Contact Number</label>
               <input
                 type="tel"
                 placeholder="+91 12345 67890"
                 defaultValue={user?.additionalDetails?.contactNumber}
                 {...registerProfile("contactNumber")}
-                className="w-full bg-[#141728] border border-blue-500/20 rounded-xl px-4 py-2.5 text-xs text-white placeholder-richblack-500 focus:outline-none focus:border-blue-500 transition-colors"
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-500 transition-colors"
               />
             </div>
 
             <div className="space-y-1">
-              <label className="text-xs text-richblack-300 font-semibold">About / Bio</label>
+              <label className="text-xs text-slate-500 font-semibold">About / Bio</label>
               <input
                 type="text"
                 placeholder="Passionate learner exploring new technologies."
                 defaultValue={user?.additionalDetails?.about}
                 {...registerProfile("about")}
-                className="w-full bg-[#141728] border border-blue-500/20 rounded-xl px-4 py-2.5 text-xs text-white placeholder-richblack-500 focus:outline-none focus:border-blue-500 transition-colors"
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-500 transition-colors"
               />
             </div>
           </div>
 
           {/* Address & Geolocation field matching screenshot */}
           <div className="space-y-2 pt-2">
-            <label className="text-xs text-richblack-300 font-semibold flex items-center gap-1">
-              <VscLocation className="text-blue-400" />
+            <label className="text-xs text-slate-500 font-semibold flex items-center gap-1">
+              <VscLocation className="text-blue-600" />
               <span>Address (Auto-suggest powered by LocationIQ)</span>
             </label>
 
@@ -347,13 +347,13 @@ export default function Settings() {
                 value={addressInput}
                 onChange={(e) => handleAddressChange(e.target.value)}
                 placeholder="Sector 63, Block A, Noida, Uttar Pradesh 201301, India"
-                className="w-full bg-[#141728] border border-blue-500/20 rounded-xl px-4 py-2.5 text-xs text-white placeholder-richblack-500 focus:outline-none focus:border-blue-500 transition-colors"
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-500 transition-colors"
               />
               <button
                 type="button"
                 onClick={handleUseCurrentLocation}
                 disabled={locating}
-                className="px-4 py-2.5 bg-blue-600 hover:bg-blue-800 text-white text-xs font-bold rounded-xl transition-all shrink-0 flex items-center justify-center gap-1.5 shadow-[0_0_12px_rgba(37, 99, 235,0.3)] disabled:opacity-50"
+                className="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl transition-all shrink-0 flex items-center justify-center gap-1.5 shadow-[0_6px_16px_rgba(59,130,246,0.18)] disabled:opacity-50"
               >
                 <VscLocation />
                 <span>{locating ? "Locating..." : "Update Location"}</span>
@@ -361,7 +361,7 @@ export default function Settings() {
 
               {/* Suggestions Popup */}
               {suggestions.length > 0 && (
-                <div className="absolute top-full left-0 z-50 w-full mt-1 bg-[#141728] border border-blue-500/30 rounded-xl shadow-2xl overflow-hidden max-h-52 overflow-y-auto">
+                <div className="absolute top-full left-0 z-50 w-full mt-1 bg-slate-50 border border-blue-200 rounded-xl shadow-2xl overflow-hidden max-h-52 overflow-y-auto">
                   {suggestions.map((item, idx) => (
                     <div
                       key={idx}
@@ -370,7 +370,7 @@ export default function Settings() {
                         setCoordinates({ lat: item.lat, lon: item.lon });
                         setSuggestions([]);
                       }}
-                      className="p-3 text-xs text-richblack-200 hover:bg-blue-600 hover:text-white cursor-pointer border-b border-white/5 last:border-0 transition-colors"
+                      className="p-3 text-xs text-slate-600 hover:bg-blue-600 hover:text-white cursor-pointer border-b border-slate-100 last:border-0 transition-colors"
                     >
                       📍 {item.display_name}
                     </div>
@@ -380,17 +380,17 @@ export default function Settings() {
             </div>
           </div>
 
-          <div className="flex justify-end gap-3 pt-4 border-t border-white/10">
+          <div className="flex justify-end gap-3 pt-4 border-t border-slate-200">
             <button
               type="button"
               onClick={() => navigate("/dashboard/my-profile")}
-              className="px-5 py-2.5 rounded-xl bg-[#141728] hover:bg-white/5 text-richblack-300 text-xs font-semibold transition-colors"
+              className="px-5 py-2.5 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-500 text-xs font-semibold transition-colors"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-800 text-white text-xs font-bold transition-all shadow-[0_0_15px_rgba(37, 99, 235,0.3)]"
+              className="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-all shadow-[0_6px_16px_rgba(59,130,246,0.2)]"
             >
               Save Changes
             </button>
@@ -400,79 +400,79 @@ export default function Settings() {
 
       {/* 5. CHANGE PASSWORD SECTION */}
       {(activeTab === "security" || activeTab === "profile") && (
-        <form onSubmit={handleSubmitPassword(submitPasswordForm)} className="bg-[#0e111f] border border-blue-500/20 rounded-2xl p-6 space-y-6 shadow-[0_0_20px_rgba(37, 99, 235,0.08)]">
-          <div className="flex items-center gap-2 border-b border-white/10 pb-3">
-            <VscLock className="text-blue-400 text-lg" />
+        <form onSubmit={handleSubmitPassword(submitPasswordForm)} className="bg-white border border-slate-200 rounded-2xl p-6 space-y-6 shadow-[0_8px_24px_rgba(15,23,42,0.05)]">
+          <div className="flex items-center gap-2 border-b border-slate-200 pb-3">
+            <VscLock className="text-blue-600 text-lg" />
             <div>
-              <h2 className="text-base font-bold text-white">Change Password</h2>
-              <p className="text-[11px] text-richblack-400">Update your password to keep your account secure.</p>
+              <h2 className="text-base font-bold text-slate-900">Change Password</h2>
+              <p className="text-[11px] text-slate-500">Update your password to keep your account secure.</p>
             </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
             <div className="space-y-1 relative">
-              <label className="text-xs text-richblack-300 font-semibold">Current Password</label>
+              <label className="text-xs text-slate-500 font-semibold">Current Password</label>
               <input
                 type={showOldPass ? "text" : "password"}
                 placeholder="Enter current password"
                 {...registerPassword("oldPassword", { required: true })}
-                className="w-full bg-[#141728] border border-blue-500/20 rounded-xl pl-4 pr-10 py-2.5 text-xs text-white placeholder-richblack-500 focus:outline-none focus:border-blue-500 transition-colors"
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-4 pr-10 py-2.5 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-500 transition-colors"
               />
               <button
                 type="button"
                 onClick={() => setShowOldPass(!showOldPass)}
-                className="absolute right-3 top-8 text-richblack-400 hover:text-white"
+                className="absolute right-3 top-8 text-slate-500 hover:text-slate-900"
               >
                 {showOldPass ? <VscEyeClosed /> : <VscEye />}
               </button>
             </div>
 
             <div className="space-y-1 relative">
-              <label className="text-xs text-richblack-300 font-semibold">New Password</label>
+              <label className="text-xs text-slate-500 font-semibold">New Password</label>
               <input
                 type={showNewPass ? "text" : "password"}
                 placeholder="Enter new password"
                 {...registerPassword("newPassword", { required: true })}
-                className="w-full bg-[#141728] border border-blue-500/20 rounded-xl pl-4 pr-10 py-2.5 text-xs text-white placeholder-richblack-500 focus:outline-none focus:border-blue-500 transition-colors"
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-4 pr-10 py-2.5 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-500 transition-colors"
               />
               <button
                 type="button"
                 onClick={() => setShowNewPass(!showNewPass)}
-                className="absolute right-3 top-8 text-richblack-400 hover:text-white"
+                className="absolute right-3 top-8 text-slate-500 hover:text-slate-900"
               >
                 {showNewPass ? <VscEyeClosed /> : <VscEye />}
               </button>
             </div>
 
             <div className="space-y-1 relative sm:col-span-2">
-              <label className="text-xs text-richblack-300 font-semibold">Confirm New Password</label>
+              <label className="text-xs text-slate-500 font-semibold">Confirm New Password</label>
               <input
                 type={showConfirmPass ? "text" : "password"}
                 placeholder="Confirm new password"
                 {...registerPassword("confirmNewPassword", { required: true })}
-                className="w-full bg-[#141728] border border-blue-500/20 rounded-xl pl-4 pr-10 py-2.5 text-xs text-white placeholder-richblack-500 focus:outline-none focus:border-blue-500 transition-colors"
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-4 pr-10 py-2.5 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-500 transition-colors"
               />
               <button
                 type="button"
                 onClick={() => setShowConfirmPass(!showConfirmPass)}
-                className="absolute right-3 top-8 text-richblack-400 hover:text-white"
+                className="absolute right-3 top-8 text-slate-500 hover:text-slate-900"
               >
                 {showConfirmPass ? <VscEyeClosed /> : <VscEye />}
               </button>
             </div>
           </div>
 
-          <div className="flex justify-end gap-3 pt-4 border-t border-white/10">
+          <div className="flex justify-end gap-3 pt-4 border-t border-slate-200">
             <button
               type="button"
               onClick={() => resetPasswordForm()}
-              className="px-5 py-2.5 rounded-xl bg-[#141728] hover:bg-white/5 text-richblack-300 text-xs font-semibold transition-colors"
+              className="px-5 py-2.5 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-500 text-xs font-semibold transition-colors"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-800 text-white text-xs font-bold transition-all shadow-[0_0_15px_rgba(37, 99, 235,0.3)]"
+              className="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-all shadow-[0_6px_16px_rgba(59,130,246,0.2)]"
             >
               Update Password
             </button>
@@ -482,19 +482,19 @@ export default function Settings() {
 
       {/* 6. PREFERENCES SECTION */}
       {(activeTab === "preferences" || activeTab === "profile") && (
-        <div className="bg-[#0e111f] border border-blue-500/20 rounded-2xl p-6 space-y-6 shadow-[0_0_20px_rgba(37, 99, 235,0.08)]">
-          <div className="flex items-center gap-2 border-b border-white/10 pb-3">
-            <VscSettingsGear className="text-blue-400 text-lg" />
-            <h2 className="text-base font-bold text-white">Preferences</h2>
+        <div className="bg-white border border-slate-200 rounded-2xl p-6 space-y-6 shadow-[0_8px_24px_rgba(15,23,42,0.05)]">
+          <div className="flex items-center gap-2 border-b border-slate-200 pb-3">
+            <VscSettingsGear className="text-blue-600 text-lg" />
+            <h2 className="text-base font-bold text-slate-900">Preferences</h2>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             
             {/* Email Notifications */}
-            <div className="p-4 rounded-xl bg-[#141728] border border-white/5 flex items-center justify-between">
+            <div className="p-4 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-between">
               <div>
-                <span className="text-xs font-bold text-white block">Email Notifications</span>
-                <span className="text-[10px] text-richblack-400">Receive updates about courses and offers</span>
+                <span className="text-xs font-bold text-slate-900 block">Email Notifications</span>
+                <span className="text-[10px] text-slate-500">Receive updates about courses and offers</span>
               </div>
               <button
                 type="button"
@@ -510,10 +510,10 @@ export default function Settings() {
             </div>
 
             {/* Marketing Emails */}
-            <div className="p-4 rounded-xl bg-[#141728] border border-white/5 flex items-center justify-between">
+            <div className="p-4 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-between">
               <div>
-                <span className="text-xs font-bold text-white block">Marketing Emails</span>
-                <span className="text-[10px] text-richblack-400">Receive emails about new features and promotions</span>
+                <span className="text-xs font-bold text-slate-900 block">Marketing Emails</span>
+                <span className="text-[10px] text-slate-500">Receive emails about new features and promotions</span>
               </div>
               <button
                 type="button"
@@ -529,10 +529,10 @@ export default function Settings() {
             </div>
 
             {/* Dark Mode */}
-            <div className="p-4 rounded-xl bg-[#141728] border border-white/5 flex items-center justify-between">
+            <div className="p-4 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-between">
               <div>
-                <span className="text-xs font-bold text-white block">Dark Mode</span>
-                <span className="text-[10px] text-richblack-400">Enable dark mode across the platform</span>
+                <span className="text-xs font-bold text-slate-900 block">Dark Mode</span>
+                <span className="text-[10px] text-slate-500">Enable dark mode across the platform</span>
               </div>
               <button
                 type="button"
@@ -548,10 +548,10 @@ export default function Settings() {
             </div>
 
             {/* Course Progress Reminders */}
-            <div className="p-4 rounded-xl bg-[#141728] border border-white/5 flex items-center justify-between">
+            <div className="p-4 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-between">
               <div>
-                <span className="text-xs font-bold text-white block">Course Progress Reminders</span>
-                <span className="text-[10px] text-richblack-400">Get reminded to continue your learning</span>
+                <span className="text-xs font-bold text-slate-900 block">Course Progress Reminders</span>
+                <span className="text-[10px] text-slate-500">Get reminded to continue your learning</span>
               </div>
               <button
                 type="button"
@@ -572,21 +572,21 @@ export default function Settings() {
 
       {/* 7. BILLING & PLANS SECTION */}
       {activeTab === "billing" && (
-        <div className="bg-[#0e111f] border border-blue-500/20 rounded-2xl p-6 space-y-6 shadow-[0_0_20px_rgba(37, 99, 235,0.08)]">
-          <div className="flex items-center gap-2 border-b border-white/10 pb-3">
-            <VscCreditCard className="text-blue-400 text-lg" />
-            <h2 className="text-base font-bold text-white">Billing & Plan</h2>
+        <div className="bg-white border border-slate-200 rounded-2xl p-6 space-y-6 shadow-[0_8px_24px_rgba(15,23,42,0.05)]">
+          <div className="flex items-center gap-2 border-b border-slate-200 pb-3">
+            <VscCreditCard className="text-blue-600 text-lg" />
+            <h2 className="text-base font-bold text-slate-900">Billing & Plan</h2>
           </div>
 
-          <div className="p-5 rounded-xl bg-blue-950/20 border border-blue-500/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="p-5 rounded-xl bg-blue-50 border border-blue-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>
-              <span className="text-xs font-bold text-blue-300 block uppercase tracking-wider">Current Membership</span>
-              <h3 className="text-lg font-extrabold text-white mt-1">CodeLearn Lifetime Access</h3>
-              <p className="text-xs text-richblack-300">Unlimited course streaming and updates included.</p>
+              <span className="text-xs font-bold text-blue-700 block uppercase tracking-wider">Current Membership</span>
+              <h3 className="text-lg font-extrabold text-slate-900 mt-1">CodeLearn Lifetime Access</h3>
+              <p className="text-xs text-slate-500">Unlimited course streaming and updates included.</p>
             </div>
             <button
               onClick={() => navigate("/dashboard/buy-courses")}
-              className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-800 text-white text-xs font-bold transition-all shadow-[0_0_12px_rgba(37, 99, 235,0.3)] shrink-0"
+              className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-all shadow-[0_6px_16px_rgba(59,130,246,0.18)] shrink-0"
             >
               Browse More Courses
             </button>
@@ -602,7 +602,7 @@ export default function Settings() {
           </div>
           <div>
             <h3 className="text-sm font-bold text-red-400">Delete Account</h3>
-            <p className="text-xs text-richblack-300 mt-0.5">
+            <p className="text-xs text-slate-500 mt-0.5">
               Once you delete your account, there is no going back. Please be certain.
             </p>
           </div>
@@ -610,7 +610,7 @@ export default function Settings() {
 
         <button
           onClick={() => setShowDeleteModal(true)}
-          className="px-5 py-2.5 rounded-xl bg-red-900/30 hover:bg-red-600 border border-red-500/30 text-red-300 hover:text-white text-xs font-bold transition-all shrink-0 self-start sm:self-auto"
+          className="px-5 py-2.5 rounded-xl bg-red-900/30 hover:bg-red-600 border border-red-500/30 text-red-700 hover:text-white text-xs font-bold transition-all shrink-0 self-start sm:self-auto"
         >
           Delete My Account
         </button>
@@ -619,22 +619,22 @@ export default function Settings() {
       {/* DELETE ACCOUNT CONFIRMATION MODAL */}
       {showDeleteModal && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-[#0e111f] border border-red-500/40 max-w-md w-full rounded-2xl p-6 text-white space-y-4 shadow-[0_0_30px_rgba(239,68,68,0.3)]">
-            <div className="flex items-center gap-3 border-b border-white/10 pb-3">
+          <div className="bg-white border border-red-500/40 max-w-md w-full rounded-2xl p-6 text-slate-900 space-y-4 shadow-[0_0_30px_rgba(239,68,68,0.3)]">
+            <div className="flex items-center gap-3 border-b border-slate-200 pb-3">
               <div className="w-10 h-10 rounded-full bg-red-500/20 text-red-400 flex items-center justify-center text-xl shrink-0">
                 ⚠️
               </div>
-              <h2 className="font-bold text-base text-white">Confirm Account Deletion</h2>
+              <h2 className="font-bold text-base text-slate-900">Confirm Account Deletion</h2>
             </div>
 
-            <p className="text-xs text-richblack-300 leading-relaxed">
+            <p className="text-xs text-slate-500 leading-relaxed">
               Are you sure you want to permanently delete your CodeLearn account? All your enrolled courses, certificates, and learning progress will be permanently wiped.
             </p>
 
             <div className="flex justify-end gap-3 pt-2">
               <button
                 onClick={() => setShowDeleteModal(false)}
-                className="px-4 py-2 bg-[#141728] hover:bg-white/5 text-richblack-300 rounded-xl text-xs font-semibold transition-colors"
+                className="px-4 py-2 bg-slate-50 hover:bg-slate-100 text-slate-500 rounded-xl text-xs font-semibold transition-colors"
               >
                 Cancel
               </button>

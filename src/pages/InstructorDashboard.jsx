@@ -39,241 +39,6 @@ import { FaCrown } from 'react-icons/fa';
 import { getInstructorData } from '../services/operations/profileAPI';
 import ConfirmationModal from '../components/Common/ConfirmationModal';
 
-// 21 Authentic reference courses matching the design screenshot
-const REFERENCE_COURSES = [
-  {
-    id: 'c1',
-    courseName: 'Complete React Native Mobile Development',
-    courseDescription: 'Learn hands-on projects, industry best practices...',
-    tech: 'react-native',
-    totalStudentsEnrolled: 1,
-    totalAmountGenerated: 3649,
-    averageRating: 5.0,
-    price: 3649,
-    status: 'Published'
-  },
-  {
-    id: 'c2',
-    courseName: 'Blockchain & Ethereum Smart Contract Engineering',
-    courseDescription: 'Learn blockchain, smart contracts and dApps...',
-    tech: 'ethereum',
-    totalStudentsEnrolled: 0,
-    totalAmountGenerated: 0,
-    averageRating: 0,
-    price: 4999,
-    status: 'Published'
-  },
-  {
-    id: 'c3',
-    courseName: 'Data Analytics with SQL, Tableau and PowerBI',
-    courseDescription: 'Hands-on data analysis with real-world projects...',
-    tech: 'analytics',
-    totalStudentsEnrolled: 1,
-    totalAmountGenerated: 2964,
-    averageRating: 4.8,
-    price: 2964,
-    status: 'Published'
-  },
-  {
-    id: 'c4',
-    courseName: 'Vue.js 3 & Nuxt Fullstack Mastery',
-    courseDescription: 'Build modern fullstack applications with Vue & Nuxt...',
-    tech: 'vue',
-    totalStudentsEnrolled: 0,
-    totalAmountGenerated: 0,
-    averageRating: 0,
-    price: 3499,
-    status: 'Published'
-  },
-  {
-    id: 'c5',
-    courseName: 'iOS Development with Swift 6 and SwiftUI',
-    courseDescription: 'Build beautiful iOS apps with SwiftUI...',
-    tech: 'swift',
-    totalStudentsEnrolled: 0,
-    totalAmountGenerated: 0,
-    averageRating: 0,
-    price: 4499,
-    status: 'Published'
-  },
-  {
-    id: 'c6',
-    courseName: 'Go Language Backend API Engineering',
-    courseDescription: 'Build scalable backend services with Go...',
-    tech: 'go',
-    totalStudentsEnrolled: 0,
-    totalAmountGenerated: 0,
-    averageRating: 0,
-    price: 3999,
-    status: 'Published'
-  },
-  {
-    id: 'c7',
-    courseName: 'Rust Programming Language Complete Guide',
-    courseDescription: 'Learn Rust with practical projects...',
-    tech: 'rust',
-    totalStudentsEnrolled: 1,
-    totalAmountGenerated: 4934,
-    averageRating: 5.0,
-    price: 4934,
-    status: 'Published'
-  },
-  {
-    id: 'c8',
-    courseName: 'GraphQL, Prisma & Microservices Development',
-    courseDescription: 'Master GraphQL and build microservices...',
-    tech: 'graphql',
-    totalStudentsEnrolled: 0,
-    totalAmountGenerated: 0,
-    averageRating: 0,
-    price: 3899,
-    status: 'Published'
-  },
-  {
-    id: 'c9',
-    courseName: 'AI & Large Language Models Prompt Engineering',
-    courseDescription: 'Learn prompt engineering with real-world examples...',
-    tech: 'ai',
-    totalStudentsEnrolled: 0,
-    totalAmountGenerated: 0,
-    averageRating: 0,
-    price: 2999,
-    status: 'Published'
-  },
-  {
-    id: 'c10',
-    courseName: 'Flutter & Dart Cross-Platform Mobile App Development',
-    courseDescription: 'Build beautiful cross-platform apps with Flutter...',
-    tech: 'flutter',
-    totalStudentsEnrolled: 0,
-    totalAmountGenerated: 0,
-    averageRating: 0,
-    price: 3799,
-    status: 'Published'
-  },
-  {
-    id: 'c11',
-    courseName: 'Cyber Security & Ethical Hacking Masterclass',
-    courseDescription: 'Learn cybersecurity with hands-on labs...',
-    tech: 'security',
-    totalStudentsEnrolled: 0,
-    totalAmountGenerated: 0,
-    averageRating: 0,
-    price: 4999,
-    status: 'Published'
-  },
-  {
-    id: 'c12',
-    courseName: 'DevOps Essentials: CI/CD Pipelines & Kubernetes',
-    courseDescription: 'Master DevOps tools and cloud deployment...',
-    tech: 'devops',
-    totalStudentsEnrolled: 0,
-    totalAmountGenerated: 0,
-    averageRating: 0,
-    price: 4299,
-    status: 'Published'
-  },
-  {
-    id: 'c13',
-    courseName: 'Modern UI/UX Design with Figma & Tailwind CSS',
-    courseDescription: 'Design modern and responsive interfaces...',
-    tech: 'uiux',
-    totalStudentsEnrolled: 0,
-    totalAmountGenerated: 0,
-    averageRating: 0,
-    price: 2499,
-    status: 'Published'
-  },
-  {
-    id: 'c14',
-    courseName: 'Complete System Design for Tech Interviews',
-    courseDescription: 'Learn system design with real-world case studies...',
-    tech: 'system-design',
-    totalStudentsEnrolled: 0,
-    totalAmountGenerated: 0,
-    averageRating: 0,
-    price: 4999,
-    status: 'Published'
-  },
-  {
-    id: 'c15',
-    courseName: 'Cloud Engineering with AWS & Docker Containers',
-    courseDescription: 'Deploy and manage cloud infrastructure...',
-    tech: 'aws',
-    totalStudentsEnrolled: 0,
-    totalAmountGenerated: 0,
-    averageRating: 0,
-    price: 4499,
-    status: 'Published'
-  },
-  {
-    id: 'c16',
-    courseName: 'Node.js, Express & PostgreSQL Backend Architecture',
-    courseDescription: 'Build production-ready APIs with Node.js...',
-    tech: 'node',
-    totalStudentsEnrolled: 0,
-    totalAmountGenerated: 0,
-    averageRating: 0,
-    price: 3699,
-    status: 'Published'
-  },
-  {
-    id: 'c17',
-    courseName: 'Python for Data Science and Machine Learning',
-    courseDescription: 'Learn Python and build ML projects...',
-    tech: 'python',
-    totalStudentsEnrolled: 0,
-    totalAmountGenerated: 0,
-    averageRating: 0,
-    price: 3999,
-    status: 'Published'
-  },
-  {
-    id: 'c18',
-    courseName: 'React & Next.js Masterclass with TypeScript',
-    courseDescription: 'Build modern web apps with TypeScript...',
-    tech: 'react-next',
-    totalStudentsEnrolled: 0,
-    totalAmountGenerated: 0,
-    averageRating: 0,
-    price: 4599,
-    status: 'Published'
-  },
-  {
-    id: 'c19',
-    courseName: 'Data Structures & Algorithms (Supreme 4.0)',
-    courseDescription: 'Master DSA with problem solving...',
-    tech: 'dsa',
-    totalStudentsEnrolled: 0,
-    totalAmountGenerated: 0,
-    averageRating: 0,
-    price: 4999,
-    status: 'Published'
-  },
-  {
-    id: 'c20',
-    courseName: 'Full Stack Web Development Bootcamp 2026',
-    courseDescription: 'Complete web development from scratch...',
-    tech: 'fullstack',
-    totalStudentsEnrolled: 0,
-    totalAmountGenerated: 0,
-    averageRating: 0,
-    price: 5499,
-    status: 'Published'
-  },
-  {
-    id: 'c21',
-    courseName: 'Python Programming for Beginners',
-    courseDescription: 'Learn Python from the ground up...',
-    tech: 'python',
-    totalStudentsEnrolled: 1,
-    totalAmountGenerated: 5990,
-    averageRating: 5.0,
-    price: 5990,
-    status: 'Published'
-  }
-];
-
 // Helper to render course icons matching reference screenshot
 const CourseIcon = ({ course }) => {
   const name = (course.courseName || '').toLowerCase();
@@ -456,7 +221,7 @@ const InstructorDashboard = () => {
   const { token } = useSelector((state) => state.auth);
   const navigate = useNavigate();
 
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [coursesData, setCoursesData] = useState([]);
   const [statsData, setStatsData] = useState(null);
   const [activeTab, setActiveTab] = useState('COURSES');
@@ -486,23 +251,16 @@ const InstructorDashboard = () => {
       if (!token) return;
       setLoading(true);
       const apiRes = await getInstructorData(token);
-      if (apiRes?.success && apiRes?.data?.length > 0) {
-        setCoursesData(apiRes.data);
-        setStatsData(apiRes.stats || null);
-      }
+      setCoursesData(apiRes?.success && Array.isArray(apiRes.data) ? apiRes.data : []);
+      setStatsData(apiRes?.success ? apiRes.stats || null : null);
       setLoading(false);
     };
 
     fetchDashboard();
   }, [token]);
 
-  // Merge with reference dataset if API has empty or few items, preserving authentic look
-  const effectiveCourses =
-    coursesData && coursesData.length > 0
-      ? coursesData.length < 5
-        ? [...coursesData, ...REFERENCE_COURSES.slice(coursesData.length)]
-        : coursesData
-      : REFERENCE_COURSES;
+  // Only show courses returned for the authenticated instructor.
+  const effectiveCourses = coursesData;
 
   // Stats calculation
   const totalCourses = statsData?.totalCourses ?? effectiveCourses.length;
@@ -519,18 +277,26 @@ const InstructorDashboard = () => {
           effectiveCourses.reduce((acc, c) => acc + (c.averageRating || 0), 0) /
           effectiveCourses.length
         ).toFixed(1)
-      : '5');
+      : '0');
 
   // Deltas matching screenshot
-  const courseDelta = statsData?.courseDelta || '+2 this month';
-  const studentDelta = statsData?.studentDelta || '+4 this month';
-  const earningsDelta = statsData?.earningsDelta || '+₹1,846 this month';
-  const ratingDelta = '+0.2 this month';
+  const courseDelta = statsData?.courseDelta || 'No change this month';
+  const studentDelta = statsData?.studentDelta || 'No change this month';
+  const earningsDelta = statsData?.earningsDelta || 'No change this month';
+  const ratingDelta = 'No change this month';
 
   // Displayed courses based on Read More / View More state
   const displayedCourses = showAllCourses
     ? effectiveCourses
     : effectiveCourses.slice(0, INITIAL_DISPLAY_COUNT);
+
+  if (loading) {
+    return (
+      <div className="flex h-64 items-center justify-center" aria-label="Loading instructor dashboard">
+        <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-7 font-['Inter',sans-serif] selection:bg-blue-600 selection:text-white pb-10">

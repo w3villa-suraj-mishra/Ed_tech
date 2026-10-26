@@ -413,8 +413,8 @@ export default function Cart() {
                     </p>
                     <div className="flex items-center gap-1 text-xs text-slate-600 pt-1">
                       <span className="text-amber-500">★</span>
-                      <span className="font-bold text-slate-900">{course.averageRating || 4.6}</span>
-                      <span className="text-slate-400">({course.ratingAndReviews?.length || 980})</span>
+                      <span className="font-bold text-slate-900">{course.averageRating ?? course.rating ?? 0}</span>
+                      <span className="text-slate-400">({course.reviewsCount ?? course.reviewCount ?? course.ratingAndReviews?.length ?? 0})</span>
                     </div>
                   </div>
 
@@ -494,8 +494,8 @@ export default function Cart() {
           {(recommendedCourses.length > 0 ? recommendedCourses : defaultRecommended).map((course) => {
             const courseId = course._id || course.id;
             const price = Number(course?.pricing?.finalPrice || course?.price || 3299);
-            const rating = course.averageRating || course.rating || 4.6;
-            const reviews = course.ratingAndReviews?.length || course.reviewsCount || 980;
+            const rating = course.averageRating ?? course.rating ?? 0;
+            const reviews = course.reviewsCount ?? course.reviewCount ?? course.ratingAndReviews?.length ?? 0;
             const isWishlisted = Boolean(wishlist[courseId]);
 
             return (

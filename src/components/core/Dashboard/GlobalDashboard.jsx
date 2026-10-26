@@ -15,7 +15,6 @@ import {
 } from "react-icons/fi";
 import { FaFire } from "react-icons/fa";
 import { AiOutlineTrophy } from "react-icons/ai";
-import dashWelcomeIllustration from "../../../assests/Images/dash_welcome_illustration.png";
 import dashRocket from "../../../assests/Images/dash_rocket.png";
 
 const GlobalDashboard = () => {
@@ -109,44 +108,31 @@ const GlobalDashboard = () => {
   const continueLearningCourses = enrolledCourses.slice(0, 3);
 
   return (
-    <div className="space-y-6 text-gray-800 pb-10 font-sans">
-      
-      {/* 1. WELCOME BANNER SECTION (Emoji removed as requested) */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-[#F0F3FE]/80 border border-[#13AA92]/30 rounded-2xl sm:rounded-3xl p-6 sm:p-7 relative overflow-hidden shadow-xs">
-        <div className="z-10 relative">
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-[#0F172A] tracking-tight">
-            Welcome back, {userName}
-          </h1>
-          <p className="text-xs sm:text-sm text-gray-500 mt-1 font-normal">
-            Keep learning and grow your skills every day.
-          </p>
-        </div>
+    <div className="space-y-6 sm:space-y-7 text-slate-800 pb-10 font-sans">
 
-        {/* Center/Right 3D Books & Plant Illustration */}
-        <div className="absolute left-1/2 -translate-x-1/4 bottom-0 hidden lg:block pointer-events-none">
-          <img
-            src={dashWelcomeIllustration}
-            alt=""
-            className="h-20 sm:h-22 object-contain object-bottom"
-          />
+      {/* Dashboard heading */}
+      <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 px-1">
+        <div>
+          <span className="inline-flex items-center gap-2 text-[10px] font-extrabold uppercase tracking-[0.16em] text-blue-600">
+            <span className="h-1.5 w-1.5 rounded-full bg-blue-500" /> Learning workspace
+          </span>
+          <h1 className="mt-1 text-xl sm:text-2xl font-extrabold tracking-tight text-slate-900">Your learning dashboard</h1>
+          <p className="mt-1 text-xs sm:text-sm text-slate-500">Track your progress and pick up where you left off.</p>
         </div>
-
-        <div className="z-10 relative shrink-0">
-          <Link
-            to="/courses"
-            className="px-5 py-2.5 rounded-xl bg-[#3BA7F2] hover:bg-[#3BA7F2] text-white text-xs sm:text-sm font-bold flex items-center gap-2 shadow-sm shadow-indigo-500/20 transition-all"
-          >
-            <span>Explore Courses</span>
-            <FiArrowRight className="text-xs" />
-          </Link>
-        </div>
+        <Link
+          to="/courses"
+          className="inline-flex items-center justify-center gap-2 self-start sm:self-auto px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-sm shadow-blue-600/20 transition-colors"
+        >
+          Explore courses <FiArrowRight />
+        </Link>
       </div>
 
-      {/* 2. 5 STATISTICS CARDS GRID */}
+      {/* 1. 5 STATISTICS CARDS GRID */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
         
         {/* Card 1: Enrolled Courses */}
-        <div className="bg-white border border-gray-200/80 rounded-2xl p-4 flex flex-col justify-between shadow-xs hover:border-indigo-200 hover:shadow-sm transition-all">
+        <div className="group relative overflow-hidden bg-white border border-slate-200/80 rounded-2xl p-4 flex flex-col justify-between shadow-[0_5px_18px_rgba(28,44,72,0.045)] hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-[0_12px_28px_rgba(37,99,235,0.09)] transition-all">
+          <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-blue-500 to-cyan-400" />
           <div className="flex items-center justify-between">
             <div className="w-8 h-8 rounded-xl bg-[#E0F2FE] text-[#0284C7] flex items-center justify-center text-sm">
               <FiBookOpen />
@@ -165,7 +151,8 @@ const GlobalDashboard = () => {
         </div>
 
         {/* Card 2: Hours Learned */}
-        <div className="bg-white border border-gray-200/80 rounded-2xl p-4 flex flex-col justify-between shadow-xs hover:border-indigo-200 hover:shadow-sm transition-all">
+        <div className="group relative overflow-hidden bg-white border border-slate-200/80 rounded-2xl p-4 flex flex-col justify-between shadow-[0_5px_18px_rgba(28,44,72,0.045)] hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-[0_12px_28px_rgba(37,99,235,0.09)] transition-all">
+          <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-violet-500 to-blue-400" />
           <div className="flex items-center justify-between">
             <div className="w-8 h-8 rounded-xl bg-[#13AA92]/10 text-[#9333EA] flex items-center justify-center text-sm">
               <FiClock />
@@ -184,7 +171,8 @@ const GlobalDashboard = () => {
         </div>
 
         {/* Card 3: Lessons Completed */}
-        <div className="bg-white border border-gray-200/80 rounded-2xl p-4 flex flex-col justify-between shadow-xs hover:border-indigo-200 hover:shadow-sm transition-all">
+        <div className="group relative overflow-hidden bg-white border border-slate-200/80 rounded-2xl p-4 flex flex-col justify-between shadow-[0_5px_18px_rgba(28,44,72,0.045)] hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-[0_12px_28px_rgba(37,99,235,0.09)] transition-all">
+          <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-emerald-400 to-teal-400" />
           <div className="flex items-center justify-between">
             <div className="w-8 h-8 rounded-xl bg-[#DCFCE7] text-[#16A34A] flex items-center justify-center text-sm">
               <FiCheckCircle />
@@ -203,7 +191,8 @@ const GlobalDashboard = () => {
         </div>
 
         {/* Card 4: Day Streak */}
-        <div className="bg-white border border-gray-200/80 rounded-2xl p-4 flex flex-col justify-between shadow-xs hover:border-indigo-200 hover:shadow-sm transition-all">
+        <div className="group relative overflow-hidden bg-white border border-slate-200/80 rounded-2xl p-4 flex flex-col justify-between shadow-[0_5px_18px_rgba(28,44,72,0.045)] hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-[0_12px_28px_rgba(37,99,235,0.09)] transition-all">
+          <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-amber-400 to-orange-400" />
           <div className="flex items-center justify-between">
             <div className="w-8 h-8 rounded-xl bg-[#FEF3C7] text-[#D97706] flex items-center justify-center text-sm">
               <FaFire />
@@ -222,7 +211,8 @@ const GlobalDashboard = () => {
         </div>
 
         {/* Card 5: Certificates Earned */}
-        <div className="col-span-2 sm:col-span-1 bg-white border border-gray-200/80 rounded-2xl p-4 flex flex-col justify-between shadow-xs hover:border-indigo-200 hover:shadow-sm transition-all">
+        <div className="group relative col-span-2 sm:col-span-1 overflow-hidden bg-white border border-slate-200/80 rounded-2xl p-4 flex flex-col justify-between shadow-[0_5px_18px_rgba(28,44,72,0.045)] hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-[0_12px_28px_rgba(37,99,235,0.09)] transition-all">
+          <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-sky-400 to-indigo-400" />
           <div className="flex items-center justify-between">
             <div className="w-8 h-8 rounded-xl bg-[#DBEAFE] text-[#3BA7F2] flex items-center justify-center text-sm">
               <AiOutlineTrophy />

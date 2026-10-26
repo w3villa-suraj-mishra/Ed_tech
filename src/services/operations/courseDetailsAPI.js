@@ -8,7 +8,6 @@ import { courseEndpoints, ratingsEndpoints } from "../apis"
 const {
   COURSE_DETAILS_API,
   COURSE_CATEGORIES_API,
-  GET_CATEGORIES_COUNT_API,
   GET_ALL_COURSE_API,
   CREATE_COURSE_API,
   EDIT_COURSE_API,
@@ -86,9 +85,11 @@ export const fetchCourseDetails = async (courseId) => {
 // fetching total count of categories (Ultra fast count query)
 export const fetchCategoriesCount = async () => {
   try {
-    const response = await apiConnector("GET", GET_CATEGORIES_COUNT_API)
+    // The category list endpoint already returns totalCategories. Reuse it
+    // instead of calling the removed /categories/count endpoint.
+    const response = await apiConnector("GET", COURSE_CATEGORIES_API, null, null, { page: 1, limit: 1 })
     if (response?.data?.success) {
-      return response.data.count || 0
+      return response.data.totalCategories || 0
     }
   } catch (error) {
     console.log("FETCH_CATEGORIES_COUNT_API ERROR............", error)
@@ -119,7 +120,7 @@ export const fetchCourseCategories = async (page, limit, search) => {
   } catch (error) {
     console.log("COURSE_CATEGORY_API API ERROR............", error)
     if (!error.message?.includes('Network Error')) {
-      toast.error(error.message)
+      toast.error(error.response?.data?.message || error.message || "Could not fetch course categories")
     }
   }
   return result

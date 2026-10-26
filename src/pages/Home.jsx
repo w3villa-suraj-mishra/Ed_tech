@@ -15,7 +15,7 @@ import CTAIllustrationImgWebp from "../assests/Images/cta_illustration.webp";
 import CTAIllustrationImgPng from "../assests/Images/cta_illustration.png";
 import InstructorSlider from '../components/core/HomePage/InstructorSlider';
 import { getUserEnrolledCourses } from '../services/operations/profileAPI';
-import { getHomePageStats, fetchCourseCategories, fetchCategoriesCount, getAllCourses } from '../services/operations/courseDetailsAPI';
+import { getHomePageStats, fetchCourseCategories, getAllCourses } from '../services/operations/courseDetailsAPI';
 
 import {
   FiPlayCircle,
@@ -231,14 +231,7 @@ const Home = () => {
   useEffect(() => {
     let isMounted = true;
 
-    // 1. Fetch category count immediately (Ultra fast DB count: ~50ms)
-    fetchCategoriesCount().then(count => {
-      if (isMounted && count !== null && count !== undefined) {
-        setCategoryCount(count);
-      }
-    });
-
-    // 2. Fetch homepage stats
+    // Fetch independent homepage data in parallel.
     getHomePageStats().then(statsData => {
       if (isMounted && statsData) {
         setStats({
@@ -252,17 +245,17 @@ const Home = () => {
       }
     });
 
-    // 3. Fetch top categories for homepage display
+    // The categories response includes totalCategories, so no second count request is needed.
     fetchCourseCategories(1, 6).then(catData => {
       if (isMounted && catData && Array.isArray(catData)) {
         setDbCategories(catData);
-        if (catData.totalCategories) {
+        if (catData.totalCategories !== undefined) {
           setCategoryCount(catData.totalCategories);
         }
       }
     });
 
-    // 4. Fetch featured courses independently
+    // Fetch featured courses independently.
     getAllCourses().then(coursesData => {
       if (isMounted && coursesData && Array.isArray(coursesData)) {
         setFeaturedCourses(coursesData.slice(0, 4));

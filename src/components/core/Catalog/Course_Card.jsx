@@ -1,7 +1,6 @@
-import React, { useEffect } from 'react'
+import React from 'react'
 import RatingStars from '../../Common/RatingStars'
 import GetAvgRating from '../../../utils/avgRating'
-import { useState } from 'react'
 import { Link } from 'react-router-dom'
 
 
@@ -9,12 +8,8 @@ import { Link } from 'react-router-dom'
 const Course_Card = ({course, Height}) => {
 
 
-    const [avgReviewCount, setAvgReviewCount] = useState(0);
-
-    useEffect(()=> {
-        const count = GetAvgRating(course.ratingAndReviews);
-        setAvgReviewCount(count);
-    },[course])
+    const avgReviewCount = Number(course.averageRating || course.rating) || GetAvgRating(course.ratingAndReviews);
+    const reviewCount = Number(course.reviewsCount ?? course.reviewCount ?? course.ratingAndReviews?.length ?? 0);
 
 
     
@@ -37,8 +32,8 @@ const Course_Card = ({course, Height}) => {
             <div className="flex items-center gap-2">
               <span className="text-yellow-5">{avgReviewCount || 0}</span>
               <RatingStars Review_Count={avgReviewCount} />
-              <span className="text-richblack-400">
-                {course?.ratingAndReviews?.length} Ratings
+                <span className="text-richblack-400">
+                  {reviewCount} Ratings
               </span>
             </div>
             <div className="flex items-center gap-3">

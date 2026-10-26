@@ -117,7 +117,7 @@ function AdminPracticeBankInner() {
 
   const fetchCourses = async () => {
     try {
-      const res = await apiConnector('GET', courseEndpoints.GET_ALL_COURSE_API);
+      const res = await apiConnector('GET', courseEndpoints.GET_ALL_COURSE_API, null, null, { includeUnpublished: 'true', limit: 'all' });
       if (res.data?.success) {
         setCourses(res.data.data || []);
       }

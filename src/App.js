@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useRef } from "react";
 import { Routes, Route, useLocation } from "react-router-dom";
 import Navbar from "./components/Navbar/Navbar";
 import Footer from "./components/Common/Footer.jsx";
@@ -82,7 +82,12 @@ import { BASE_URL } from "./services/apis";
 import { AdminChatPage, StudentChatWidget } from "./modules/chat";
 
 const OAuthCallbackForwarder = () => {
+  const forwarding = useRef(false);
+
   useEffect(() => {
+    if (forwarding.current) return;
+    forwarding.current = true;
+
     const search = window.location.search;
     const backendHost = process.env.REACT_APP_BASE_URL || BASE_URL || 'https://ed-tech-backend-2kha.vercel.app';
     window.location.href = `${backendHost}/auth/google_oauth2/callback${search}`;

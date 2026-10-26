@@ -7,7 +7,6 @@ import InstructorChart from './InstructorChart'
 
 export default function Instructor() {
   const { token } = useSelector((state) => state.auth)
-  const { user } = useSelector((state) => state.profile)
 
   const [loading, setLoading] = useState(false)
   const [instructorData, setInstructorData] = useState(null)
@@ -32,16 +31,6 @@ export default function Instructor() {
 
   return (
     <div className="space-y-8">
-
-      {/* Header */}
-      <div className="flex flex-col gap-2">
-        <h1 className="text-3xl font-bold text-richblack-5">
-          👋 Welcome back, {user?.first_name}
-        </h1>
-        <p className="text-richblack-300">
-          Let’s build something amazing today 🚀
-        </p>
-      </div>
 
       {loading ? (
         <div className="flex items-center justify-center h-[400px]">

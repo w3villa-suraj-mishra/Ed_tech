@@ -488,7 +488,7 @@ export default function TestBuilderWizard({
   const isEditingTest = Boolean(initialTest?.id || testForm.id);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/80 backdrop-blur-md overflow-y-auto">
+    <div className={`fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/80 backdrop-blur-md overflow-y-auto ${role === 'INSTRUCTOR' ? 'test-builder-light' : ''}`}>
       <div className="bg-[#161D29] border border-[#2C333F] rounded-2xl w-full max-w-4xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden font-['Inter',sans-serif]">
         
         {/* HEADER & STEP WIZARD PROGRESS */}

@@ -277,55 +277,6 @@ const Articles = () => {
   return (
     <div className="space-y-6 text-[#1E293B] font-sans pb-12 max-w-[1240px] mx-auto">
       
-      {/* 1. HERO BANNER CARD */}
-      <div className="bg-gradient-to-r from-[#F0F5FF] via-[#EEF2FF] to-[#F5F3FF] border border-slate-200/80 rounded-2xl sm:rounded-3xl p-6 sm:p-7 shadow-xs relative overflow-hidden flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-        
-        {/* Banner Left: Explore Box & Titles */}
-        <div className="flex items-start sm:items-center gap-4 relative z-10 max-w-xl">
-          <div className="w-13 h-13 sm:w-14 sm:h-14 rounded-2xl bg-white/90 border border-blue-200/80 shadow-2xs flex flex-col items-center justify-center text-blue-600 shrink-0">
-            <FiBookOpen className="text-xl sm:text-2xl" />
-            <span className="text-[9px] font-extrabold uppercase tracking-wider text-blue-600 mt-0.5">Explore</span>
-          </div>
-
-          <div className="space-y-1">
-            <h1 className="text-2xl sm:text-[28px] font-extrabold text-slate-900 tracking-tight leading-tight">
-              Learn Articles
-            </h1>
-            <p className="text-xs sm:text-sm text-slate-500 font-normal leading-relaxed">
-              Explore technical articles, engineering deep-dives, and tutorials generated live by our admin & editorial team.
-            </p>
-          </div>
-        </div>
-
-        {/* Banner Right: Books & Plant 3D Illustration + Quote */}
-        <div className="flex items-center gap-4 shrink-0 relative z-10 select-none">
-          
-          {/* Books and succulent plant graphic */}
-          <div className="hidden lg:block">
-            <svg width="90" height="65" viewBox="0 0 90 65" fill="none">
-              {/* Stand Books */}
-              <rect x="25" y="10" width="9" height="50" rx="2" fill="#3BA7F2" />
-              <rect x="35" y="6" width="10" height="54" rx="2" fill="#3BA7F2" />
-              <rect x="46" y="14" width="8" height="46" rx="2" fill="#818CF8" />
-              {/* Bottom book horizontal */}
-              <rect x="10" y="56" width="70" height="8" rx="2" fill="#CBD5E1" />
-              {/* Succulent pot on left */}
-              <rect x="6" y="38" width="16" height="18" rx="3" fill="#E2E8F0" />
-              <path d="M14 38C14 26 6 22 6 22C6 22 10 32 14 38Z" fill="#10B981" />
-              <path d="M14 38C14 28 22 24 22 24C22 24 18 32 14 38Z" fill="#059669" />
-            </svg>
-          </div>
-
-          {/* Quote bubble */}
-          <div className="bg-white/85 backdrop-blur-xs border border-indigo-100 rounded-2xl px-5 py-3 text-center shadow-2xs">
-            <p className="text-xs italic font-serif text-slate-700 font-medium leading-relaxed">
-              “Read. Learn. Build<br />A better you, every day.”
-            </p>
-          </div>
-        </div>
-
-      </div>
-
       {/* 2. SEARCH BAR & FILTER DROPDOWNS ROW */}
       <div className="bg-white border border-slate-200/80 rounded-2xl p-3 sm:p-3.5 shadow-xs flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
         
