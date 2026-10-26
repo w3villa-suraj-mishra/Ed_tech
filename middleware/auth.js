@@ -15,17 +15,13 @@ const authenticateUser = async (req, res, next) => {
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET || 'Secret123');
-    const user = await User.findByPk(decoded.user_id || decoded.userId || decoded.id);
+    const user = await User.findByPk(decoded.user_id || decoded.userId);
 
     if (!user) {
       return res.status(401).json({ success: false, message: 'User no longer exists' });
     }
 
     req.user = user;
-    const role = String(user.accountType || decoded.account_type || '').toLowerCase();
-    if (role.includes('admin') || role.includes('superadmin')) {
-      req.admin = user;
-    }
     next();
   } catch (error) {
     logger.error('AUTHENTICATION ERROR:', error.message);
@@ -42,7 +38,7 @@ const setCurrentUserIfAuthenticated = async (req, res, next) => {
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET || 'Secret123');
-    const user = await User.findByPk(decoded.user_id || decoded.userId || decoded.id);
+    const user = await User.findByPk(decoded.user_id || decoded.userId);
     if (user) {
       req.user = user;
     }
@@ -60,9 +56,7 @@ const isInstructor = (req, res, next) => {
 };
 
 const isAdmin = (req, res, next) => {
-  const user = req.user || req.admin;
-  const role = String(user?.accountType || user?.account_type || '').toLowerCase();
-  if (!user || (!role.includes('admin') && !role.includes('superadmin'))) {
+  if (!req.user || (req.user.accountType !== 'Admin' && req.user.accountType !== 'Superadmin')) {
     return res.status(403).json({ success: false, message: 'This is a protected route for Admins' });
   }
   next();

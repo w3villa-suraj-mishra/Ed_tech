@@ -31,9 +31,28 @@ const findAdminUserByEmailQuery = async (email) => {
 
 const getAdminNotificationsQuery = async () => {
   const [pendingContacts, recentReviews, newEnrollments] = await Promise.all([
-    ContactUs.findAll({ where: { status: 'Pending' }, limit: 5, order: [['createdAt', 'DESC']] }),
-    RatingAndReview.findAll({ limit: 5, order: [['createdAt', 'DESC']], include: [{ model: User, as: 'user', attributes: ['firstName', 'lastName'] }] }),
-    Enrollment.findAll({ limit: 5, order: [['createdAt', 'DESC']], include: [{ model: User, as: 'user', attributes: ['firstName', 'lastName'] }, { model: Course, as: 'course', attributes: ['courseName'] }] })
+    ContactUs.findAll({
+      attributes: ['id', 'firstName', 'lastName', 'message', 'createdAt'],
+      where: { status: 'Pending' },
+      limit: 5,
+      order: [['createdAt', 'DESC']],
+      raw: true
+    }),
+    RatingAndReview.findAll({
+      attributes: ['id', 'userId', 'rating', 'createdAt'],
+      limit: 5,
+      order: [['createdAt', 'DESC']],
+      include: [{ model: User, as: 'user', attributes: ['firstName'] }]
+    }),
+    Enrollment.findAll({
+      attributes: ['id', 'userId', 'courseId', 'createdAt'],
+      limit: 5,
+      order: [['createdAt', 'DESC']],
+      include: [
+        { model: User, as: 'user', attributes: ['firstName'] },
+        { model: Course, as: 'course', attributes: ['courseName'] }
+      ]
+    })
   ]);
   return { pendingContacts, recentReviews, newEnrollments };
 };
@@ -124,10 +143,16 @@ const deleteUserAndRelationsQuery = async (userId) => {
 
 const findCategoriesWithCourseCountQuery = async (where = {}) => {
   const cats = await Category.findAll({
-    where, order: [['createdAt', 'DESC']],
-    include: [{ model: Course, attributes: ['id'] }]
+    attributes: {
+      include: [[sequelize.fn('COUNT', sequelize.col('Courses.id')), 'courseCount']]
+    },
+    where,
+    order: [['createdAt', 'DESC']],
+    include: [{ model: Course, attributes: [], required: false }],
+    group: ['Category.id'],
+    raw: true
   });
-  return cats.map(c => ({ ...c.toJSON(), courseCount: c.Courses ? c.Courses.length : 0 }));
+  return cats.map(category => ({ ...category, courseCount: Number(category.courseCount) || 0 }));
 };
 
 const findCategoryByNameQuery = async (name, excludeId = null) => {

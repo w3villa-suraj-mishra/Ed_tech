@@ -1,6 +1,6 @@
 const jwt = require('jsonwebtoken');
 const axios = require('axios');
-const { authQuery } = require('../nativequery');
+const { User } = require('../models');
 const helpers = require('../utils/helpers');
 const logger = require('../utils/logger');
 
@@ -68,27 +68,31 @@ const sessionsController = {
 
       // Find or create user
       logger.info(`${logPrefix} 5] User lookup started for email: ${email}`);
-      let user = await authQuery.findSocialUserQuery(email);
+      let user = await User.findOne({
+        attributes: ['id', 'email', 'firstName', 'lastName', 'accountType', 'image', 'githubUid', 'googleUid'],
+        where: { email }
+      });
 
       if (user) {
-        logger.info(`${logPrefix} 6] Existing user found (ID: ${user.id}, stored accountType: ${user.accountType})`);
-        
-        // For signup mode, if accountType is different, update it if explicitly requested; for login, preserve stored accountType
+        const updates = {};
         if (mode === 'signup' && role && role !== user.accountType) {
-          await user.update({ accountType: role });
-          logger.info(`${logPrefix} 6] Updated existing user accountType to selected signup role: ${role}`);
+          updates.accountType = role;
         }
 
-        // Update social fields without breaking existing accounts
         if (isGithub && !user.githubUid) {
-          await user.update({ githubUid: String(uid || '') });
+          updates.githubUid = String(uid || '');
         } else if ((provider === 'google' || provider === 'google_oauth2') && !user.googleUid) {
-          await user.update({ googleUid: String(uid || '') });
+          updates.googleUid = String(uid || '');
         }
 
-        // Update profile image if missing
         if (auth.photo && !user.image) {
-          await user.update({ image: auth.photo });
+          updates.image = auth.photo.length > 250
+            ? helpers.getDefaultAvatarUrl(user.firstName, user.lastName)
+            : auth.photo;
+        }
+
+        if (Object.keys(updates).length > 0) {
+          await user.update(updates);
         }
       } else {
         logger.info(`${logPrefix} 6] New user detected. Creating new user record for ${email}`);
@@ -120,7 +124,7 @@ const sessionsController = {
         userData.image = safePhoto;
 
         try {
-          user = await authQuery.createSocialUserQuery(userData);
+          user = await User.create(userData);
           logger.info(`${logPrefix} 7] User created successfully (ID: ${user.id}, accountType: ${user.accountType})`);
         } catch (createErr) {
           logger.error(`${logPrefix} CREATE ERROR] User.create failed for ${email}: ${createErr.message}`, {
@@ -141,7 +145,10 @@ const sessionsController = {
         {
           user_id: user.id,
           email: user.email,
-          account_type: user.accountType
+          account_type: user.accountType,
+          first_name: user.firstName,
+          last_name: user.lastName,
+          image: user.image
         },
         process.env.JWT_SECRET || 'Secret123',
         { expiresIn: '7d' }

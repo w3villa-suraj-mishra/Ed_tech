@@ -70,7 +70,7 @@ const User = sequelize.define('User', {
     allowNull: true
   },
   githubToken: {
-    type: DataTypes.TEXT,
+    type: DataTypes.STRING,
     field: 'github_token',
     allowNull: true
   },
@@ -80,12 +80,12 @@ const User = sequelize.define('User', {
     allowNull: true
   },
   googleToken: {
-    type: DataTypes.TEXT,
+    type: DataTypes.STRING,
     field: 'google_token',
     allowNull: true
   },
   token: {
-    type: DataTypes.TEXT,
+    type: DataTypes.STRING,
     allowNull: true
   },
   resetPasswordExpires: {

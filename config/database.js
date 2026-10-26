@@ -1,6 +1,13 @@
 const { Sequelize } = require('sequelize');
 require('dotenv').config();
 
+const poolOptions = {
+  max: Math.max(1, Number.parseInt(process.env.DB_POOL_MAX, 10) || 5),
+  min: Math.max(0, Number.parseInt(process.env.DB_POOL_MIN, 10) || 0),
+  acquire: Math.max(1000, Number.parseInt(process.env.DB_POOL_ACQUIRE_MS, 10) || 30000),
+  idle: Math.max(1000, Number.parseInt(process.env.DB_POOL_IDLE_MS, 10) || 10000)
+};
+
 let sequelize;
 
 if (process.env.DATABASE_URL) {
@@ -14,7 +21,7 @@ if (process.env.DATABASE_URL) {
       }
     },
     logging: false,
-    pool: { max: 5, min: 0, acquire: 30000, idle: 10000 }
+    pool: poolOptions
   });
 } else {
   sequelize = new Sequelize({
@@ -26,13 +33,8 @@ if (process.env.DATABASE_URL) {
     username: process.env.DB_USER || 'postgres',
     password: process.env.DB_PASSWORD || 'postgres',
     timezone: '+00:00',
-    logging: false,
-    pool: {
-      max: 5,
-      min: 0,
-      acquire: 30000,
-      idle: 10000
-    }
+    logging: process.env.NODE_ENV === 'development' ? console.log : false,
+    pool: poolOptions
   });
 }
 

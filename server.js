@@ -39,29 +39,19 @@ if (!process.env.VERCEL) {
     }
     try {
       const cleanToken = token.replace('Bearer ', '');
-      const decoded = jwt.verify(cleanToken, process.env.JWT_SECRET || 'Secret123');
+      const decoded = jwt.verify(cleanToken, process.env.JWT_SECRET || 'fallbackSecretKeyForJWT12345');
       socket.user = decoded;
-      socket.user.id = decoded.user_id || decoded.userId || decoded.id;
-      socket.user.accountType = decoded.account_type || decoded.accountType;
       next();
     } catch (err) {
       return next(new Error('Authentication error: Invalid token'));
     }
   });
 
-  const { registerChatSocketHandlers } = require('./modules/chat');
-
   io.on('connection', (socket) => {
-    const userId = socket.user?.id || socket.user?.user_id || socket.user?.userId;
+    const userId = socket.user?.id || socket.user?._id;
     if (userId) {
       socket.join(`user:${userId}`);
     }
-    const accountType = socket.user?.accountType || socket.user?.account_type;
-    if (accountType === 'Admin' || accountType === 'Superadmin') {
-      socket.join('staff');
-    }
-    // Register Chat Socket Handlers
-    registerChatSocketHandlers(io, socket);
   });
 
   socketService.init(io);
@@ -134,15 +124,11 @@ app.get('/health', (req, res) => {
 app.get('/run-migrations', async (req, res) => {
   try {
     await sequelize.authenticate();
-    const { Announcement, AnnouncementDismissal, Offer, OfferCourse, Conversation, Message } = require('./models');
+    const { Announcement, AnnouncementDismissal, Offer, OfferCourse } = require('./models');
     await Announcement.sync();
     await AnnouncementDismissal.sync();
     await Offer.sync();
     await OfferCourse.sync();
-    if (Conversation && Message) {
-      await Conversation.sync({ alter: true });
-      await Message.sync({ alter: true });
-    }
     await sequelize.query(`
       DO $$ 
       BEGIN 
@@ -169,9 +155,6 @@ app.get('/run-migrations', async (req, res) => {
 // ==========================================
 // ROUTES
 // ==========================================
-const { chatRoutes } = require('./modules/chat');
-app.use('/api', chatRoutes);
-app.use('/', chatRoutes);
 app.use('/', routes);
 app.use('/admin', adminRoutes);
 
@@ -195,26 +178,16 @@ app.use((err, req, res, next) => {
   });
 });
 
-process.on('uncaughtException', (err) => {
-  logger.error('UNCAUGHT EXCEPTION:', err.message || err);
-  console.error('[UNCAUGHT EXCEPTION]', err.stack || err);
-});
-
-process.on('unhandledRejection', (reason) => {
-  logger.error('UNHANDLED REJECTION:', reason?.message || reason);
-  console.error('[UNHANDLED REJECTION]', reason);
-});
-
 // ==========================================
 // DATABASE & SERVER
 // ==========================================
 
 const PORT = process.env.PORT || 5000;
 
-if (!process.env.VERCEL && process.env.NODE_ENV !== 'test') {
+if (!process.env.VERCEL) {
   const startServer = async () => {
     try {
-      await sequelize.sync();
+      await sequelize.sync({ alter: true });
       logger.info('Database synchronized successfully');
       try {
         const fixTestCaseInputs = require('./scripts/fixTestCaseInputs');
@@ -225,14 +198,6 @@ if (!process.env.VERCEL && process.env.NODE_ENV !== 'test') {
     } catch (error) {
       logger.error('Database connection warning (server started without DB):', error.message);
     }
-
-    server.on('error', (error) => {
-      if (error.code === 'EADDRINUSE') {
-        logger.error(`Port ${PORT} is already in use. Please kill the running process on port ${PORT} or wait a moment.`);
-      } else {
-        logger.error('Server error:', error.message);
-      }
-    });
 
     server.listen(PORT, () => {
       logger.info(`Server is running on port ${PORT}`);

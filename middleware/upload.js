@@ -36,7 +36,11 @@ const fileFilter = (req, file, cb) => {
     'video/quicktime',
     'video/mov'
   ];
-  cb(null, true);
+  if (whitelist.includes(file.mimetype)) {
+    cb(null, true);
+  } else {
+    cb(new Error('Unsupported file type'), false);
+  }
 };
 
 const upload = multer({

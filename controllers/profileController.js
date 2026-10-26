@@ -1,5 +1,4 @@
-const { profileQuery } = require('../nativequery');
-const uploadService = require('../services/uploadService');
+const { User, Course, Enrollment, Section, SubSection, RatingAndReview } = require('../models');
 const logger = require('../utils/logger');
 
 const profileController = {
@@ -9,7 +8,7 @@ const profileController = {
   getUserDetails: async (req, res) => {
     try {
       const user = req.user;
-      const profile = await profileQuery.findProfileByUserIdQuery(user.id);
+      const profile = await user.getProfile();
 
       return res.status(200).json({
         success: true,
@@ -46,7 +45,42 @@ const profileController = {
   getEnrolledCourses: async (req, res) => {
     try {
       const userId = req.user.id;
-      const { enrollments, userProgresses } = await profileQuery.getUserEnrolledCoursesQuery(userId);
+      const { CourseProgress, CourseProgressVideo } = require('../models');
+
+      const enrollments = await Enrollment.findAll({
+        where: { userId },
+        include: [
+          {
+            model: Course,
+            as: 'course',
+            required: false,
+            include: [
+              {
+                model: Section,
+                as: 'sections',
+                required: false,
+                include: [
+                  {
+                    model: SubSection,
+                    as: 'subSections',
+                    required: false
+                  }
+                ]
+              },
+              {
+                model: RatingAndReview,
+                as: 'ratingAndReviews',
+                required: false
+              }
+            ]
+          }
+        ]
+      });
+
+      const userProgresses = await CourseProgress.findAll({
+        where: { userId },
+        include: [{ model: CourseProgressVideo, as: 'courseProgressVideos' }]
+      });
 
       const data = enrollments
         .filter(entry => entry.course !== null && entry.course !== undefined)
@@ -55,6 +89,7 @@ const profileController = {
           const isSilverExpired = entry.plan === 'silver' && entry.expiresAt && new Date(entry.expiresAt) <= new Date();
           const liveStatus = isSilverExpired ? 'expired' : entry.status;
 
+          // Calculate total lectures
           let totalLectures = 0;
           if (courseData.sections && Array.isArray(courseData.sections)) {
             courseData.sections.forEach(sec => {
@@ -64,11 +99,13 @@ const profileController = {
             });
           }
 
+          // Calculate ratings
           const reviews = courseData.ratingAndReviews || [];
           const totalRatingSum = reviews.reduce((sum, r) => sum + (r.rating || 0), 0);
           const ratingCount = reviews.length;
           const averageRating = ratingCount > 0 ? (totalRatingSum / ratingCount).toFixed(1) : 0;
 
+          // Find progress record for this course
           const progRecord = userProgresses.find(p => p.courseId === courseData.id);
           const completedVideosCount = progRecord?.courseProgressVideos ? progRecord.courseProgressVideos.length : 0;
 
@@ -114,7 +151,8 @@ const profileController = {
   deleteAccount: async (req, res) => {
     try {
       const user = req.user;
-      await profileQuery.deleteUserAccountQuery(user);
+
+      await user.destroy();
 
       return res.status(200).json({
         success: true,
@@ -139,8 +177,10 @@ const profileController = {
         return res.status(400).json({ success: false, message: 'No image file provided' });
       }
 
+      const uploadService = require('../services/uploadService');
       const imageUrl = await uploadService.handleFileUpload(req.file, false);
-      await profileQuery.updateUserImageQuery(user, imageUrl);
+
+      await user.update({ image: imageUrl });
 
       return res.status(200).json({
         success: true,
@@ -167,7 +207,21 @@ const profileController = {
   instructorDashboard: async (req, res) => {
     try {
       const instructorId = req.user.id;
-      const courses = await profileQuery.getInstructorCoursesQuery(instructorId);
+      const { Op } = require('sequelize');
+
+      // Fetch all courses for this instructor including enrollments and ratingAndReviews
+      const courses = await Course.findAll({
+        where: { instructorId },
+        include: [
+          { model: Enrollment, as: 'enrollments' },
+          {
+            model: RatingAndReview,
+            as: 'ratingAndReviews',
+            include: [{ model: User, as: 'user', attributes: ['id', 'firstName', 'lastName', 'image'] }]
+          }
+        ],
+        order: [['createdAt', 'DESC']]
+      });
 
       const now = new Date();
       const firstDayThisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -231,12 +285,15 @@ const profileController = {
         };
       });
 
+      // Unique student count
       const uniqueStudentIds = new Set(allEnrollments.map(e => e.userId));
       const totalStudents = uniqueStudentIds.size;
 
+      // Overall average rating across all instructor courses
       const overallRatingSum = allReviews.reduce((sum, r) => sum + (r.rating || 0), 0);
       const overallAvgRating = allReviews.length > 0 ? Number((overallRatingSum / allReviews.length).toFixed(1)) : 0;
 
+      // Calculate monthly comparison deltas
       const courseDelta = totalCoursesThisMonth - totalCoursesLastMonth;
       const studentDelta = totalStudentsThisMonth - totalStudentsLastMonth;
       const earningsDelta = totalEarningsThisMonth - totalEarningsLastMonth;
@@ -283,6 +340,7 @@ const profileController = {
 
       const user = req.user;
 
+      // Update user name if provided
       if (firstName || lastName) {
         await user.update({
           firstName: firstName || user.firstName,
@@ -290,14 +348,21 @@ const profileController = {
         });
       }
 
-      const profile = await profileQuery.updateProfileQuery(user.id, {
+      // Update or create profile
+      let profile = await user.getProfile();
+
+      if (!profile) {
+        profile = await user.createProfile({});
+      }
+
+      await profile.update({
         gender,
         dateOfBirth,
         about,
         contactNumber,
-        address,
-        latitude,
-        longitude
+        address: address !== undefined ? address : profile.address,
+        latitude: latitude !== undefined ? latitude : profile.latitude,
+        longitude: longitude !== undefined ? longitude : profile.longitude
       });
 
       return res.status(200).json({
@@ -308,8 +373,8 @@ const profileController = {
           firstName: user.firstName,
           lastName: user.lastName,
           email: user.email,
-          profile: profile ? profile.toJSON() : null,
-          additionalDetails: profile ? profile.toJSON() : null
+          profile: profile.toJSON(),
+          additionalDetails: profile.toJSON()
         }
       });
     } catch (error) {

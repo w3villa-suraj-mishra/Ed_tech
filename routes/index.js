@@ -21,6 +21,11 @@ const upload = require('../middleware/upload');
 
 const siteConfigController = require('../controllers/siteConfigController');
 const announcementRoutes = require('./announcementRoutes');
+const { chatRoutes } = require('../modules/chat');
+
+// Chat client calls use the /api prefix; mount the chat module here so
+// conversation and message endpoints are reachable through the main app.
+router.use('/api', chatRoutes);
 
 // ==========================================
 // SITE CONFIG ROUTES
@@ -76,159 +81,79 @@ router.get('/auth/debug', (req, res) => {
 });
 
 router.get('/auth/github', (req, res, next) => {
-  console.log('[GITHUB INIT 1] /auth/github reached');
   const mode = req.query.mode || 'signup';
   const role = req.query.role || 'Student';
-  console.log(`[GITHUB INIT 2] mode and role received: mode=${mode}, role=${role}`);
 
   const githubClientId = String(process.env.GITHUB_CLIENT_ID || '').trim();
   const githubClientSecret = String(process.env.GITHUB_CLIENT_SECRET || '').trim();
-  const githubCallback = String(process.env.GITHUB_CALLBACK_URL || '').trim();
-
-  console.log(`[GITHUB INIT 3] GitHub environment variables present: GITHUB_CLIENT_ID=${Boolean(githubClientId)}, GITHUB_CLIENT_SECRET=${Boolean(githubClientSecret)}, GITHUB_CALLBACK_URL=${Boolean(githubCallback)}`);
 
   if (!githubClientId || !githubClientSecret) {
-    console.error('[GITHUB INIT ERROR] GitHub Client ID or Secret missing in env');
     return res.status(400).json({
       success: false,
       message: "GitHub OAuth is not configured on the server. Please set GITHUB_CLIENT_ID and GITHUB_CLIENT_SECRET in backend Environment Variables."
     });
   }
 
-  try {
-    const { configurePassport } = require('../config/passport');
-    configurePassport();
-    console.log('[GITHUB INIT 4] Passport initialized');
-
-    const strategyRegistered = Boolean(passport._strategies && passport._strategies['github']);
-    console.log(`[GITHUB INIT 5] GitHub strategy registered: ${strategyRegistered}`);
-
-    if (!strategyRegistered) {
-      console.error('[GITHUB INIT ERROR] GitHub strategy is NOT registered in Passport after configurePassport()');
-      return res.status(500).json({
-        success: false,
-        message: "GitHub OAuth strategy is not initialized. Please verify GITHUB_CLIENT_ID and GITHUB_CLIENT_SECRET environment variables."
-      });
-    }
-
-    console.log('[GITHUB INIT 6] Starting passport.authenticate for strategy github');
-    return passport.authenticate('github', {
-      scope: ['user:email'],
-      session: false,
-      state: `${mode}_${role}`
-    })(req, res, next);
-  } catch (error) {
-    console.error('[GITHUB INIT ERROR]', error.message);
-    console.error('[GITHUB INIT ERROR STACK]', error.stack);
+  if (!passport._strategies?.github) {
     return res.status(500).json({
       success: false,
-      message: error.message || "Failed to initialize GitHub authentication",
-      stack: error.stack
+      message: "GitHub OAuth strategy is not initialized. Verify the server OAuth configuration."
     });
   }
+
+  return passport.authenticate('github', {
+    scope: ['user:email'],
+    session: false,
+    state: `${mode}_${role}`
+  })(req, res, next);
 });
 
 router.get('/auth/google_oauth2', (req, res, next) => {
-  console.log('[GOOGLE DEBUG] OAuth route reached');
   const mode = req.query.mode || 'signup';
   const role = req.query.role || 'Student';
-  console.log('[GOOGLE DEBUG] mode:', mode);
-  console.log('[GOOGLE DEBUG] role:', role);
-  console.log('[GOOGLE DEBUG] GOOGLE_CLIENT_ID present:', Boolean(process.env.GOOGLE_CLIENT_ID));
-  console.log('[GOOGLE DEBUG] GOOGLE_CLIENT_SECRET present:', Boolean(process.env.GOOGLE_CLIENT_SECRET));
-  console.log('[GOOGLE DEBUG] GOOGLE_CALLBACK_URL present:', Boolean(process.env.GOOGLE_CALLBACK_URL));
 
   if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
-    console.error('[GOOGLE ERROR] Google Client ID or Secret missing in env');
     return res.status(400).json({
       success: false,
       message: "Google OAuth is not configured on the server. Please set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET in backend Environment Variables."
     });
   }
 
-  console.log('[GOOGLE DEBUG] Passport configuration started');
-  try {
-    const { configurePassport } = require('../config/passport');
-    configurePassport();
-    console.log('[GOOGLE DEBUG] Passport configuration completed');
-  } catch (error) {
-    console.error('[GOOGLE PASSPORT CONFIG ERROR]', error);
-    console.error(error.stack);
-  }
-
   const strategyExists = Boolean(passport._strategies && (passport._strategies['google_oauth2'] || passport._strategies['google']));
-  console.log('[GOOGLE DEBUG] Strategy google_oauth2 exists:', Boolean(passport._strategies?.google_oauth2));
-  console.log('[GOOGLE DEBUG] Strategy google exists:', Boolean(passport._strategies?.google));
 
   if (!strategyExists) {
-    console.error('[GOOGLE ERROR] Google OAuth strategy is NOT registered after configuration');
     return res.status(500).json({
       success: false,
-      message: "Google OAuth strategy is not initialized. Please verify GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET in Vercel environment variables."
+      message: "Google OAuth strategy is not initialized. Verify the server OAuth configuration."
     });
   }
 
   const strategyName = passport._strategies['google_oauth2'] ? 'google_oauth2' : 'google';
-  console.log(`[GOOGLE DEBUG] About to authenticate with strategy: ${strategyName}`);
-
-  try {
-    return passport.authenticate(strategyName, {
-      scope: ['email', 'profile'],
-      session: false,
-      state: `${mode}_${role}`
-    })(req, res, next);
-  } catch (error) {
-    console.error('[GOOGLE INIT ERROR]', error);
-    console.error('[GOOGLE INIT STACK]', error.stack);
-    return res.status(500).json({
-      success: false,
-      message: error.message,
-      stack: error.stack
-    });
-  }
+  return passport.authenticate(strategyName, {
+    scope: ['email', 'profile'],
+    session: false,
+    state: `${mode}_${role}`
+  })(req, res, next);
 });
 
 router.get(
   '/auth/google_oauth2/callback',
   (req, res, next) => {
-    console.log('[GOOGLE CALLBACK 1] Callback route reached');
-    console.log('[GOOGLE CALLBACK 2] Query parameters received:', JSON.stringify(req.query));
-
-    if (!passport._strategies || !passport._strategies['google_oauth2']) {
-      console.log('[GOOGLE CALLBACK 2] Initializing Passport strategy dynamically in callback handler...');
-      try {
-        const { configurePassport } = require('../config/passport');
-        configurePassport();
-      } catch (err) {
-        console.error('[GOOGLE CALLBACK PASSPORT ERROR]', err);
-      }
+    if (!passport._strategies?.google_oauth2) {
+      return res.status(500).json({ success: false, message: 'Google OAuth strategy is not initialized.' });
     }
 
-    console.log('[GOOGLE CALLBACK 3] Passport authentication started');
     passport.authenticate('google_oauth2', { session: false }, (err, user, info) => {
-      const defaultFrontend = 'https://ed-tech-frontend-indol.vercel.app';
-      const targetFrontend = (process.env.FRONTEND_URL || defaultFrontend).trim();
-
       if (err) {
-        console.error('[GOOGLE CALLBACK ERROR] Passport authentication threw error:', err.message);
-        console.error('[GOOGLE CALLBACK ERROR STACK]', err.stack);
-        return res.status(500).json({
-          success: false,
-          message: `OAuth Auth Error: ${err.message}`,
-          stack: err.stack
-        });
+        logger.error('GOOGLE CALLBACK ERROR:', err.message);
+        return res.redirect(`${(process.env.FRONTEND_URL || 'https://ed-tech-frontend-indol.vercel.app').trim()}/login?error=auth_failed`);
       }
 
       if (!user) {
-        console.error('[GOOGLE CALLBACK ERROR] Passport did not return a user profile. Info:', info);
-        return res.status(400).json({
-          success: false,
-          message: 'No user profile received from Google',
-          info
-        });
+        logger.error('GOOGLE CALLBACK: no user profile received', info);
+        return res.redirect(`${(process.env.FRONTEND_URL || 'https://ed-tech-frontend-indol.vercel.app').trim()}/login?error=auth_failed`);
       }
 
-      console.log('[GOOGLE CALLBACK 4] Google profile received for email:', user.email);
       req.authInfo = user;
       req.user = user;
 
@@ -244,7 +169,6 @@ router.get(
         }
       }
 
-      console.log('[GOOGLE CALLBACK 5] Handing over to sessionsController.create');
       next();
     })(req, res, next);
   },
@@ -254,15 +178,10 @@ router.get(
 router.get(
   '/auth/github/callback',
   (req, res, next) => {
-    logger.info('[GITHUB 2] Callback reached');
-    if (!passport._strategies || !passport._strategies['github']) {
-      try {
-        const { configurePassport } = require('../config/passport');
-        configurePassport();
-      } catch (err) {
-        logger.error('[GITHUB PASSPORT CALLBACK INIT ERROR]', err);
-      }
+    if (!passport._strategies?.github) {
+      return res.redirect(`${(process.env.FRONTEND_URL || 'https://ed-tech-frontend-indol.vercel.app').trim()}/login?error=auth_failed`);
     }
+
     passport.authenticate('github', { session: false }, (err, user, info) => {
       const defaultFrontend = 'https://ed-tech-frontend-indol.vercel.app';
       const targetFrontend = (process.env.FRONTEND_URL || defaultFrontend).trim();
@@ -277,7 +196,6 @@ router.get(
         return res.redirect(`${targetFrontend}/login?error=auth_failed`);
       }
 
-      logger.info('[GITHUB 3] GitHub profile received');
       req.authInfo = user;
       req.user = user;
 
@@ -427,10 +345,6 @@ router.post(
 router.get(
   '/course/showAllCategories',
   courseController.showAllCategories
-);
-router.get(
-  '/course/getCategoriesCount',
-  courseController.getCategoriesCount
 );
 router.post(
   '/course/createCategory',

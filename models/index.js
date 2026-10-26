@@ -61,10 +61,9 @@ LiveChatMessage.belongsTo(User, { foreignKey: 'userId' });
 
 // Course associations
 Category.hasMany(Course, { foreignKey: 'categoryId', onDelete: 'CASCADE' });
-Course.belongsTo(Category, { foreignKey: 'categoryId', as: 'category' });
+Course.belongsTo(Category, { foreignKey: 'categoryId' });
 
 Course.hasMany(Section, { foreignKey: 'courseId', as: 'sections', onDelete: 'CASCADE' });
-Course.hasMany(Section, { foreignKey: 'courseId', as: 'courseContent', onDelete: 'CASCADE' });
 Section.belongsTo(Course, { foreignKey: 'courseId', as: 'course' });
 
 Course.hasMany(Enrollment, { foreignKey: 'courseId', as: 'enrollments', onDelete: 'CASCADE' });
@@ -74,7 +73,7 @@ Course.hasMany(CourseProgress, { foreignKey: 'courseId', as: 'courseProgresses',
 CourseProgress.belongsTo(Course, { foreignKey: 'courseId' });
 
 Course.hasMany(RatingAndReview, { foreignKey: 'courseId', as: 'ratingAndReviews', onDelete: 'CASCADE' });
-RatingAndReview.belongsTo(Course, { foreignKey: 'courseId', as: 'course' });
+RatingAndReview.belongsTo(Course, { foreignKey: 'courseId' });
 
 Course.hasMany(CourseComment, { foreignKey: 'courseId', as: 'comments', onDelete: 'CASCADE' });
 CourseComment.belongsTo(Course, { foreignKey: 'courseId' });
@@ -190,9 +189,6 @@ OfferRedemption.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 Course.hasMany(OfferRedemption, { foreignKey: 'courseId', as: 'offerRedemptions', onDelete: 'CASCADE' });
 OfferRedemption.belongsTo(Course, { foreignKey: 'courseId', as: 'course' });
 
-// Chat Module Models
-const { Conversation, Message } = require('../modules/chat/models');
-
 module.exports = {
   User,
   Profile,
@@ -226,7 +222,5 @@ module.exports = {
   AnnouncementDismissal,
   Offer,
   OfferCourse,
-  OfferRedemption,
-  Conversation,
-  Message
+  OfferRedemption
 };

@@ -5,19 +5,17 @@ const toCamelCase = (key) => {
 };
 
 const normalizeObject = (obj) => {
-  if (!obj || typeof obj !== 'object' || Array.isArray(obj)) return obj;
+  if (!obj || typeof obj !== 'object') return obj;
   const normalized = {};
 
-  for (const key in obj) {
-    if (Object.prototype.hasOwnProperty.call(obj, key)) {
-      const value = obj[key];
-      normalized[key] = value;
-      const camelKey = toCamelCase(key);
-      if (camelKey !== key && !(camelKey in normalized)) {
-        normalized[camelKey] = value;
-      }
+  Object.keys(obj).forEach((key) => {
+    const value = obj[key];
+    normalized[key] = value;
+    const camelKey = toCamelCase(key);
+    if (camelKey !== key) {
+      normalized[camelKey] = value;
     }
-  }
+  });
 
   return normalized;
 };
