@@ -26,6 +26,3 @@ node_modules/
 
 # Local backups (old per-project git histories)
 .git_backups/
-
-# Unrelated Ruby tooling
-.ruby-lsp/
