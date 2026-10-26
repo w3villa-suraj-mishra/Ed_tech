@@ -1,0 +1,83 @@
+import { ACCOUNT_TYPE } from "../utils/constants";
+export const sidebarLinks = [
+  {
+    id: 0,
+    name: "Dashboard",
+    path: "/dashboard/global",
+    icon: "FiHome",
+  },
+  {
+    id: 5,
+    name: "Your Courses",
+    path: "/dashboard/enrolled-courses",
+    type: ACCOUNT_TYPE.STUDENT,
+    icon: "FiBookOpen",
+  },
+  {
+    id: 13,
+    name: "Buy Courses",
+    path: "/dashboard/buy-courses",
+    type: ACCOUNT_TYPE.STUDENT,
+    icon: "FiCalendar",
+  },
+  {
+    id: 16,
+    name: "Practice",
+    path: "/dashboard/practice",
+    type: ACCOUNT_TYPE.STUDENT,
+    icon: "FiCode",
+  },
+  {
+    id: 14,
+    name: "Notifications",
+    path: "/dashboard/notifications",
+    icon: "FiBell",
+  },
+  {
+    id: 12,
+    name: "Help & Support",
+    path: "/dashboard/help",
+    icon: "FiHelpCircle",
+  },
+  {
+    id: 15,
+    name: "Articles",
+    path: "/dashboard/articles",
+    icon: "FiFileText",
+  },
+  {
+    id: 2,
+    name: "Instructor Stats",
+    path: "/dashboard/instructor",
+    type: ACCOUNT_TYPE.INSTRUCTOR,
+    icon: "VscGraph",
+  },
+  {
+    id: 3,
+    name: "My Courses",
+    path: "/dashboard/my-courses",
+    type: ACCOUNT_TYPE.INSTRUCTOR,
+    icon: "VscVm",
+  },
+  {
+    id: 4,
+    name: "Add Course",
+    path: "/dashboard/add-course",
+    type: ACCOUNT_TYPE.INSTRUCTOR,
+    icon: "VscAdd",
+  },
+  {
+    id: 17,
+    name: "Practice",
+    path: "/dashboard/instructor-practice",
+    type: ACCOUNT_TYPE.INSTRUCTOR,
+    icon: "FiCode",
+  },
+  {
+    id: 6,
+    name: "Cart",
+    path: "/dashboard/cart",
+    type: ACCOUNT_TYPE.STUDENT,
+    icon: "FiShoppingCart",
+  },
+];
