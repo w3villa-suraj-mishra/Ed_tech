@@ -124,11 +124,28 @@ app.get('/health', (req, res) => {
 app.get('/run-migrations', async (req, res) => {
   try {
     await sequelize.authenticate();
-    const { Announcement, AnnouncementDismissal, Offer, OfferCourse } = require('./models');
+    const {
+      Announcement,
+      AnnouncementDismissal,
+      Offer,
+      OfferCourse,
+      Assignment,
+      AssignmentQuestion,
+      AssignmentResource,
+      AssignmentSubmission,
+      AssignmentSubmissionFile
+    } = require('./models');
     await Announcement.sync();
     await AnnouncementDismissal.sync();
     await Offer.sync();
     await OfferCourse.sync();
+    // Keep the assignment schema available on hosted deployments where the
+    // local Sequelize sync path is not run (for example, Vercel).
+    await Assignment.sync();
+    await AssignmentQuestion.sync();
+    await AssignmentResource.sync();
+    await AssignmentSubmission.sync();
+    await AssignmentSubmissionFile.sync();
     await sequelize.query(`
       DO $$ 
       BEGIN 

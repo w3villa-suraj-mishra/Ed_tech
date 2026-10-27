@@ -12,8 +12,8 @@ const {
   CourseCertificate
 } = require('../models');
 const { Op } = require('sequelize');
-const { sequelize } = require('../config/database');
 const courseService = require('../services/courseService');
+const { calculateCoursePrice } = require('../services/pricingService');
 const uploadService = require('../services/uploadService');
 const logger = require('../utils/logger');
 
@@ -492,25 +492,64 @@ const courseController = {
   getInstructorCourses: async (req, res) => {
     try {
       const instructorId = req.user.id;
+      const page = Math.max(1, Number.parseInt(req.query.page, 10) || 1);
+      const limit = Math.min(100, Math.max(1, Number.parseInt(req.query.limit, 10) || 24));
+      const where = { instructorId };
+      if (['Draft', 'Published'].includes(req.query.status)) where.status = req.query.status;
 
+      // Return summary fields and section IDs only. Lectures and video URLs
+      // are fetched later when an instructor opens a course.
       const courses = await Course.findAll({
-        where: { instructorId },
-        include: [
-          {
-            association: 'sections',
-            include: [{ association: 'subSections' }]
-          }
+        attributes: [
+          'id', 'courseName', 'courseDescription', 'price', 'originalPrice',
+          'discountType', 'discountValue', 'offerStartAt', 'offerEndAt',
+          'status', 'thumbnail', 'createdAt'
         ],
-        order: [['createdAt', 'DESC']]
+        where,
+        order: [['createdAt', 'DESC']],
+        limit,
+        offset: (page - 1) * limit
       });
 
-      const formattedCourses = await Promise.all(
-        courses.map(course => courseService.formatCourse(course))
+      const sectionCounts = courses.length > 0
+        ? await Section.findAll({
+          attributes: [
+            'courseId',
+            [Section.sequelize.fn('COUNT', Section.sequelize.col('id')), 'sectionsCount']
+          ],
+          where: { courseId: { [Op.in]: courses.map((course) => course.id) } },
+          group: ['courseId'],
+          raw: true
+        })
+        : [];
+      const sectionCountByCourseId = new Map(
+        sectionCounts.map((row) => [Number(row.courseId), Number(row.sectionsCount) || 0])
       );
+
+      const formattedCourses = courses.map((instance) => {
+        const course = instance.get({ plain: true });
+        const pricing = calculateCoursePrice(course);
+        return {
+          id: course.id,
+          _id: course.id,
+          courseName: course.courseName,
+          courseDescription: course.courseDescription,
+          thumbnail: course.thumbnail,
+          status: course.status,
+          price: pricing.finalPrice,
+          originalPrice: pricing.originalPrice,
+          pricing,
+          sectionsCount: sectionCountByCourseId.get(Number(course.id)) || 0,
+          createdAt: course.createdAt
+        };
+      });
 
       return res.status(200).json({
         success: true,
-        data: formattedCourses
+        data: formattedCourses,
+        currentPage: page,
+        limit,
+        hasMore: formattedCourses.length === limit
       });
     } catch (error) {
       logger.error('GET INSTRUCTOR COURSES FAILED:', error.message);
@@ -529,9 +568,12 @@ const courseController = {
       const page = Math.max(1, parseInt(req.query.page, 10) || 1);
       const requestedLimit = req.query.limit === 'all' ? null : parseInt(req.query.limit, 10);
       const limit = requestedLimit === null ? null : Math.min(100, Math.max(1, requestedLimit || 12));
-      const where = req.query.includeUnpublished === 'true'
-        ? {}
-        : { status: 'Published' };
+      // Draft courses are only visible through this optional query for a
+      // signed-in administrator. Public and student catalog requests always
+      // return published courses, even if includeUnpublished is supplied.
+      const canIncludeUnpublished = req.query.includeUnpublished === 'true'
+        && ['Admin', 'Superadmin'].includes(req.user?.accountType);
+      const where = canIncludeUnpublished ? {} : { status: 'Published' };
 
       if (req.query.category && req.query.category !== 'all') {
         const category = /^\d+$/.test(String(req.query.category))

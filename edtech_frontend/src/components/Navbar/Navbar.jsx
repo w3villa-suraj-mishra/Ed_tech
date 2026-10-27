@@ -43,6 +43,9 @@ const Navbar = () => {
   const searchContainerRef = useRef(null);
 
   const userRole = user?.accountType || user?.account_type;
+  const roleLabel = typeof userRole === 'string'
+    ? userRole.charAt(0).toUpperCase() + userRole.slice(1).toLowerCase()
+    : '';
 
   const [totalCourses, setTotalCourses] = useState(0);
 
@@ -538,7 +541,14 @@ const Navbar = () => {
                   <div className="absolute right-0 mt-2.5 w-60 max-h-[80vh] overflow-y-auto custom-scrollbar rounded-2xl bg-white border border-gray-200 text-gray-700 shadow-premium-light z-50 py-2 animate-in fade-in slide-in-from-top-2 duration-150">
                     
                     <div className="px-4 py-2 border-b border-gray-200 mb-1">
-                      <h3 className="font-semibold text-xs text-gray-900">{user?.first_name} {user?.last_name}</h3>
+                      <div className="flex items-center gap-2 min-w-0">
+                        <h3 className="font-semibold text-xs text-gray-900 truncate">{user?.first_name} {user?.last_name}</h3>
+                        {roleLabel && (
+                          <span className="shrink-0 rounded-full bg-emerald-50 px-2 py-0.5 text-[9px] font-semibold leading-none text-emerald-700 ring-1 ring-inset ring-emerald-200">
+                            {roleLabel}
+                          </span>
+                        )}
+                      </div>
                       <p className="text-[11px] text-gray-500 truncate">{user?.email}</p>
                     </div>
 

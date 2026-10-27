@@ -17,15 +17,17 @@ const MyCourses = () => {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    let active = true
     const fetchCourses = async () => {
       setLoading(true)
-      const result = await fetchInstructorCourses(token)
-      if (result) {
+      const result = await fetchInstructorCourses(token, { status: 'Published', page: 1, limit: 100 })
+      if (active) {
         setCourses(result)
+        setLoading(false)
       }
-      setLoading(false)
     }
     fetchCourses()
+    return () => { active = false }
   }, [token])
 
   return (

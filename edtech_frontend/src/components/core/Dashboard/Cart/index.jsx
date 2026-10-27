@@ -261,27 +261,27 @@ export default function Cart() {
 
       {/* 2. CART BANNER: EMPTY STATE OR FILLED CART */}
       {cart.length === 0 ? (
-        <div className="bg-gradient-to-r from-[#0F172A] via-[#1E3A8A] to-[#3BA7F2] rounded-2xl sm:rounded-3xl p-8 sm:p-10 shadow-lg relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-6">
+        <div className="bg-white border border-slate-200/80 rounded-2xl sm:rounded-3xl p-8 sm:p-10 shadow-xs relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-6">
           
           {/* Left Column: Icon + Text + Button */}
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5 relative z-10 max-w-xl">
-            {/* White/Blue Cart Icon Circle */}
-            <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-blue-500/25 border border-blue-400/30 flex items-center justify-center text-white text-2xl shrink-0 shadow-inner">
-              <FiShoppingCart className="text-2xl sm:text-3xl text-white" />
+            {/* Blue Cart Icon Squircle */}
+            <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-sky-50 border border-sky-100 flex items-center justify-center text-[#3BA7F2] text-2xl shrink-0 shadow-xs">
+              <FiShoppingCart className="text-2xl sm:text-3xl text-[#3BA7F2]" />
             </div>
 
             <div className="space-y-1.5">
-              <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
+              <h2 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
                 Your cart is empty
               </h2>
-              <p className="text-xs sm:text-sm text-slate-200 font-normal leading-relaxed">
+              <p className="text-xs sm:text-sm text-slate-500 font-normal leading-relaxed">
                 Looks like you haven't added any courses to your cart yet. Explore our top courses and start learning today.
               </p>
 
               {/* Action Button */}
               <button
                 onClick={() => navigate("/dashboard/buy-courses")}
-                className="px-5 py-2.5 rounded-xl bg-[#3BA7F2] hover:bg-[#1D4ED8] text-white text-xs sm:text-sm font-semibold shadow-md transition-all flex items-center gap-1.5 mt-3 cursor-pointer active:scale-95"
+                className="px-5 py-2.5 rounded-xl bg-[#3BA7F2] hover:bg-[#2895E0] text-white text-xs sm:text-sm font-semibold shadow-xs hover:shadow-md transition-all flex items-center gap-1.5 mt-3 cursor-pointer active:scale-95"
               >
                 <span>Explore Courses</span>
                 <FiArrowRight className="text-sm" />
@@ -298,7 +298,7 @@ export default function Cart() {
                   <stop offset="100%" stopColor="#1D4ED8" />
                 </linearGradient>
                 <filter id="cartGlow" x="-20%" y="-20%" width="140%" height="140%">
-                  <feDropShadow dx="0" dy="8" stdDeviation="12" floodColor="#38BDF8" floodOpacity="0.3" />
+                  <feDropShadow dx="0" dy="4" stdDeviation="8" floodColor="#38BDF8" floodOpacity="0.15" />
                 </filter>
               </defs>
 
@@ -309,36 +309,36 @@ export default function Cart() {
                 <rect x="4" y="0" width="42" height="12" rx="2" fill="#93C5FD" />
               </g>
 
-              {/* White Shopping Cart with blue wheels */}
+              {/* Shopping Cart with blue wheels */}
               <g filter="url(#cartGlow)" transform="translate(50, 15)">
                 {/* Cart basket mesh */}
                 <path
                   d="M20 20 H95 L84 75 H32 L20 20 Z"
-                  stroke="white"
+                  stroke="#0284C7"
                   strokeWidth="3.5"
-                  fill="none"
+                  fill="#F0F9FF"
                   strokeLinecap="round"
                   strokeLinejoin="round"
                 />
-                <line x1="40" y1="20" x2="46" y2="75" stroke="white" strokeWidth="2.5" />
-                <line x1="60" y1="20" x2="62" y2="75" stroke="white" strokeWidth="2.5" />
-                <line x1="80" y1="20" x2="76" y2="75" stroke="white" strokeWidth="2.5" />
-                <line x1="25" y1="38" x2="90" y2="38" stroke="white" strokeWidth="2.5" />
-                <line x1="28" y1="56" x2="86" y2="56" stroke="white" strokeWidth="2.5" />
+                <line x1="40" y1="20" x2="46" y2="75" stroke="#38BDF8" strokeWidth="2" />
+                <line x1="60" y1="20" x2="62" y2="75" stroke="#38BDF8" strokeWidth="2" />
+                <line x1="80" y1="20" x2="76" y2="75" stroke="#38BDF8" strokeWidth="2" />
+                <line x1="25" y1="38" x2="90" y2="38" stroke="#38BDF8" strokeWidth="2" />
+                <line x1="28" y1="56" x2="86" y2="56" stroke="#38BDF8" strokeWidth="2" />
                 
                 {/* Cart handle */}
-                <path d="M10 5 H22" stroke="white" strokeWidth="4" strokeLinecap="round" />
-                <path d="M22 5 L20 20" stroke="white" strokeWidth="3" />
+                <path d="M10 5 H22" stroke="#0284C7" strokeWidth="4" strokeLinecap="round" />
+                <path d="M22 5 L20 20" stroke="#0284C7" strokeWidth="3" />
 
                 {/* Cart chassis */}
-                <path d="M30 75 L28 88 H85" stroke="white" strokeWidth="3.5" strokeLinecap="round" />
+                <path d="M30 75 L28 88 H85" stroke="#0284C7" strokeWidth="3.5" strokeLinecap="round" />
 
                 {/* Left Wheel */}
-                <circle cx="38" cy="94" r="6" fill="#38BDF8" stroke="white" strokeWidth="2.5" />
+                <circle cx="38" cy="94" r="6" fill="#38BDF8" stroke="#0284C7" strokeWidth="2" />
                 <circle cx="38" cy="94" r="2" fill="white" />
 
                 {/* Right Wheel */}
-                <circle cx="78" cy="94" r="6" fill="#38BDF8" stroke="white" strokeWidth="2.5" />
+                <circle cx="78" cy="94" r="6" fill="#38BDF8" stroke="#0284C7" strokeWidth="2" />
                 <circle cx="78" cy="94" r="2" fill="white" />
 
                 {/* Floating Graduation Cap above the cart */}

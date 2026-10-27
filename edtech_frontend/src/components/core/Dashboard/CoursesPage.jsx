@@ -32,9 +32,10 @@ const CoursesPage = ({ defaultTab = "your-courses" }) => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
-  const [activeSubTab, setActiveSubTab] = useState("all"); // 'all' | 'in-progress' | 'completed' | 'buy'
+  const [activeSubTab, setActiveSubTab] = useState(defaultTab === "buy-courses" ? "buy" : "all"); // 'all' | 'in-progress' | 'completed' | 'buy'
   const [enrolledCourses, setEnrolledCourses] = useState([]);
   const [allCourses, setAllCourses] = useState([]);
+  const [allCoursesTotal, setAllCoursesTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [sortOption, setSortOption] = useState("recently-accessed");
@@ -53,6 +54,8 @@ const CoursesPage = ({ defaultTab = "your-courses" }) => {
       setActiveSubTab("all");
     }
   }, [defaultTab]);
+
+  const isBuyCoursesPage = defaultTab === "buy-courses";
 
   useEffect(() => {
     const fetchData = async () => {
@@ -95,10 +98,6 @@ const CoursesPage = ({ defaultTab = "your-courses" }) => {
             setEnrolledCourses(normalized);
           }
         }
-        const courses = await getAllCourses();
-        if (courses && Array.isArray(courses)) {
-          setAllCourses(courses);
-        }
       } catch (err) {
         console.error("Error fetching course data", err);
       } finally {
@@ -108,6 +107,33 @@ const CoursesPage = ({ defaultTab = "your-courses" }) => {
 
     fetchData();
   }, [token]);
+
+  useEffect(() => {
+    if (activeSubTab !== "buy") return;
+
+    let cancelled = false;
+    const fetchAvailableCourses = async () => {
+      setLoading(true);
+      try {
+        const response = await getAllCourses(currentPage, ITEMS_PER_PAGE, undefined, searchQuery.trim() || undefined);
+        if (cancelled) return;
+        const courses = Array.isArray(response) ? response : response?.data;
+        setAllCourses(Array.isArray(courses) ? courses : []);
+        setAllCoursesTotal(Number(response?.totalCourses) || (Array.isArray(courses) ? courses.length : 0));
+      } catch (err) {
+        if (!cancelled) {
+          console.error("Error fetching available courses", err);
+          setAllCourses([]);
+          setAllCoursesTotal(0);
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+
+    fetchAvailableCourses();
+    return () => { cancelled = true; };
+  }, [activeSubTab, currentPage, searchQuery]);
 
   // Derived Dynamic Dashboard Statistics (Real-time calculation)
   const totalEnrolled = enrolledCourses.length;
@@ -190,10 +216,17 @@ const CoursesPage = ({ defaultTab = "your-courses" }) => {
   };
 
   const displayedCourses = getDisplayedCourses();
-  const totalCourses = displayedCourses.length;
+  const totalCourses = activeSubTab === "buy" ? allCoursesTotal : displayedCourses.length;
   const totalPages = Math.ceil(totalCourses / ITEMS_PER_PAGE) || 1;
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-  const paginatedCourses = displayedCourses.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  const paginatedCourses = activeSubTab === "buy"
+    ? displayedCourses
+    : displayedCourses.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  const pageWindowStart = Math.max(1, Math.min(currentPage - 2, totalPages - 4));
+  const visiblePageNumbers = Array.from(
+    { length: Math.min(5, totalPages) },
+    (_, index) => pageWindowStart + index
+  );
 
   return (
     <div className="w-full space-y-6 text-gray-800 pb-10 font-sans">
@@ -201,9 +234,9 @@ const CoursesPage = ({ defaultTab = "your-courses" }) => {
       {/* 1. HEADER SECTION */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-extrabold text-[#0F172A] tracking-tight">Your Courses</h1>
+          <h1 className="text-2xl font-extrabold text-[#0F172A] tracking-tight">{isBuyCoursesPage || activeSubTab === "buy" ? "Buy Courses" : "Your Courses"}</h1>
           <p className="text-xs text-gray-500 mt-1 font-normal">
-            Continue learning and achieve your goals
+            {isBuyCoursesPage || activeSubTab === "buy" ? "Explore courses and find your next skill to master" : "Continue learning and achieve your goals"}
           </p>
         </div>
 
@@ -252,7 +285,7 @@ const CoursesPage = ({ defaultTab = "your-courses" }) => {
       </div>
 
       {/* 2. DYNAMIC STATISTICS CARDS ROW (4 Stats Matching Reference) */}
-      <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+      {!isBuyCoursesPage && <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         
         {/* Enrolled Courses */}
         <div className="bg-white border border-gray-200/80 rounded-2xl p-4 flex flex-col justify-between shadow-xs hover:border-indigo-200 hover:shadow-sm transition-all">
@@ -330,10 +363,10 @@ const CoursesPage = ({ defaultTab = "your-courses" }) => {
           </div>
         </div>
 
-      </div>
+      </div>}
 
       {/* 3. TABS & SEARCH BAR ROW */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 pt-1 border-b border-gray-200/80">
+      {!isBuyCoursesPage && <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 pt-1 border-b border-gray-200/80">
         {/* Navigation Tabs */}
         <div className="flex items-center gap-6 overflow-x-auto scrollbar-none">
           {[
@@ -367,7 +400,7 @@ const CoursesPage = ({ defaultTab = "your-courses" }) => {
             className="w-full sm:w-64 bg-white border border-gray-200/90 rounded-xl pl-9 pr-4 py-2 text-xs text-gray-800 placeholder-gray-400 focus:outline-none focus:border-[#3BA7F2] focus:ring-1 focus:ring-[#3BA7F2] transition-all shadow-2xs"
           />
         </div>
-      </div>
+      </div>}
 
       {/* 4. COURSE LISTING OR CLEAN EMPTY STATE */}
       {loading ? (
@@ -398,14 +431,14 @@ const CoursesPage = ({ defaultTab = "your-courses" }) => {
 
           {/* PAGINATION CONTROLS */}
           {totalPages > 1 && (
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-6 mt-4 border-t border-gray-200/80">
-              <span className="text-xs text-gray-500 font-medium">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 pt-6 mt-4 border-t border-gray-200/80">
+              <span className="text-xs text-gray-500 font-medium text-center md:text-left">
                 Showing <span className="font-bold text-gray-800">{startIndex + 1}</span> to{" "}
                 <span className="font-bold text-gray-800">{Math.min(startIndex + ITEMS_PER_PAGE, totalCourses)}</span> of{" "}
                 <span className="font-bold text-gray-800">{totalCourses}</span> courses
               </span>
 
-              <div className="flex items-center gap-1.5">
+              <div className="flex max-w-full items-center justify-center gap-1.5 overflow-x-auto pb-1">
                 {/* Previous Button */}
                 <button
                   disabled={currentPage === 1}
@@ -420,9 +453,9 @@ const CoursesPage = ({ defaultTab = "your-courses" }) => {
                 </button>
 
                 {/* Page Number Buttons */}
-                <div className="flex items-center gap-1">
-                  {Array.from({ length: totalPages }).map((_, idx) => {
-                    const pageNum = idx + 1;
+                <div className="flex shrink-0 items-center gap-1">
+                  {pageWindowStart > 1 && <span className="px-1 text-xs text-gray-400">…</span>}
+                  {visiblePageNumbers.map((pageNum) => {
                     return (
                       <button
                         key={pageNum}
@@ -440,6 +473,9 @@ const CoursesPage = ({ defaultTab = "your-courses" }) => {
                       </button>
                     );
                   })}
+                  {pageWindowStart + visiblePageNumbers.length - 1 < totalPages && (
+                    <span className="px-1 text-xs text-gray-400">…</span>
+                  )}
                 </div>
 
                 {/* Next Button */}

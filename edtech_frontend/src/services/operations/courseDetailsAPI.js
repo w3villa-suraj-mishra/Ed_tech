@@ -140,7 +140,7 @@ export const addCourseDetails = async (data, token) => {
       throw new Error("Could Not Add Course Details")
     }
     toast.success("Course Details Added Successfully")
-    result = response?.data?.data
+    result = Array.isArray(response?.data?.data) ? response.data.data : []
   } catch (error) {
     console.log("CREATE COURSE API ERROR............", error)
     const errorMessage = error.response?.data?.message || error.message
@@ -164,7 +164,7 @@ export const editCourseDetails = async (data, token) => {
       throw new Error("Could Not Update Course Details")
     }
     toast.success("Course Details Updated Successfully")
-    result = response?.data?.data
+    result = Array.isArray(response?.data?.data) ? response.data.data : []
   } catch (error) {
     console.log("EDIT COURSE API ERROR............", error)
     const errorMessage = error.response?.data?.message || error.message
@@ -312,9 +312,8 @@ export const deleteSubSection = async (data, token) => {
 }
 
 // fetching all courses under a specific instructor
-export const fetchInstructorCourses = async (token) => {
+export const fetchInstructorCourses = async (token, params = {}) => {
   let result = []
-  const toastId = toast.loading("Loading...")
   try {
     const response = await apiConnector(
       "GET",
@@ -322,18 +321,19 @@ export const fetchInstructorCourses = async (token) => {
       null,
       {
         Authorization: `Bearer ${token}`,
-      }
+      },
+      params
     )
-    console.log("INSTRUCTOR COURSES API RESPONSE............", response)
     if (!response?.data?.success) {
       throw new Error("Could Not Fetch Instructor Courses")
     }
     result = response?.data?.data
+    result.currentPage = response.data.currentPage || Number(params.page) || 1
+    result.hasMore = Boolean(response.data.hasMore)
   } catch (error) {
-    console.log("INSTRUCTOR COURSES API ERROR............", error)
-    toast.error(error.message)
+    console.error("INSTRUCTOR COURSES API ERROR:", error)
+    toast.error(error.response?.data?.message || "Could not fetch instructor courses")
   }
-  toast.dismiss(toastId)
   return result
 }
 

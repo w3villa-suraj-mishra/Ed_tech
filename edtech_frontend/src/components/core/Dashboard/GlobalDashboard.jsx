@@ -131,19 +131,19 @@ const GlobalDashboard = () => {
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
         
         {/* Card 1: Enrolled Courses */}
-        <div className="group relative overflow-hidden bg-white border border-slate-200/80 rounded-2xl p-4 flex flex-col justify-between shadow-[0_5px_18px_rgba(28,44,72,0.045)] hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-[0_12px_28px_rgba(37,99,235,0.09)] transition-all">
+        <div className="group relative overflow-hidden bg-gradient-to-br from-white via-white to-slate-50/80 border border-slate-200/80 rounded-2xl p-4 flex flex-col justify-between shadow-[0_8px_24px_rgba(15,23,42,0.055)] hover:-translate-y-1 hover:border-blue-200 hover:shadow-[0_16px_34px_rgba(37,99,235,0.12)] transition-all duration-300">
           <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-blue-500 to-cyan-400" />
           <div className="flex items-center justify-between">
-            <div className="w-8 h-8 rounded-xl bg-[#E0F2FE] text-[#0284C7] flex items-center justify-center text-sm">
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-sky-100 to-blue-50 text-[#0284C7] ring-1 ring-inset ring-sky-200/70 flex items-center justify-center text-sm shadow-sm">
               <FiBookOpen />
             </div>
             <span className="text-[10px] text-[#16A34A] font-bold bg-[#DCFCE7] px-2 py-0.5 rounded-full">
               Live
             </span>
           </div>
-          <div className="mt-2.5">
-            <span className="text-2xl font-extrabold text-[#0F172A] block leading-tight">{totalEnrolled}</span>
-            <span className="text-xs text-gray-500 font-medium block mt-0.5">Enrolled Courses</span>
+          <div className="mt-4">
+            <span className="text-3xl font-black tracking-tight text-slate-900 block leading-none">{totalEnrolled}</span>
+            <span className="text-xs text-slate-500 font-semibold block mt-2">Enrolled Courses</span>
           </div>
           <div className="mt-2 text-[10px] text-[#16A34A] font-semibold flex items-center gap-1">
             <span>↑ {totalEnrolled > 0 ? "100%" : "0%"} vs last month</span>
@@ -151,19 +151,19 @@ const GlobalDashboard = () => {
         </div>
 
         {/* Card 2: Hours Learned */}
-        <div className="group relative overflow-hidden bg-white border border-slate-200/80 rounded-2xl p-4 flex flex-col justify-between shadow-[0_5px_18px_rgba(28,44,72,0.045)] hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-[0_12px_28px_rgba(37,99,235,0.09)] transition-all">
+        <div className="group relative overflow-hidden bg-gradient-to-br from-white via-white to-violet-50/60 border border-slate-200/80 rounded-2xl p-4 flex flex-col justify-between shadow-[0_8px_24px_rgba(15,23,42,0.055)] hover:-translate-y-1 hover:border-violet-200 hover:shadow-[0_16px_34px_rgba(124,58,237,0.12)] transition-all duration-300">
           <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-violet-500 to-blue-400" />
           <div className="flex items-center justify-between">
-            <div className="w-8 h-8 rounded-xl bg-[#13AA92]/10 text-[#9333EA] flex items-center justify-center text-sm">
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-violet-100 to-fuchsia-50 text-violet-600 ring-1 ring-inset ring-violet-200/70 flex items-center justify-center text-sm shadow-sm">
               <FiClock />
             </div>
             <span className="text-[10px] text-[#13AA92] font-bold bg-[#13AA92]/10 px-2 py-0.5 rounded-full">
               Est.
             </span>
           </div>
-          <div className="mt-2.5">
-            <span className="text-2xl font-extrabold text-[#0F172A] block leading-tight">{totalHoursLearned}</span>
-            <span className="text-xs text-gray-500 font-medium block mt-0.5">Hours Learned</span>
+          <div className="mt-4">
+            <span className="text-3xl font-black tracking-tight text-slate-900 block leading-none">{totalHoursLearned}</span>
+            <span className="text-xs text-slate-500 font-semibold block mt-2">Hours Learned</span>
           </div>
           <div className="mt-2 text-[10px] text-[#16A34A] font-semibold flex items-center gap-1">
             <span>↑ {totalCompletedLessons > 0 ? "35%" : "0%"} vs last month</span>
@@ -171,19 +171,19 @@ const GlobalDashboard = () => {
         </div>
 
         {/* Card 3: Lessons Completed */}
-        <div className="group relative overflow-hidden bg-white border border-slate-200/80 rounded-2xl p-4 flex flex-col justify-between shadow-[0_5px_18px_rgba(28,44,72,0.045)] hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-[0_12px_28px_rgba(37,99,235,0.09)] transition-all">
+        <div className="group relative overflow-hidden bg-gradient-to-br from-white via-white to-emerald-50/60 border border-slate-200/80 rounded-2xl p-4 flex flex-col justify-between shadow-[0_8px_24px_rgba(15,23,42,0.055)] hover:-translate-y-1 hover:border-emerald-200 hover:shadow-[0_16px_34px_rgba(16,185,129,0.12)] transition-all duration-300">
           <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-emerald-400 to-teal-400" />
           <div className="flex items-center justify-between">
-            <div className="w-8 h-8 rounded-xl bg-[#DCFCE7] text-[#16A34A] flex items-center justify-center text-sm">
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-100 to-teal-50 text-emerald-600 ring-1 ring-inset ring-emerald-200/70 flex items-center justify-center text-sm shadow-sm">
               <FiCheckCircle />
             </div>
             <span className="text-[10px] text-[#16A34A] font-bold bg-[#DCFCE7] px-2 py-0.5 rounded-full">
               Total
             </span>
           </div>
-          <div className="mt-2.5">
-            <span className="text-2xl font-extrabold text-[#0F172A] block leading-tight">{totalCompletedLessons}</span>
-            <span className="text-xs text-gray-500 font-medium block mt-0.5">Lessons Completed</span>
+          <div className="mt-4">
+            <span className="text-3xl font-black tracking-tight text-slate-900 block leading-none">{totalCompletedLessons}</span>
+            <span className="text-xs text-slate-500 font-semibold block mt-2">Lessons Completed</span>
           </div>
           <div className="mt-2 text-[10px] text-[#16A34A] font-semibold flex items-center gap-1">
             <span>↑ {totalCompletedLessons > 0 ? "40%" : "0%"} vs last month</span>
@@ -191,19 +191,19 @@ const GlobalDashboard = () => {
         </div>
 
         {/* Card 4: Day Streak */}
-        <div className="group relative overflow-hidden bg-white border border-slate-200/80 rounded-2xl p-4 flex flex-col justify-between shadow-[0_5px_18px_rgba(28,44,72,0.045)] hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-[0_12px_28px_rgba(37,99,235,0.09)] transition-all">
+        <div className="group relative overflow-hidden bg-gradient-to-br from-white via-white to-amber-50/70 border border-slate-200/80 rounded-2xl p-4 flex flex-col justify-between shadow-[0_8px_24px_rgba(15,23,42,0.055)] hover:-translate-y-1 hover:border-amber-200 hover:shadow-[0_16px_34px_rgba(245,158,11,0.13)] transition-all duration-300">
           <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-amber-400 to-orange-400" />
           <div className="flex items-center justify-between">
-            <div className="w-8 h-8 rounded-xl bg-[#FEF3C7] text-[#D97706] flex items-center justify-center text-sm">
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-amber-100 to-orange-50 text-amber-600 ring-1 ring-inset ring-amber-200/70 flex items-center justify-center text-sm shadow-sm">
               <FaFire />
             </div>
             <span className="text-[10px] text-[#D97706] font-bold bg-[#FEF3C7] px-2 py-0.5 rounded-full">
               Active
             </span>
           </div>
-          <div className="mt-2.5">
-            <span className="text-2xl font-extrabold text-[#0F172A] block leading-tight">{activeStreakDays}</span>
-            <span className="text-xs text-gray-500 font-medium block mt-0.5">Day Streak</span>
+          <div className="mt-4">
+            <span className="text-3xl font-black tracking-tight text-slate-900 block leading-none">{activeStreakDays}</span>
+            <span className="text-xs text-slate-500 font-semibold block mt-2">Day Streak</span>
           </div>
           <div className="mt-2 text-[10px] text-[#D97706] font-semibold flex items-center gap-1">
             <span>↑ Keep it up! 🔥</span>
@@ -211,19 +211,19 @@ const GlobalDashboard = () => {
         </div>
 
         {/* Card 5: Certificates Earned */}
-        <div className="group relative col-span-2 sm:col-span-1 overflow-hidden bg-white border border-slate-200/80 rounded-2xl p-4 flex flex-col justify-between shadow-[0_5px_18px_rgba(28,44,72,0.045)] hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-[0_12px_28px_rgba(37,99,235,0.09)] transition-all">
+        <div className="group relative col-span-2 sm:col-span-1 overflow-hidden bg-gradient-to-br from-white via-white to-indigo-50/70 border border-slate-200/80 rounded-2xl p-4 flex flex-col justify-between shadow-[0_8px_24px_rgba(15,23,42,0.055)] hover:-translate-y-1 hover:border-indigo-200 hover:shadow-[0_16px_34px_rgba(79,70,229,0.12)] transition-all duration-300">
           <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-sky-400 to-indigo-400" />
           <div className="flex items-center justify-between">
-            <div className="w-8 h-8 rounded-xl bg-[#DBEAFE] text-[#3BA7F2] flex items-center justify-center text-sm">
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-100 to-blue-50 text-indigo-600 ring-1 ring-inset ring-indigo-200/70 flex items-center justify-center text-sm shadow-sm">
               <AiOutlineTrophy />
             </div>
             <span className="text-[10px] text-[#3BA7F2] font-bold bg-[#DBEAFE] px-2 py-0.5 rounded-full">
               Earned
             </span>
           </div>
-          <div className="mt-2.5">
-            <span className="text-2xl font-extrabold text-[#0F172A] block leading-tight">{certificatesEarned}</span>
-            <span className="text-xs text-gray-500 font-medium block mt-0.5">Certificates Earned</span>
+          <div className="mt-4">
+            <span className="text-3xl font-black tracking-tight text-slate-900 block leading-none">{certificatesEarned}</span>
+            <span className="text-xs text-slate-500 font-semibold block mt-2">Certificates Earned</span>
           </div>
           <div className="mt-2 text-[10px] text-[#16A34A] font-semibold flex items-center gap-1">
             <span>↑ {certificatesEarned > 0 ? "100%" : "0%"} vs last month</span>

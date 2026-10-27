@@ -4,7 +4,8 @@ import AdminModal from '../../components/admin/AdminModal';
 import DeleteConfirm from '../../components/admin/DeleteConfirm';
 import { AdminProtectedRoute, StatusBadge, Pagination, AdminInput, AdminSelect, AdminTextarea, TableSkeleton, EmptyState } from '../../components/admin/AdminUI';
 import {
-  getCourses, getCourse, updateCourse, updateCourseStatus, updateCoursePricing, deleteCourse, getCategories,
+  getCourses, getCourse, updateCourse, updateCourseStatus, updateCoursePricing, deleteCourse,
+  unpublishAllCourses, deleteAllCourses, getCategories,
   createSection, updateSection, deleteSection,
   createSubSection, updateSubSection, deleteSubSection
 } from '../../services/admin/adminAPI';
@@ -22,6 +23,11 @@ function CoursesInner() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch]   = useState('');
   const [searchInput, setSearchInput] = useState('');
+  const [instructorSearch, setInstructorSearch] = useState('');
+  const [instructorSearchInput, setInstructorSearchInput] = useState('');
+  const [instructorEmailSearch, setInstructorEmailSearch] = useState('');
+  const [instructorEmailSearchInput, setInstructorEmailSearchInput] = useState('');
+  const [selectedCourseIds, setSelectedCourseIds] = useState([]);
   const [statusFilter, setStatusFilter] = useState('');
   const [categories, setCategories] = useState([]);
 
@@ -48,17 +54,25 @@ function CoursesInner() {
   const [form, setForm]             = useState({});
   const [saving, setSaving]         = useState(false);
   const [deleting, setDeleting]     = useState(false);
+  const [bulkActionLoading, setBulkActionLoading] = useState(false);
+  const [pendingAllAction, setPendingAllAction] = useState(null);
+  const [allActionLoading, setAllActionLoading] = useState(false);
   const [thumbnail, setThumbnail]   = useState(null);
 
   const isSA = JSON.parse(localStorage.getItem('adminUser') || '{}').accountType === 'Superadmin';
 
   const load = useCallback(() => {
     setLoading(true);
-    getCourses({ page, limit: 15, search, status: statusFilter })
-      .then(({ data }) => { setCourses(data.data.courses); setTotal(data.data.total); setTP(data.data.totalPages); })
+    getCourses({ page, limit: 15, search, instructorSearch, instructorEmailSearch, status: statusFilter })
+      .then(({ data }) => {
+        setCourses(data.data.courses);
+        setTotal(data.data.total);
+        setTP(data.data.totalPages);
+        setSelectedCourseIds([]);
+      })
       .catch(() => toast.error('Failed to load courses'))
       .finally(() => setLoading(false));
-  }, [page, search, statusFilter]);
+  }, [page, search, instructorSearch, instructorEmailSearch, statusFilter]);
 
   useEffect(() => { load(); }, [load]);
   useEffect(() => { getCategories().then(({ data }) => setCategories(data.data)).catch(() => {}); }, []);
@@ -66,6 +80,14 @@ function CoursesInner() {
     const t = setTimeout(() => { setSearch(searchInput); setPage(1); }, 400);
     return () => clearTimeout(t);
   }, [searchInput]);
+  useEffect(() => {
+    const t = setTimeout(() => { setInstructorSearch(instructorSearchInput.trim()); setPage(1); }, 400);
+    return () => clearTimeout(t);
+  }, [instructorSearchInput]);
+  useEffect(() => {
+    const t = setTimeout(() => { setInstructorEmailSearch(instructorEmailSearchInput.trim()); setPage(1); }, 400);
+    return () => clearTimeout(t);
+  }, [instructorEmailSearchInput]);
 
   const loadCourseFull = (courseId) => {
     setLoadingDetails(true);
@@ -130,6 +152,70 @@ function CoursesInner() {
       toast.success(`Course ${next.toLowerCase()}`);
       load();
     } catch { toast.error('Failed to update status'); }
+  };
+
+  const toggleCourseSelection = (courseId) => {
+    const id = String(courseId);
+    setSelectedCourseIds((current) => current.includes(id)
+      ? current.filter((selectedId) => selectedId !== id)
+      : [...current, id]);
+  };
+
+  const togglePageSelection = (checked) => {
+    setSelectedCourseIds(checked ? courses.map((course) => String(course.id)) : []);
+  };
+
+  const handleBulkUnpublish = async () => {
+    if (selectedCourseIds.length === 0 || bulkActionLoading) return;
+    setBulkActionLoading(true);
+    try {
+      const results = await Promise.allSettled(selectedCourseIds.map((id) => updateCourseStatus(id, 'Draft')));
+      const updatedCount = results.filter((result) => result.status === 'fulfilled').length;
+      if (updatedCount) toast.success(`${updatedCount} course${updatedCount === 1 ? '' : 's'} unpublished`);
+      if (updatedCount !== results.length) toast.error(`${results.length - updatedCount} course${results.length - updatedCount === 1 ? '' : 's'} could not be unpublished`);
+      await load();
+    } finally {
+      setBulkActionLoading(false);
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (!isSA || selectedCourseIds.length === 0 || bulkActionLoading) return;
+    const count = selectedCourseIds.length;
+    if (!window.confirm(`Delete ${count} selected course${count === 1 ? '' : 's'}? This cannot be undone.`)) return;
+    setBulkActionLoading(true);
+    try {
+      const results = await Promise.allSettled(selectedCourseIds.map((id) => deleteCourse(id)));
+      const deletedCount = results.filter((result) => result.status === 'fulfilled').length;
+      if (deletedCount) toast.success(`${deletedCount} course${deletedCount === 1 ? '' : 's'} deleted`);
+      if (deletedCount !== results.length) toast.error(`${results.length - deletedCount} course${results.length - deletedCount === 1 ? '' : 's'} could not be deleted`);
+      await load();
+    } finally {
+      setBulkActionLoading(false);
+    }
+  };
+
+  const confirmAllCoursesAction = async () => {
+    if (!pendingAllAction || allActionLoading) return;
+    if (pendingAllAction === 'delete' && !isSA) return;
+
+    setAllActionLoading(true);
+    try {
+      const { data } = pendingAllAction === 'unpublish'
+        ? await unpublishAllCourses()
+        : await deleteAllCourses();
+      toast.success(data.message || (pendingAllAction === 'unpublish'
+        ? 'All published courses unpublished.'
+        : 'All courses deleted.'));
+      setPendingAllAction(null);
+      setSelectedCourseIds([]);
+      if (pendingAllAction === 'delete') setPage(1);
+      load();
+    } catch (err) {
+      toast.error(err.response?.data?.message || `Failed to ${pendingAllAction} all courses.`);
+    } finally {
+      setAllActionLoading(false);
+    }
   };
 
   const handleDelete = async () => {
@@ -219,11 +305,27 @@ function CoursesInner() {
           <h1 className="text-xl font-bold text-gray-800">Courses</h1>
           <p className="text-sm text-gray-500 mt-0.5">{total} total courses</p>
         </div>
+        <div className="flex flex-wrap items-center justify-end gap-2">
+          <button type="button" onClick={() => setPendingAllAction('unpublish')}
+            className="rounded border border-amber-300 bg-white px-3 py-2 text-xs font-bold text-amber-800 transition hover:bg-amber-50">
+            Unpublish all courses
+          </button>
+          {isSA && <button type="button" onClick={() => setPendingAllAction('delete')}
+            className="rounded border border-red-300 bg-white px-3 py-2 text-xs font-bold text-red-700 transition hover:bg-red-50">
+            Delete all courses
+          </button>}
+        </div>
       </div>
 
       {/* Filters */}
       <div className="bg-white border border-gray-200 rounded-sm shadow-sm p-4 mb-6 flex flex-wrap gap-4">
-        <input value={searchInput} onChange={e => setSearchInput(e.target.value)} placeholder="Search courses…"
+        <input value={searchInput} onChange={e => setSearchInput(e.target.value)} placeholder="Search course name…"
+          className="flex-1 min-w-[200px] bg-white border border-gray-300 rounded px-4 py-2 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:border-purple-600" />
+        <input value={instructorSearchInput} onChange={e => setInstructorSearchInput(e.target.value)} placeholder="Filter by instructor name…"
+          aria-label="Filter courses by instructor name"
+          className="flex-1 min-w-[200px] bg-white border border-gray-300 rounded px-4 py-2 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:border-purple-600" />
+        <input value={instructorEmailSearchInput} onChange={e => setInstructorEmailSearchInput(e.target.value)} placeholder="Filter by instructor email…"
+          aria-label="Filter courses by instructor email"
           className="flex-1 min-w-[200px] bg-white border border-gray-300 rounded px-4 py-2 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:border-purple-600" />
         <select value={statusFilter} onChange={e => { setStatusFilter(e.target.value); setPage(1); }}
           className="w-40 bg-white border border-gray-300 rounded px-3 py-2 text-sm text-gray-800 focus:outline-none focus:border-purple-600">
@@ -232,6 +334,21 @@ function CoursesInner() {
           <option value="Draft">Draft</option>
         </select>
       </div>
+
+      {selectedCourseIds.length > 0 && (
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded border border-purple-200 bg-purple-50 px-4 py-3">
+          <span className="text-sm font-semibold text-purple-900">{selectedCourseIds.length} course{selectedCourseIds.length === 1 ? '' : 's'} selected</span>
+          <div className="flex items-center gap-2">
+            <button type="button" disabled={bulkActionLoading} onClick={handleBulkUnpublish} className="rounded border border-amber-300 bg-white px-3 py-2 text-xs font-bold text-amber-800 transition hover:bg-amber-50 disabled:cursor-wait disabled:opacity-60">
+              {bulkActionLoading ? 'Working…' : 'Unpublish selected'}
+            </button>
+            {isSA && <button type="button" disabled={bulkActionLoading} onClick={handleBulkDelete} className="rounded border border-red-300 bg-white px-3 py-2 text-xs font-bold text-red-700 transition hover:bg-red-50 disabled:cursor-wait disabled:opacity-60">
+              {bulkActionLoading ? 'Working…' : 'Delete selected'}
+            </button>}
+            <button type="button" onClick={() => setSelectedCourseIds([])} className="px-2 py-2 text-xs font-semibold text-gray-600 hover:text-gray-900">Clear</button>
+          </div>
+        </div>
+      )}
 
       {/* Table */}
       <div className="bg-white border border-gray-200 rounded-sm shadow-sm overflow-hidden mb-8">
@@ -243,6 +360,15 @@ function CoursesInner() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-200 text-gray-600 text-xs font-bold uppercase tracking-wide bg-gray-50">
+                <th className="w-10 px-3 py-3 text-center">
+                  <input
+                    type="checkbox"
+                    aria-label="Select all courses on this page"
+                    checked={courses.length > 0 && courses.every((course) => selectedCourseIds.includes(String(course.id)))}
+                    onChange={(event) => togglePageSelection(event.target.checked)}
+                    className="h-4 w-4 cursor-pointer accent-purple-700"
+                  />
+                </th>
                 <th className="text-left px-5 py-3">Course</th>
                 <th className="text-left px-5 py-3">Instructor</th>
                 <th className="text-left px-5 py-3">Category</th>
@@ -253,18 +379,34 @@ function CoursesInner() {
             </thead>
             <tbody className="divide-y divide-gray-100">
               {loading ? (
-                <tr><td colSpan={6} className="px-5 py-4"><TableSkeleton rows={8} cols={6} /></td></tr>
+                <tr><td colSpan={7} className="px-5 py-4"><TableSkeleton rows={8} cols={6} /></td></tr>
               ) : courses.length === 0 ? (
-                <tr><td colSpan={6}><EmptyState message="No courses found." /></td></tr>
+                <tr><td colSpan={7}><EmptyState message="No courses found." /></td></tr>
               ) : courses.map(c => (
                 <tr key={c.id} className="hover:bg-gray-50 transition-colors">
+                  <td className="px-3 py-3.5 text-center">
+                    <input
+                      type="checkbox"
+                      aria-label={`Select ${c.courseName}`}
+                      checked={selectedCourseIds.includes(String(c.id))}
+                      onChange={() => toggleCourseSelection(c.id)}
+                      className="h-4 w-4 cursor-pointer accent-purple-700"
+                    />
+                  </td>
                   <td className="px-5 py-3.5">
                     <div className="flex items-center gap-3">
                       {c.thumbnail && <img src={c.thumbnail} alt="" className="w-10 h-10 rounded-lg object-cover flex-shrink-0" />}
                       <span className="font-medium text-gray-800 max-w-[180px] truncate">{c.courseName}</span>
                     </div>
                   </td>
-                  <td className="px-5 py-3.5 text-gray-500">{c.instructor ? `${c.instructor.firstName} ${c.instructor.lastName}` : '—'}</td>
+                  <td className="px-5 py-3.5 text-gray-500">
+                    {c.instructor ? (
+                      <div className="min-w-0">
+                        <p className="font-medium text-gray-800">{[c.instructor.firstName, c.instructor.lastName].filter(Boolean).join(' ') || '—'}</p>
+                        {c.instructor.email && <a href={`mailto:${c.instructor.email}`} className="block max-w-[220px] truncate text-xs text-purple-700 hover:underline">{c.instructor.email}</a>}
+                      </div>
+                    ) : '—'}
+                  </td>
                   <td className="px-5 py-3.5 text-gray-500">{c.Category?.name || c.category?.name || '—'}</td>
                   <td className="px-5 py-3.5 text-gray-500">
                     {c?.pricing?.isOfferActive || (c?.originalPrice && Number(c?.originalPrice) > Number(c?.price)) ? (
@@ -457,6 +599,31 @@ function CoursesInner() {
       <DeleteConfirm isOpen={!!delModal} title="Delete Course?" message="This will permanently delete the course, all its sections, subsections, and enrollments." onClose={() => setDelModal(null)} onConfirm={handleDelete} loading={deleting} />
       <DeleteConfirm isOpen={!!delSecId} title="Delete Section?" message="This will delete this section and all its lectures." onClose={() => setDelSecId(null)} onConfirm={handleDeleteSection} />
       <DeleteConfirm isOpen={!!delSubId} title="Delete Lecture?" message="This will delete this video lecture." onClose={() => setDelSubId(null)} onConfirm={handleDeleteSubSection} />
+
+      <AdminModal
+        isOpen={!!pendingAllAction}
+        title={pendingAllAction === 'delete' ? 'Delete all courses?' : 'Unpublish all courses?'}
+        onClose={() => { if (!allActionLoading) setPendingAllAction(null); }}
+        size="sm"
+      >
+        <div className="space-y-4">
+          <p className="text-sm leading-6 text-gray-600">
+            {pendingAllAction === 'delete'
+              ? 'This permanently deletes every course on the platform, including courses outside the current filters and pages, along with their course content and enrollments. This cannot be undone.'
+              : 'This changes every currently published course on the platform to Draft, including courses outside the current filters and pages. Draft courses are not affected.'}
+          </p>
+          <div className="flex justify-end gap-2">
+            <button type="button" disabled={allActionLoading} onClick={() => setPendingAllAction(null)}
+              className="rounded border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-60">
+              Cancel
+            </button>
+            <button type="button" disabled={allActionLoading} onClick={confirmAllCoursesAction}
+              className={`rounded px-4 py-2 text-sm font-bold text-white disabled:cursor-wait disabled:opacity-60 ${pendingAllAction === 'delete' ? 'bg-red-600 hover:bg-red-700' : 'bg-amber-600 hover:bg-amber-700'}`}>
+              {allActionLoading ? 'Working…' : pendingAllAction === 'delete' ? 'Delete all courses' : 'Unpublish all courses'}
+            </button>
+          </div>
+        </div>
+      </AdminModal>
     </AdminLayout>
   );
 }

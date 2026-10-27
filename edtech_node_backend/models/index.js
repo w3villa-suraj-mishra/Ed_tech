@@ -21,6 +21,11 @@ const NotificationPreference = require('./NotificationPreference');
 const Article = require('./Article');
 const Announcement = require('./Announcement');
 const AnnouncementDismissal = require('./AnnouncementDismissal');
+const Assignment = require('./Assignment');
+const AssignmentQuestion = require('./AssignmentQuestion');
+const AssignmentResource = require('./AssignmentResource');
+const AssignmentSubmission = require('./AssignmentSubmission');
+const AssignmentSubmissionFile = require('./AssignmentSubmissionFile');
 
 // Define associations
 
@@ -189,6 +194,29 @@ OfferRedemption.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 Course.hasMany(OfferRedemption, { foreignKey: 'courseId', as: 'offerRedemptions', onDelete: 'CASCADE' });
 OfferRedemption.belongsTo(Course, { foreignKey: 'courseId', as: 'course' });
 
+// Assignment associations
+Course.hasMany(Assignment, { foreignKey: 'courseId', as: 'assignments', onDelete: 'CASCADE' });
+Assignment.belongsTo(Course, { foreignKey: 'courseId', as: 'course' });
+
+User.hasMany(Assignment, { foreignKey: 'instructorId', as: 'createdAssignments', onDelete: 'CASCADE' });
+Assignment.belongsTo(User, { foreignKey: 'instructorId', as: 'instructor' });
+
+Assignment.hasMany(AssignmentQuestion, { foreignKey: 'assignmentId', as: 'questions', onDelete: 'CASCADE' });
+AssignmentQuestion.belongsTo(Assignment, { foreignKey: 'assignmentId', as: 'assignment' });
+
+Assignment.hasMany(AssignmentResource, { foreignKey: 'assignmentId', as: 'resources', onDelete: 'CASCADE' });
+AssignmentResource.belongsTo(Assignment, { foreignKey: 'assignmentId', as: 'assignment' });
+
+Assignment.hasMany(AssignmentSubmission, { foreignKey: 'assignmentId', as: 'submissions', onDelete: 'CASCADE' });
+AssignmentSubmission.belongsTo(Assignment, { foreignKey: 'assignmentId', as: 'assignment' });
+
+AssignmentSubmission.belongsTo(User, { foreignKey: 'userId', as: 'student' });
+AssignmentSubmission.belongsTo(User, { foreignKey: 'verifiedBy', as: 'verifier' });
+User.hasMany(AssignmentSubmission, { foreignKey: 'userId', as: 'assignmentSubmissions', onDelete: 'CASCADE' });
+
+AssignmentSubmission.hasMany(AssignmentSubmissionFile, { foreignKey: 'submissionId', as: 'files', onDelete: 'CASCADE' });
+AssignmentSubmissionFile.belongsTo(AssignmentSubmission, { foreignKey: 'submissionId', as: 'submission' });
+
 module.exports = {
   User,
   Profile,
@@ -222,5 +250,10 @@ module.exports = {
   AnnouncementDismissal,
   Offer,
   OfferCourse,
-  OfferRedemption
+  OfferRedemption,
+  Assignment,
+  AssignmentQuestion,
+  AssignmentResource,
+  AssignmentSubmission,
+  AssignmentSubmissionFile
 };

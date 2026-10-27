@@ -9,6 +9,7 @@ export const endpoints = {
   LOGIN_API: BASE_URL + "/login",
   LOGOUT_API: BASE_URL + "/logout",
   RESETPASSTOKEN_API: BASE_URL + "/auth/reset-password-token",
+  VERIFY_RESETPASSTOKEN_API: BASE_URL + "/auth/reset-password-token",
   RESETPASSWORD_API: BASE_URL + "/auth/reset-password",
 }
 
@@ -129,6 +130,20 @@ export const practiceEndpoints = {
   INSTRUCTOR_GET_QUESTIONS: BASE_URL + "/instructor/practice/questions",
   INSTRUCTOR_TOGGLE_TEST_STATUS: BASE_URL + "/instructor/practice/tests/",
   INSTRUCTOR_GET_TEST_ATTEMPTS: BASE_URL + "/instructor/practice/tests/",
+}
+
+// ASSIGNMENT ENDPOINTS
+export const assignmentEndpoints = {
+  CREATE_ASSIGNMENT_API: BASE_URL + "/assignments/create",
+  INSTRUCTOR_ASSIGNMENTS_API: BASE_URL + "/assignments/instructor",
+  STUDENT_ASSIGNMENT_COURSES_API: BASE_URL + "/assignments/student-courses",
+  COURSE_ASSIGNMENTS_API: BASE_URL + "/assignments/course",
+  ASSIGNMENT_DETAILS_API: BASE_URL + "/assignments",
+  ASSIGNMENT_QUESTIONS_API: BASE_URL + "/assignments",
+  ASSIGNMENT_RESOURCES_API: BASE_URL + "/assignments",
+  ASSIGNMENT_SUBMISSIONS_API: BASE_URL + "/assignments",
+  SUBMIT_ASSIGNMENT_API: BASE_URL + "/assignments",
+  VERIFY_SUBMISSION_API: BASE_URL + "/assignments/submissions",
 }
 
 // ANNOUNCEMENT ENDPOINTS

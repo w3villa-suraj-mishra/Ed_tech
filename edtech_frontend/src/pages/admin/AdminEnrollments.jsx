@@ -82,6 +82,7 @@ function EnrollmentsInner() {
                     <td className="px-5 py-3.5 text-gray-500">
                       <p className="font-medium text-gray-800">{(e.course || e.Course)?.courseName || '—'}</p>
                       <p className="text-xs text-gray-500">Instructor: {instructor ? `${instructor.firstName || ''} ${instructor.lastName || ''}` : '—'}</p>
+                      {instructor?.email && <p className="text-xs text-gray-500">{instructor.email}</p>}
                     </td>
                     <td className="px-5 py-3.5">
                       <div className="flex flex-col gap-1 items-start">

@@ -395,14 +395,20 @@ const deleteCategory = async (req, res) => {
 
 const getCourses = async (req, res) => {
   try {
-    const { page = 1, limit = 15, search = '', status = '', categoryId = '' } = req.query;
+    const { page = 1, limit = 15, search = '', instructorSearch = '', instructorEmailSearch = '', status = '', categoryId = '' } = req.query;
     const offset = (parseInt(page) - 1) * parseInt(limit);
     const where = {};
     if (search) where.courseName = { [Op.iLike]: `%${search}%` };
     if (status) where.status = status;
     if (categoryId) where.categoryId = categoryId;
 
-    const { count, rows } = await adminQuery.findCoursesPaginatedQuery({ where, limit: parseInt(limit), offset });
+    const { count, rows } = await adminQuery.findCoursesPaginatedQuery({
+      where,
+      instructorSearch: String(instructorSearch).trim(),
+      instructorEmailSearch: String(instructorEmailSearch).trim(),
+      limit: parseInt(limit),
+      offset
+    });
     const formattedCourses = rows.map(c => {
       const courseObj = typeof c.toJSON === 'function' ? c.toJSON() : c;
       courseObj.pricing = calculateCoursePrice(courseObj);
@@ -484,6 +490,34 @@ const deleteCourseAdmin = async (req, res) => {
     return res.json({ success: true, message: 'Course deleted.' });
   } catch (e) {
     return res.status(500).json({ success: false, message: e.message });
+  }
+};
+
+const unpublishAllCoursesAdmin = async (req, res) => {
+  try {
+    const updatedCount = await adminQuery.unpublishAllCoursesQuery();
+    return res.json({
+      success: true,
+      message: `${updatedCount} published course${updatedCount === 1 ? '' : 's'} unpublished.`,
+      data: { updatedCount }
+    });
+  } catch (e) {
+    logger.error('ADMIN UNPUBLISH ALL COURSES:', e.message);
+    return res.status(500).json({ success: false, message: e.message });
+  }
+};
+
+const deleteAllCoursesAdmin = async (req, res) => {
+  try {
+    const deletedCount = await adminQuery.deleteAllCoursesQuery();
+    return res.json({
+      success: true,
+      message: `${deletedCount} course${deletedCount === 1 ? '' : 's'} deleted.`,
+      data: { deletedCount }
+    });
+  } catch (e) {
+    logger.error('ADMIN DELETE ALL COURSES:', e.message);
+    return res.status(500).json({ success: false, message: e.message || 'Unable to delete all courses.' });
   }
 };
 
@@ -780,6 +814,7 @@ module.exports = {
   getUsers, getUser, createUser, updateUser, deleteUser, resetPassword,
   getCategories, createCategory, updateCategory, deleteCategory,
   getCourses, getCourse, updateCourse, updateCourseStatus, deleteCourseAdmin,
+  unpublishAllCoursesAdmin, deleteAllCoursesAdmin,
   getEnrollments, deleteEnrollment,
   getReviews, deleteReview,
   getLiveSessions, createLiveSession, updateLiveSession, deleteLiveSession,

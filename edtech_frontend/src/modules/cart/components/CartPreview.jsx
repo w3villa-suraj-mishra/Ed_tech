@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { removeFromCart } from '../../../services/slices/cartSlice';
 import { VscClose } from 'react-icons/vsc';
+import { AiOutlineShoppingCart } from 'react-icons/ai';
 
 const CartPreview = ({ isOpen, onClose }) => {
   const navigate = useNavigate();
@@ -55,9 +56,11 @@ const CartPreview = ({ isOpen, onClose }) => {
       {/* ITEMS LIST */}
       <div className="max-h-72 overflow-y-auto p-4 space-y-3 custom-scrollbar">
         {cart.length === 0 ? (
-          <div className="py-8 text-center text-gray-400 space-y-2">
-            <div className="text-3xl">🛒</div>
-            <p className="text-xs font-semibold">Your cart is empty</p>
+          <div className="py-8 text-center space-y-2.5">
+            <div className="w-12 h-12 mx-auto rounded-2xl bg-sky-50 border border-sky-100 flex items-center justify-center text-[#3BA7F2] shadow-xs">
+              <AiOutlineShoppingCart className="text-2xl" />
+            </div>
+            <p className="text-xs font-semibold text-gray-600">Your cart is empty</p>
           </div>
         ) : (
           cart.map((course) => {
