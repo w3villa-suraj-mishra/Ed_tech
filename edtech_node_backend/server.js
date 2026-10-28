@@ -14,6 +14,8 @@ const http = require('http');
 const { Server } = require('socket.io');
 const jwt = require('jsonwebtoken');
 const { socketService } = require('./services/notificationService');
+const { initLiveClassSocket } = require('./services/liveClassSocketService');
+const { startLiveClassScheduler } = require('./services/liveClassSchedulerService');
 
 const app = express();
 const server = http.createServer(app);
@@ -55,7 +57,9 @@ if (!process.env.VERCEL) {
   });
 
   socketService.init(io);
+  initLiveClassSocket(io);
   startSilverExpirationCron();
+  startLiveClassScheduler();
 }
 
 // ==========================================

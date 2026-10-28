@@ -35,6 +35,13 @@ export const sidebarLinks = [
     icon: "FiFileText",
   },
   {
+    id: 20,
+    name: "Live Classes",
+    path: "/dashboard/live-classes",
+    type: ACCOUNT_TYPE.STUDENT,
+    icon: "FiVideo",
+  },
+  {
     id: 14,
     name: "Notifications",
     path: "/dashboard/notifications",
@@ -86,6 +93,13 @@ export const sidebarLinks = [
     path: "/dashboard/assignments",
     type: ACCOUNT_TYPE.INSTRUCTOR,
     icon: "FiFileText",
+  },
+  {
+    id: 21,
+    name: "Live Classes",
+    path: "/dashboard/live-classes",
+    type: ACCOUNT_TYPE.INSTRUCTOR,
+    icon: "FiVideo",
   },
   {
     id: 6,

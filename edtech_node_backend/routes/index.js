@@ -19,6 +19,7 @@ const {
 } = require('../middleware/auth');
 const upload = require('../middleware/upload');
 const assignmentController = require('../controllers/assignmentController');
+const liveClassController = require('../controllers/liveClassController');
 
 const assignmentUpload = (fields) => (req, res, next) => {
   upload.fields(fields)(req, res, (error) => {
@@ -58,6 +59,22 @@ router.patch('/notifications/read-all', authenticateUser, notificationController
 router.patch('/notifications/:id/read', authenticateUser, notificationController.markAsRead);
 router.delete('/notifications/:id', authenticateUser, notificationController.deleteNotification);
 router.post('/admin/create-notification', authenticateUser, isAdmin, notificationController.createAdminNotification);
+
+// ==========================================
+// LIVE CLASS ROUTES
+// ==========================================
+router.post('/live-classes', authenticateUser, liveClassController.scheduleLiveClass);
+router.get('/live-classes/instructor', authenticateUser, liveClassController.getInstructorLiveClasses);
+router.get('/live-classes/student', authenticateUser, liveClassController.getStudentLiveClasses);
+router.get('/courses/:courseId/live-classes', authenticateUser, liveClassController.getCourseLiveClasses);
+router.get('/live-classes/:id', authenticateUser, liveClassController.getLiveClassDetails);
+router.patch('/live-classes/:id', authenticateUser, liveClassController.updateLiveClass);
+router.post('/live-classes/:id/cancel', authenticateUser, liveClassController.cancelLiveClass);
+router.post('/live-classes/:id/start', authenticateUser, liveClassController.startLiveClass);
+router.post('/live-classes/:id/end', authenticateUser, liveClassController.endLiveClass);
+router.post('/live-classes/:id/join', authenticateUser, liveClassController.joinLiveClass);
+router.post('/live-classes/:id/leave', authenticateUser, liveClassController.leaveLiveClass);
+router.get('/live-classes/:id/attendance', authenticateUser, liveClassController.getAttendanceReport);
 
 // ==========================================
 // ARTICLE ROUTES
@@ -504,10 +521,8 @@ router.put('/assignments/questions/:questionId', authenticateUser, isInstructor,
 router.delete('/assignments/questions/:questionId', authenticateUser, isInstructor, assignmentController.deleteQuestion);
 
 router.post('/assignments/:assignmentId/resources', authenticateUser, isInstructor, assignmentResourceUpload, assignmentController.addResources);
-router.get('/assignments/resources/:resourceId/download', assignmentController.downloadResource);
 router.delete('/assignments/resources/:resourceId', authenticateUser, isInstructor, assignmentController.deleteResource);
 
-router.get('/assignments/submissions/files/:fileId/download', assignmentController.downloadSubmissionFile);
 router.get('/assignments/:assignmentId/submissions', authenticateUser, isInstructor, assignmentController.getSubmissions);
 router.patch('/assignments/submissions/:submissionId/verify', authenticateUser, isInstructor, assignmentController.verifySubmission);
 

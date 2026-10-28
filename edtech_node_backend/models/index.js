@@ -12,6 +12,8 @@ const CourseProgressVideo = require('./CourseProgressVideo');
 const Otp = require('./Otp');
 const LiveSession = require('./LiveSession');
 const LiveChatMessage = require('./LiveChatMessage');
+const LiveClass = require('./LiveClass');
+const LiveClassAttendance = require('./LiveClassAttendance');
 const ContactUs = require('./ContactUs');
 const CoursePriceAudit = require('./CoursePriceAudit');
 const CourseComment = require('./CourseComment');
@@ -88,6 +90,16 @@ CourseCertificate.belongsTo(Course, { foreignKey: 'courseId', as: 'course' });
 
 Course.hasMany(LiveSession, { foreignKey: 'courseId', onDelete: 'CASCADE' });
 LiveSession.belongsTo(Course, { foreignKey: 'courseId' });
+
+// Live class associations
+Course.hasMany(LiveClass, { foreignKey: 'courseId', as: 'liveClasses', onDelete: 'CASCADE' });
+LiveClass.belongsTo(Course, { foreignKey: 'courseId', as: 'course' });
+User.hasMany(LiveClass, { foreignKey: 'instructorId', as: 'hostedLiveClasses', onDelete: 'CASCADE' });
+LiveClass.belongsTo(User, { foreignKey: 'instructorId', as: 'instructor' });
+LiveClass.hasMany(LiveClassAttendance, { foreignKey: 'liveClassId', as: 'attendances', onDelete: 'CASCADE' });
+LiveClassAttendance.belongsTo(LiveClass, { foreignKey: 'liveClassId', as: 'liveClass' });
+User.hasMany(LiveClassAttendance, { foreignKey: 'studentId', as: 'liveClassAttendances', onDelete: 'CASCADE' });
+LiveClassAttendance.belongsTo(User, { foreignKey: 'studentId', as: 'student' });
 
 // Section associations
 Section.hasMany(SubSection, { foreignKey: 'sectionId', as: 'subSections', onDelete: 'CASCADE' });
@@ -235,6 +247,8 @@ module.exports = {
   Otp,
   LiveSession,
   LiveChatMessage,
+  LiveClass,
+  LiveClassAttendance,
   ContactUs,
   CoursePriceAudit,
   Article,

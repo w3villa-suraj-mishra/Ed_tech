@@ -146,6 +146,12 @@ export const assignmentEndpoints = {
   VERIFY_SUBMISSION_API: BASE_URL + "/assignments/submissions",
 }
 
+export const liveClassEndpoints = {
+  BASE: BASE_URL + "/live-classes",
+  INSTRUCTOR: BASE_URL + "/live-classes/instructor",
+  STUDENT: BASE_URL + "/live-classes/student",
+}
+
 // ANNOUNCEMENT ENDPOINTS
 export const announcementEndpoints = {
   GET_ACTIVE_ANNOUNCEMENT_API: BASE_URL + "/announcements/active",

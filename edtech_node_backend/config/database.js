@@ -33,7 +33,7 @@ if (process.env.DATABASE_URL) {
     username: process.env.DB_USER || 'postgres',
     password: process.env.DB_PASSWORD || 'postgres',
     timezone: '+00:00',
-    logging: process.env.DB_LOGGING === 'true' ? console.log : false,
+    logging: process.env.NODE_ENV === 'development' ? console.log : false,
     pool: poolOptions
   });
 }

@@ -51,6 +51,8 @@ import StudentAssignmentsPage from "./pages/StudentAssignmentsPage";
 import StudentCoursePracticePage from "./pages/StudentCoursePracticePage.jsx";
 import StudentCourseTestRunner from "./pages/StudentCourseTestRunner.jsx";
 import UpgradePlanPage from "./pages/UpgradePlanPage.jsx";
+import LiveClassesPage from "./pages/LiveClassesPage.jsx";
+import LiveClassroomPage from "./pages/LiveClassroomPage.jsx";
 import NotFoundPage from "./pages/NotFoundPage";
 import { Toaster } from "react-hot-toast";
 import { useEffect } from "react";
@@ -213,7 +215,8 @@ function App() {
             <Route path="my-courses"          element={<MyCourses />} />
             <Route path="instructor"          element={<InstructorDashboard />} />
             <Route path="instructor-practice" element={<InstructorPracticeBuilder />} />
-            <Route path="assignments"          element={<InstructorAssignmentsPage />} />
+             <Route path="assignments"          element={<InstructorAssignmentsPage />} />
+             <Route path="live-classes"         element={<LiveClassesPage />} />
             <Route path="articles"            element={<Articles />} />
             <Route path="articles/:articleId" element={<ArticleDetailPage />} />
             <Route path="guided-path"         element={<GuidedPath />} />
@@ -232,7 +235,8 @@ function App() {
           <Route path="/courses/:courseId/take/pratice-test/:testId/review/:attemptId" element={<StudentCourseTestRunner />} />
           <Route path="/s/courses/:courseId/certificate" element={<CourseCertificatePage />} />
           <Route path="/certificate/verify/:certificateId" element={<CourseCertificatePage />} />
-          <Route path="/upgrade"              element={<UpgradePlanPage />} />
+           <Route path="/upgrade"              element={<UpgradePlanPage />} />
+           <Route path="/live/:classId"         element={<LiveClassroomPage />} />
           <Route path="/upgrade-plan"         element={<UpgradePlanPage />} />
           <Route path="/courses/:courseId/upgrade" element={<UpgradePlanPage />} />
           <Route path="/courses/:courseId"    element={<CourseDetails />} />
