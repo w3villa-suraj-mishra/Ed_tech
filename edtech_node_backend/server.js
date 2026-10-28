@@ -16,6 +16,41 @@ const jwt = require('jsonwebtoken');
 const { socketService } = require('./services/notificationService');
 const { initLiveClassSocket } = require('./services/liveClassSocketService');
 const { startLiveClassScheduler } = require('./services/liveClassSchedulerService');
+const {
+  Assignment,
+  AssignmentQuestion,
+  AssignmentResource,
+  AssignmentSubmission,
+  AssignmentSubmissionFile,
+  LiveClass,
+  LiveClassAttendance
+} = require('./models');
+
+const ensureRequiredTables = async () => {
+  const queryInterface = sequelize.getQueryInterface();
+  const existingTables = new Set(
+    (await queryInterface.showAllTables()).map((tableName) => String(tableName).toLowerCase())
+  );
+
+  const requiredModels = [
+    Assignment,
+    AssignmentQuestion,
+    AssignmentResource,
+    AssignmentSubmission,
+    AssignmentSubmissionFile,
+    LiveClass,
+    LiveClassAttendance
+  ];
+
+  for (const model of requiredModels) {
+    const tableName = model?.getTableName?.() || model?.tableName || model?.name || '';
+    const normalized = String(tableName).toLowerCase();
+    if (!normalized || existingTables.has(normalized)) continue;
+
+    await model.sync();
+    existingTables.add(normalized);
+  }
+};
 
 const app = express();
 const server = http.createServer(app);
@@ -143,13 +178,7 @@ app.get('/run-migrations', async (req, res) => {
     await AnnouncementDismissal.sync();
     await Offer.sync();
     await OfferCourse.sync();
-    // Keep the assignment schema available on hosted deployments where the
-    // local Sequelize sync path is not run (for example, Vercel).
-    await Assignment.sync();
-    await AssignmentQuestion.sync();
-    await AssignmentResource.sync();
-    await AssignmentSubmission.sync();
-    await AssignmentSubmissionFile.sync();
+    await ensureRequiredTables();
     await sequelize.query(`
       DO $$ 
       BEGIN 
@@ -209,6 +238,7 @@ if (!process.env.VERCEL) {
   const startServer = async () => {
     try {
       await sequelize.sync({ alter: true });
+      await ensureRequiredTables();
       logger.info('Database synchronized successfully');
       try {
         const fixTestCaseInputs = require('./scripts/fixTestCaseInputs');
