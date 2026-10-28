@@ -55,6 +55,22 @@ const ensureRequiredTables = async () => {
 const app = express();
 const server = http.createServer(app);
 
+app.use(async (req, res, next) => {
+  const criticalPath = req.path.includes('/assignments') || req.path.includes('/live-classes') || req.path.includes('/live-class');
+  if (!criticalPath) return next();
+
+  try {
+    await ensureRequiredTables();
+    return next();
+  } catch (error) {
+    logger.error('CRITICAL TABLE CHECK FAILED:', error.message);
+    return res.status(500).json({
+      success: false,
+      message: 'Database schema is not ready yet. Please retry in a moment.'
+    });
+  }
+});
+
 if (!process.env.VERCEL) {
   // Initialize Socket.IO with CORS (Only on full Node.js servers like Render/local)
   const io = new Server(server, {
