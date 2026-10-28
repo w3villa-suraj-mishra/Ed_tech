@@ -16,7 +16,7 @@ export default function Instructor() {
     const getCourseDataWithStats = async () => {
       setLoading(true)
       const instructorApidata = await getInstructorData(token)
-      const result = await fetchInstructorCourses(token)
+      const result = await fetchInstructorCourses(token, { page: 1, limit: 12 })
 
       if (instructorApidata?.length) setInstructorData(instructorApidata)
       if (result) setCourses(result)

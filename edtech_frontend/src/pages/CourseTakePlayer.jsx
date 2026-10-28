@@ -25,6 +25,7 @@ import {
 } from "react-icons/fi";
 import { FaComments } from "react-icons/fa6";
 import CoursePracticeTab from "../components/core/ViewCourse/CoursePracticeTab";
+import StudentAssignmentsPanel from "../components/core/Assignments/StudentAssignmentsPanel";
 
 const { COURSE_DETAILS_API } = courseEndpoints;
 
@@ -42,6 +43,7 @@ const CourseTakePlayer = () => {
   const [currentSectionIndex, setCurrentSectionIndex] = useState(0);
   const [currentLectureIndex, setCurrentLectureIndex] = useState(0);
   const [showPractice, setShowPractice] = useState(false);
+  const [showAssignments, setShowAssignments] = useState(false);
 
   // Certificate Modal State
   const [showCertModal, setShowCertModal] = useState(false);
@@ -140,6 +142,7 @@ const CourseTakePlayer = () => {
     setActiveSectionId(sectionId);
     setCurrentLecture(lecture);
     setShowPractice(false);
+    setShowAssignments(false);
   };
 
   const isCompleted = (lecId) => completedLectures.includes(String(lecId));
@@ -330,8 +333,23 @@ const CourseTakePlayer = () => {
         </div>
 
         <div className="flex items-center gap-3">
+          {(user?.accountType || user?.account_type || "Student").toLowerCase() === "student" && (
+            <button
+              type="button"
+              onClick={() => {
+                setShowAssignments((visible) => !visible);
+                setShowPractice(false);
+              }}
+              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold transition shadow-sm ${showAssignments ? "bg-indigo-100 text-indigo-700" : "bg-white border border-slate-200 text-indigo-600 hover:bg-indigo-50"}`}
+            >
+              <FiAward size={14} /> Assignments
+            </button>
+          )}
           <button
-            onClick={() => navigate(`/s/courses/${courseId}/take/pratice-test`)}
+            onClick={() => {
+              setShowAssignments(false);
+              navigate(`/s/courses/${courseId}/take/pratice-test`);
+            }}
             className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold bg-blue-600 hover:bg-blue-800 text-white transition shadow-sm"
           >
             <span>🎯 Practice / Tests</span>
@@ -528,7 +546,9 @@ const CourseTakePlayer = () => {
 
         {/* MAIN PLAYER AREA */}
         <main className="flex-1 bg-white flex flex-col justify-between overflow-y-auto">
-          {showPractice ? (
+          {showAssignments ? (
+            <StudentAssignmentsPanel courseId={courseId} onClose={() => setShowAssignments(false)} />
+          ) : showPractice ? (
             <div className="flex-1 overflow-y-auto bg-[#090D16]">
               <CoursePracticeTab />
             </div>

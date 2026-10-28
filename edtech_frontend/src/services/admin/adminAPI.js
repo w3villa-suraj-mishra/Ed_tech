@@ -72,6 +72,8 @@ export const getCourses      = (p)       => get('/courses', { params: p });
 export const getCourse       = (id)      => get(`/courses/${id}`);
 export const updateCourse    = (id, fd)  => api.put(`/courses/${id}`, fd);
 export const updateCourseStatus = (id, s) => api.put(`/courses/${id}/status`, { status: s });
+export const unpublishAllCourses = () => api.patch('/courses/unpublish-all');
+export const deleteAllCourses = () => api.delete('/courses/all');
 export const updateCoursePricing = (id, d) => api.patch(`/courses/${id}/pricing`, d);
 export const deleteCourse    = (id)      => api.delete(`/courses/${id}`);
 

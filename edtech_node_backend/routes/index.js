@@ -18,6 +18,16 @@ const {
   isAdmin
 } = require('../middleware/auth');
 const upload = require('../middleware/upload');
+const assignmentController = require('../controllers/assignmentController');
+
+const assignmentUpload = (fields) => (req, res, next) => {
+  upload.fields(fields)(req, res, (error) => {
+    if (error) {
+      return res.status(400).json({ success: false, message: error.message || 'File upload failed' });
+    }
+    next();
+  });
+};
 
 const siteConfigController = require('../controllers/siteConfigController');
 const announcementRoutes = require('./announcementRoutes');
@@ -65,6 +75,9 @@ router.post('/signup', authController.signup);
 router.post('/login', authController.login);
 router.post('/send_otp', authController.sendOtp);
 router.post('/verify_otp', authController.verifyOtp);
+router.post('/auth/reset-password-token', authController.requestPasswordReset);
+router.get('/auth/reset-password-token/:token', authController.verifyPasswordResetToken);
+router.post('/auth/reset-password', authController.resetPassword);
 router.post('/logout', authController.logout);
 router.post('/auth/changepassword', authenticateUser, authController.changePassword);
 
@@ -471,6 +484,35 @@ router.post('/payment/webhook', paymentController.handleWebhook);
 // CONTACT ROUTE
 // ==========================================
 router.post('/reach/contact', contactController.contact);
+
+// ==========================================
+// ASSIGNMENT ROUTES
+// ==========================================
+const assignmentResourceUpload = assignmentUpload([{ name: 'resources', maxCount: 10 }]);
+const assignmentSubmissionUpload = assignmentUpload([{ name: 'files', maxCount: 10 }]);
+
+router.post('/assignments/create', authenticateUser, isInstructor, assignmentResourceUpload, assignmentController.createAssignment);
+router.get('/assignments/instructor', authenticateUser, isInstructor, assignmentController.getInstructorAssignments);
+router.get('/assignments/student-courses', authenticateUser, assignmentController.getStudentAssignmentCourses);
+router.get('/assignments/course/:courseId', authenticateUser, assignmentController.getCourseAssignments);
+router.get('/assignments/:assignmentId', authenticateUser, assignmentController.getAssignmentDetails);
+router.put('/assignments/:assignmentId', authenticateUser, isInstructor, assignmentResourceUpload, assignmentController.updateAssignment);
+router.delete('/assignments/:assignmentId', authenticateUser, isInstructor, assignmentController.deleteAssignment);
+
+router.post('/assignments/:assignmentId/questions', authenticateUser, isInstructor, assignmentController.addQuestion);
+router.put('/assignments/questions/:questionId', authenticateUser, isInstructor, assignmentController.updateQuestion);
+router.delete('/assignments/questions/:questionId', authenticateUser, isInstructor, assignmentController.deleteQuestion);
+
+router.post('/assignments/:assignmentId/resources', authenticateUser, isInstructor, assignmentResourceUpload, assignmentController.addResources);
+router.get('/assignments/resources/:resourceId/download', assignmentController.downloadResource);
+router.delete('/assignments/resources/:resourceId', authenticateUser, isInstructor, assignmentController.deleteResource);
+
+router.get('/assignments/submissions/files/:fileId/download', assignmentController.downloadSubmissionFile);
+router.get('/assignments/:assignmentId/submissions', authenticateUser, isInstructor, assignmentController.getSubmissions);
+router.patch('/assignments/submissions/:submissionId/verify', authenticateUser, isInstructor, assignmentController.verifySubmission);
+
+router.post('/assignments/:assignmentId/submit', authenticateUser, assignmentSubmissionUpload, assignmentController.submitAssignment);
+router.get('/assignments/:assignmentId/my-submission', authenticateUser, assignmentController.getMySubmission);
 
 // ==========================================
 // PRACTICE ROUTES (Public Categories + Protected Practice Access)

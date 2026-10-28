@@ -1,4 +1,5 @@
 const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
 const { User, Otp } = require('../models');
 const mailService = require('../services/mailService');
 const helpers = require('../utils/helpers');
@@ -279,6 +280,105 @@ const authController = {
         success: false,
         message: 'Invalid verification code. Please try again.'
       });
+    }
+  },
+
+  requestPasswordReset: async (req, res) => {
+    try {
+      const email = String(req.body.email || '').trim().toLowerCase();
+      if (!email) {
+        return res.status(400).json({ success: false, message: 'Email is required.' });
+      }
+
+      const user = await User.findOne({ where: { email } });
+      // Keep the response identical for unknown addresses to prevent account discovery.
+      if (!user) {
+        return res.status(200).json({
+          success: true,
+          message: 'If an account exists for this email, a password reset link has been sent.'
+        });
+      }
+
+      const resetToken = crypto.randomBytes(32).toString('hex');
+      const hashedToken = crypto.createHash('sha256').update(resetToken).digest('hex');
+      user.token = hashedToken;
+      user.resetPasswordExpires = new Date(Date.now() + 30 * 60 * 1000);
+      await user.save();
+
+      const frontendUrl = (process.env.FRONTEND_URL || 'http://localhost:3000').replace(/\/$/, '');
+      const resetUrl = `${frontendUrl}/reset-password?token=${encodeURIComponent(resetToken)}`;
+      let delivery;
+      try {
+        delivery = await mailService.sendPasswordResetEmail(email, resetUrl);
+      } catch (mailError) {
+        user.token = null;
+        user.resetPasswordExpires = null;
+        await user.save();
+        throw mailError;
+      }
+
+      return res.status(200).json({
+        success: true,
+        message: 'If an account exists for this email, a password reset link has been sent.',
+        previewUrl: delivery?.previewUrl || null
+      });
+    } catch (error) {
+      logger.error('REQUEST PASSWORD RESET FAILED:', error.message);
+      return res.status(500).json({ success: false, message: 'Unable to send the password reset email. Please try again.' });
+    }
+  },
+
+  verifyPasswordResetToken: async (req, res) => {
+    try {
+      const rawToken = String(req.params.token || '').trim();
+      if (!rawToken) {
+        return res.status(400).json({ success: false, message: 'Reset link is invalid or expired.' });
+      }
+      const hashedToken = crypto.createHash('sha256').update(rawToken).digest('hex');
+      const user = await User.findOne({
+        where: { token: hashedToken },
+        attributes: ['id', 'resetPasswordExpires']
+      });
+      if (!user || !user.resetPasswordExpires || new Date(user.resetPasswordExpires) <= new Date()) {
+        return res.status(400).json({ success: false, message: 'Reset link is invalid or expired. Request a new one.' });
+      }
+      return res.status(200).json({ success: true, message: 'Email verified. You can set a new password.' });
+    } catch (error) {
+      logger.error('VERIFY PASSWORD RESET TOKEN FAILED:', error.message);
+      return res.status(500).json({ success: false, message: 'Unable to verify the reset link.' });
+    }
+  },
+
+  resetPassword: async (req, res) => {
+    try {
+      const { password, confirmPassword } = req.body;
+      const rawToken = String(req.body.token || '').trim();
+      if (!rawToken || !password || !confirmPassword) {
+        return res.status(400).json({ success: false, message: 'Reset link, password, and confirmation are required.' });
+      }
+      if (password.length < 8) {
+        return res.status(400).json({ success: false, message: 'Password must be at least 8 characters.' });
+      }
+      if (password !== confirmPassword) {
+        return res.status(400).json({ success: false, message: 'Passwords do not match.' });
+      }
+
+      const hashedToken = crypto.createHash('sha256').update(rawToken).digest('hex');
+      const user = await User.findOne({ where: { token: hashedToken } });
+      if (!user || !user.resetPasswordExpires || new Date(user.resetPasswordExpires) <= new Date()) {
+        return res.status(400).json({ success: false, message: 'Reset link is invalid or expired. Request a new one.' });
+      }
+
+      user.password = password;
+      user.passwordConfirmation = confirmPassword;
+      user.token = null;
+      user.resetPasswordExpires = null;
+      await user.save();
+
+      return res.status(200).json({ success: true, message: 'Password reset successfully. You can now log in.' });
+    } catch (error) {
+      logger.error('RESET PASSWORD FAILED:', error.message);
+      return res.status(500).json({ success: false, message: error.message || 'Unable to reset password.' });
     }
   },
 

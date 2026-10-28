@@ -2,7 +2,9 @@ const nodemailer = require('nodemailer');
 const logger = require('../utils/logger');
 
 const getTransporter = async () => {
-  const user = String(process.env.EMAIL_USER || process.env.EMAIL_FROM || '').trim();
+  // EMAIL_FROM is a sender label/address, not SMTP authentication. Using it as
+  // the login often makes Gmail reject reset messages when it is an alias.
+  const user = String(process.env.EMAIL_USER || '').trim();
   const pass = String(process.env.EMAIL_PASS || process.env.EMAIL_PASSWORD || '').trim();
   const host = process.env.EMAIL_HOST || 'smtp.gmail.com';
   const port = Number(process.env.EMAIL_PORT || 465);
@@ -35,12 +37,16 @@ const getTransporter = async () => {
   throw new Error('Email configuration is missing or invalid.');
 };
 
+const getFromAddress = () => {
+  const configuredFrom = String(process.env.EMAIL_FROM || '').trim();
+  if (configuredFrom && !/example\.com|your_email@gmail\.com/i.test(configuredFrom)) return configuredFrom;
+  return process.env.EMAIL_USER || `no-reply@${process.env.EMAIL_HOST || 'studytech.com'}`;
+};
+
 const sendOTP = async (email, code) => {
   try {
     const transporter = await getTransporter();
-    const fromAddress = process.env.EMAIL_FROM && process.env.EMAIL_FROM !== 'your_email@gmail.com'
-      ? process.env.EMAIL_FROM
-      : (process.env.EMAIL_USER || `no-reply@${process.env.EMAIL_HOST || 'studytech.com'}`);
+    const fromAddress = getFromAddress();
 
     const info = await transporter.sendMail({
       from: `StudyTech <${fromAddress}>`,
@@ -79,6 +85,40 @@ const sendOTP = async (email, code) => {
     logger.warn(`Email transport failed (${error.message}). Logged OTP to server logs for verification.`);
     return { messageId: 'fallback-logged' };
   }
+};
+
+const sendPasswordResetEmail = async (email, resetUrl) => {
+  const transporter = await getTransporter();
+  const fromAddress = getFromAddress();
+
+  const info = await transporter.sendMail({
+    from: `StudyTech <${fromAddress}>`,
+    to: email,
+    subject: 'Reset your StudyTech password',
+    html: `
+      <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:24px;border:1px solid #e2e8f0;border-radius:12px">
+        <h2 style="color:#4f46e5">Verify your email to reset your password</h2>
+        <p>We received a request to create a new password for your StudyTech account.</p>
+        <p><a href="${resetUrl}" style="display:inline-block;padding:12px 20px;background:#4f46e5;color:#fff;text-decoration:none;border-radius:8px;font-weight:bold">Verify email and continue</a></p>
+        <p>This secure link expires in 30 minutes and can only be used once.</p>
+        <p>If you did not request this, you can ignore this email.</p>
+      </div>
+    `
+  });
+
+  let previewUrl = null;
+  if (process.env.NODE_ENV !== 'production') {
+    try {
+      previewUrl = nodemailer.getTestMessageUrl(info) || null;
+      if (previewUrl) logger.info(`[DEV EMAIL PREVIEW URL] Password reset email sent to ${email}: ${previewUrl}`);
+    } catch (error) {
+      logger.warn(`Unable to generate password reset email preview URL: ${error.message}`);
+    }
+  }
+  if (!info.accepted?.some((recipient) => String(recipient).toLowerCase() === email.toLowerCase())) {
+    throw new Error('The email provider did not accept the recipient address. Check the SMTP configuration.');
+  }
+  return { messageId: info.messageId, previewUrl };
 };
 
 const sendCoursePurchaseConfirmation = async ({ enrollmentId, userId, courseId }) => {
@@ -428,6 +468,7 @@ const sendContactFormEmail = async (email, data) => {
 
 module.exports = {
   sendOTP,
+  sendPasswordResetEmail,
   sendCoursePurchaseConfirmation,
   sendPaymentSuccessEmail,
   sendContactFormEmail

@@ -28,6 +28,13 @@ export const sidebarLinks = [
     icon: "FiCode",
   },
   {
+    id: 19,
+    name: "Assignments",
+    path: "/dashboard/student-assignments",
+    type: ACCOUNT_TYPE.STUDENT,
+    icon: "FiFileText",
+  },
+  {
     id: 14,
     name: "Notifications",
     path: "/dashboard/notifications",
@@ -72,6 +79,13 @@ export const sidebarLinks = [
     path: "/dashboard/instructor-practice",
     type: ACCOUNT_TYPE.INSTRUCTOR,
     icon: "FiCode",
+  },
+  {
+    id: 18,
+    name: "Assignments",
+    path: "/dashboard/assignments",
+    type: ACCOUNT_TYPE.INSTRUCTOR,
+    icon: "FiFileText",
   },
   {
     id: 6,

@@ -36,7 +36,9 @@ router.get('/courses', admin.getCourses);
 router.get('/courses/:id', admin.getCourse);
 router.put('/courses/:id', upload.single('thumbnailImage'), admin.updateCourse);
 router.put('/courses/:id/status', admin.updateCourseStatus);
+router.patch('/courses/unpublish-all', admin.unpublishAllCoursesAdmin);
 router.patch('/courses/:id/pricing', require('../controllers/courseController').updateCoursePricing);
+router.delete('/courses/all', requireSuperAdmin, admin.deleteAllCoursesAdmin);
 router.delete('/courses/:id', requireSuperAdmin, admin.deleteCourseAdmin);
 
 // Enrollments

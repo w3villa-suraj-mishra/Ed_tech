@@ -31,6 +31,8 @@ const fileFilter = (req, file, cb) => {
     'image/png',
     'image/jpg',
     'image/webp',
+    'application/pdf',
+    'application/x-pdf',
     'video/mp4',
     'video/webm',
     'video/quicktime',

@@ -180,11 +180,37 @@ const deleteCategoryQuery = async (id) => {
   return await Category.destroy({ where: { id } });
 };
 
-const findCoursesPaginatedQuery = async ({ where, limit, offset }) => {
+const findCoursesPaginatedQuery = async ({ where, instructorSearch = '', instructorEmailSearch = '', limit, offset }) => {
+  const instructorFilters = [];
+  if (instructorSearch) {
+    instructorFilters.push({
+      [Op.or]: [
+        { firstName: { [Op.iLike]: `%${instructorSearch}%` } },
+        { lastName: { [Op.iLike]: `%${instructorSearch}%` } },
+        sequelize.where(
+          sequelize.fn('concat', sequelize.col('instructor.first_name'), ' ', sequelize.col('instructor.last_name')),
+          { [Op.iLike]: `%${instructorSearch}%` }
+        )
+      ]
+    });
+  }
+  if (instructorEmailSearch) {
+    instructorFilters.push({ email: { [Op.iLike]: `%${instructorEmailSearch}%` } });
+  }
+
+  const instructorInclude = {
+    association: 'instructor',
+    attributes: ['id', 'firstName', 'lastName', 'email'],
+    ...(instructorFilters.length ? {
+      required: true,
+      where: { [Op.and]: instructorFilters }
+    } : {})
+  };
+
   return await Course.findAndCountAll({
     where, limit, offset,
     include: [
-      { association: 'instructor', attributes: ['id', 'firstName', 'lastName', 'email'] },
+      instructorInclude,
       { model: Category, attributes: ['id', 'name'] }
     ],
     order: [['createdAt', 'DESC']]
@@ -215,6 +241,29 @@ const updateCourseQuery = async (id, updates) => {
 
 const deleteCourseQuery = async (id) => {
   return await Course.destroy({ where: { id } });
+};
+
+const unpublishAllCoursesQuery = async () => {
+  const [updatedCount] = await Course.update(
+    { status: 'Draft' },
+    { where: { status: 'Published' } }
+  );
+  return updatedCount;
+};
+
+const deleteAllCoursesQuery = async () => {
+  const transaction = await sequelize.transaction();
+  try {
+    const courses = await Course.findAll({ attributes: ['id'], transaction });
+    for (const course of courses) {
+      await Course.destroy({ where: { id: course.id }, transaction });
+    }
+    await transaction.commit();
+    return courses.length;
+  } catch (error) {
+    await transaction.rollback();
+    throw error;
+  }
 };
 
 const findEnrollmentsPaginatedQuery = async ({ where, limit, offset }) => {
@@ -352,6 +401,8 @@ module.exports = {
   findCourseByIdQuery,
   updateCourseQuery,
   deleteCourseQuery,
+  unpublishAllCoursesQuery,
+  deleteAllCoursesQuery,
   findEnrollmentsPaginatedQuery,
   findEnrollmentByIdQuery,
   deleteEnrollmentQuery,

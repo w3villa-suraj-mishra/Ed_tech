@@ -12,6 +12,8 @@ import StudentDashboard from "./pages/StudentDashboard";
 import InstructorDashboard from "./pages/InstructorDashboard";
 import ScrollToTop from "./components/Common/ScrollToTop.jsx";
 import LoginForm from "./components/core/Auth/LoginForm.jsx";
+import ForgotPassword from "./components/core/Auth/ForgotPassword.jsx";
+import ResetPassword from "./components/core/Auth/ResetPassword.jsx";
 import Dashboard from "./pages/Dashboard.jsx";
 import MyProfile from "./components/core/Dashboard/MyProfile";
 import Cart from "./components/core/Dashboard/Cart";
@@ -44,6 +46,8 @@ import DailyQuiz from "./pages/DailyQuiz";
 import TopicPractice from "./pages/TopicPractice";
 import PreviousAttempts from "./pages/PreviousAttempts";
 import InstructorPracticeBuilder from "./pages/InstructorPracticeBuilder";
+import InstructorAssignmentsPage from "./pages/InstructorAssignmentsPage";
+import StudentAssignmentsPage from "./pages/StudentAssignmentsPage";
 import StudentCoursePracticePage from "./pages/StudentCoursePracticePage.jsx";
 import StudentCourseTestRunner from "./pages/StudentCourseTestRunner.jsx";
 import UpgradePlanPage from "./pages/UpgradePlanPage.jsx";
@@ -168,6 +172,8 @@ function App() {
           <Route path="/about"                element={<About />} />
           <Route path="/contact"              element={<Contact />} />
           <Route path="/login"                element={<LoginForm />} />
+          <Route path="/forgot-password"      element={<ForgotPassword />} />
+          <Route path="/reset-password"       element={<ResetPassword />} />
           <Route path="/signup"               element={<Signup />} />
           
           {/* Practice Center Routes */}
@@ -200,12 +206,14 @@ function App() {
             <Route path="practice/daily-quiz" element={<DailyQuiz />} />
             <Route path="practice/topic"      element={<TopicPractice />} />
             <Route path="practice/attempts"   element={<PreviousAttempts />} />
+            <Route path="student-assignments" element={<StudentAssignmentsPage />} />
             <Route path="settings"            element={<Settings />} />
             <Route path="add-course"          element={<AddCourse />} />
             <Route path="edit-course/:courseId" element={<EditCourse />} />
             <Route path="my-courses"          element={<MyCourses />} />
             <Route path="instructor"          element={<InstructorDashboard />} />
             <Route path="instructor-practice" element={<InstructorPracticeBuilder />} />
+            <Route path="assignments"          element={<InstructorAssignmentsPage />} />
             <Route path="articles"            element={<Articles />} />
             <Route path="articles/:articleId" element={<ArticleDetailPage />} />
             <Route path="guided-path"         element={<GuidedPath />} />
