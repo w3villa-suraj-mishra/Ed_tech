@@ -19,7 +19,7 @@ exports.config = {
   agent_enabled: Boolean(process.env.NEW_RELIC_LICENSE_KEY),
 
   distributed_tracing: {
-    enabled: true
+    enabled: false
   },
 
   // Transaction traces capture slow requests and slow DB queries.

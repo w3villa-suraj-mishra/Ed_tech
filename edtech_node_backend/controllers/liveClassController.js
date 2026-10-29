@@ -683,6 +683,16 @@ const joinLiveClass = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Live class not found' });
     }
 
+    // Check if class is cancelled or completed FIRST — prevents users from
+    // attempting to join ended/cancelled classes regardless of enrollment or timing.
+    if (liveClass.status === 'cancelled') {
+      return res.status(400).json({ success: false, message: 'This class has been cancelled' });
+    }
+
+    if (liveClass.status === 'completed') {
+      return res.status(400).json({ success: false, message: 'This class has already ended' });
+    }
+
     const isOwner = String(liveClass.instructorId) === String(req.user.id);
     const isHost = isOwner || isAdminUser(req.user);
 
@@ -702,14 +712,6 @@ const joinLiveClass = async (req, res) => {
           success: false,
           message: 'You must be actively enrolled in this course to join the live session'
         });
-      }
-
-      if (liveClass.status === 'cancelled') {
-        return res.status(400).json({ success: false, message: 'This class has been cancelled' });
-      }
-
-      if (liveClass.status === 'completed') {
-        return res.status(400).json({ success: false, message: 'This class has already ended' });
       }
 
       // Check joining window: allowed if live, or within 15 minutes before scheduled start
