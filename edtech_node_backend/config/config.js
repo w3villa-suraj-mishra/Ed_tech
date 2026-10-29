@@ -13,8 +13,8 @@ const buildConnectionConfig = (overrides = {}) => {
   const useDatabaseUrl = Boolean(process.env.DATABASE_URL);
 
   if (useDatabaseUrl) {
-    return {
-      url: process.env.DATABASE_URL,
+  return {
+    use_env_variable: 'DATABASE_URL',
       dialect: 'postgres',
       dialectOptions: buildDialectOptions(true),
       logging: false,
