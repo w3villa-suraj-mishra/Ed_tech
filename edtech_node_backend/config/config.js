@@ -1,5 +1,11 @@
 require('dotenv').config();
 
+const shouldUseSupabaseUrl = () => {
+  if (process.env.USE_SUPABASE_DB === 'true') return true;
+  if (process.env.VERCEL === '1' || process.env.NODE_ENV === 'production') return Boolean(process.env.DATABASE_URL);
+  return false;
+};
+
 const buildDialectOptions = (useDatabaseUrl) => (
   useDatabaseUrl ? {
     ssl: {
@@ -10,11 +16,11 @@ const buildDialectOptions = (useDatabaseUrl) => (
 );
 
 const buildConnectionConfig = (overrides = {}) => {
-  const useDatabaseUrl = Boolean(process.env.DATABASE_URL);
+  const useDatabaseUrl = shouldUseSupabaseUrl() && Boolean(process.env.DATABASE_URL);
 
   if (useDatabaseUrl) {
-  return {
-    use_env_variable: 'DATABASE_URL',
+    return {
+      url: process.env.DATABASE_URL,
       dialect: 'postgres',
       dialectOptions: buildDialectOptions(true),
       logging: false,
