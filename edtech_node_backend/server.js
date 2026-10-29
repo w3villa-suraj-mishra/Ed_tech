@@ -1,7 +1,14 @@
+require('dotenv').config();
+
+// New Relic APM agent must load before instrumented modules (express, pg/sequelize, socket.io, axios).
+// It initializes only when NEW_RELIC_LICENSE_KEY is provided.
+if (process.env.NEW_RELIC_LICENSE_KEY) {
+  require('newrelic');
+}
+
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
-require('dotenv').config();
 
 const sequelize = require('./config/database');
 const routes = require('./routes');
