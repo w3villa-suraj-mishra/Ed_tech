@@ -31,7 +31,7 @@ const createPaymentOrder = async (req, res) => {
       return res.status(404).json({ success: false, message: 'No valid courses found' });
     }
 
-    const userId = req.user.id;
+    const userId = req.user ? req.user.id : null;
 
     // Backend validation: Check existing enrollment plan for every requested course
     for (const course of validCourses) {
@@ -186,6 +186,9 @@ const createPaymentOrder = async (req, res) => {
     // If Stripe is not configured (no valid secret key), skip Stripe checkout
     // and directly activate course enrollments
     if (!stripe) {
+      if (!userId) {
+        return res.status(401).json({ success: false, message: 'User not authenticated' });
+      }
       await activateEnrollments({
         userId,
         courseIds: validCourses.map(c => c.id),
