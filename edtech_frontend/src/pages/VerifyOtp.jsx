@@ -1,13 +1,17 @@
 import React, { useState, useEffect, useRef } from "react";
 import { toast } from "react-hot-toast";
 import { useNavigate, Link } from "react-router-dom";
+import { useDispatch } from "react-redux";
 import { BiArrowBack } from "react-icons/bi";
 import { RxCountdownTimer, RxReload } from "react-icons/rx";
 import { HiOutlineMail } from "react-icons/hi";
 import { apiConnector } from "../services/apiConnector";
 import { endpoints } from "../services/apis";
+import { setToken } from "../services/slices/authSlice";
+import { setUser } from "../services/slices/profileSlice";
 
 function VerifyOtp() {
+  const dispatch = useDispatch();
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [loading, setLoading] = useState(false);
   const [resending, setResending] = useState(false);
@@ -145,13 +149,32 @@ function VerifyOtp() {
       sessionStorage.removeItem("referralCode");
       localStorage.removeItem("referral_anon_id");
 
-      // Auto login user if token returned
-      if (signupRes?.data?.token) {
-        const rawUser = signupRes.data?.user || {};
-        const account_type = rawUser.accountType || rawUser.account_type || accountType || "Student";
-        const first_name = rawUser.firstName || rawUser.first_name || firstName;
-        const last_name = rawUser.lastName || rawUser.last_name || lastName;
-        const userImage = rawUser.image || `https://api.dicebear.com/5.x/initials/svg?seed=${first_name} ${last_name}`;
+      // Auto login user if token returned, or fallback to login API
+      let token = signupRes?.data?.token;
+      let rawUser = signupRes?.data?.user;
+
+      if (!token && password) {
+        try {
+          const loginRes = await apiConnector("POST", endpoints.LOGIN_API, {
+            email: cleanEmail,
+            password,
+            accountType,
+            account_type: accountType,
+          });
+          if (loginRes?.data?.token) {
+            token = loginRes.data.token;
+            rawUser = loginRes.data.user;
+          }
+        } catch (loginErr) {
+          console.warn("Auto-login fallback attempt error:", loginErr);
+        }
+      }
+
+      if (token) {
+        const account_type = rawUser?.accountType || rawUser?.account_type || accountType || "Student";
+        const first_name = rawUser?.firstName || rawUser?.first_name || firstName || "";
+        const last_name = rawUser?.lastName || rawUser?.last_name || lastName || "";
+        const userImage = rawUser?.image || `https://api.dicebear.com/5.x/initials/svg?seed=${first_name} ${last_name}`;
         
         const fullUser = {
           ...rawUser,
@@ -162,10 +185,14 @@ function VerifyOtp() {
           image: userImage
         };
 
-        localStorage.setItem("token", signupRes.data.token);
+        localStorage.setItem("token", token);
         localStorage.setItem("user", JSON.stringify(fullUser));
+        dispatch(setToken(token));
+        dispatch(setUser(fullUser));
+
         toast.success("Account Created & Logged In!");
-        navigate("/dashboard/global");
+        const targetDashboard = account_type === "Instructor" ? "/dashboard/instructor" : "/dashboard/global";
+        navigate(targetDashboard);
       } else {
         toast.success("Account Created Successfully. Please log in.");
         navigate("/login");

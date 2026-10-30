@@ -2,6 +2,17 @@
 
 module.exports = {
   async up(queryInterface, Sequelize) {
+    const addIndexSafely = async (table, fields, options) => {
+      try {
+        await queryInterface.addIndex(table, fields, options);
+      } catch (error) {
+        if (error.message && (error.message.includes('already exists') || error.parent?.code === '42P07')) {
+          return;
+        }
+        throw error;
+      }
+    };
+
     // 1. Create live_classes table
     await queryInterface.createTable('live_classes', {
       id: {
@@ -100,10 +111,10 @@ module.exports = {
       }
     });
 
-    await queryInterface.addIndex('live_classes', ['course_id'], { name: 'live_classes_course_id_idx' });
-    await queryInterface.addIndex('live_classes', ['instructor_id'], { name: 'live_classes_instructor_id_idx' });
-    await queryInterface.addIndex('live_classes', ['status'], { name: 'live_classes_status_idx' });
-    await queryInterface.addIndex('live_classes', ['scheduled_start_at'], { name: 'live_classes_scheduled_start_at_idx' });
+    await addIndexSafely('live_classes', ['course_id'], { name: 'live_classes_course_id_idx' });
+    await addIndexSafely('live_classes', ['instructor_id'], { name: 'live_classes_instructor_id_idx' });
+    await addIndexSafely('live_classes', ['status'], { name: 'live_classes_status_idx' });
+    await addIndexSafely('live_classes', ['scheduled_start_at'], { name: 'live_classes_scheduled_start_at_idx' });
 
     // 2. Create live_class_attendances table
     await queryInterface.createTable('live_class_attendances', {
@@ -157,12 +168,12 @@ module.exports = {
       }
     });
 
-    await queryInterface.addIndex('live_class_attendances', ['live_class_id', 'student_id'], {
+    await addIndexSafely('live_class_attendances', ['live_class_id', 'student_id'], {
       unique: true,
       name: 'live_class_attendances_class_student_unique'
     });
-    await queryInterface.addIndex('live_class_attendances', ['live_class_id'], { name: 'live_class_attendances_class_id_idx' });
-    await queryInterface.addIndex('live_class_attendances', ['student_id'], { name: 'live_class_attendances_student_id_idx' });
+    await addIndexSafely('live_class_attendances', ['live_class_id'], { name: 'live_class_attendances_class_id_idx' });
+    await addIndexSafely('live_class_attendances', ['student_id'], { name: 'live_class_attendances_student_id_idx' });
   },
 
   async down(queryInterface) {

@@ -143,6 +143,8 @@ function Signup() {
     const codeFromUrl = params.get("ref") || params.get("referral");
     if (codeFromUrl) {
       const clean = codeFromUrl.trim().toUpperCase();
+      setReferralCode(clean);
+      sessionStorage.setItem('referralCode', clean);
       let anonId = localStorage.getItem("referral_anon_id");
       if (!anonId) {
         anonId = "anon_" + Math.random().toString(36).substring(2, 11);

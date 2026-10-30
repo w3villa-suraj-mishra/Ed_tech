@@ -122,9 +122,35 @@ const authController = {
         }
       }
 
+      // Retrieve full user record with profile for auto-login
+      const fullUserRecord = await User.findOne({
+        where: { id: user.id },
+        include: ['profile']
+      });
+
+      const token = jwt.sign(
+        {
+          user_id: user.id,
+          email: user.email,
+          account_type: user.accountType
+        },
+        process.env.JWT_SECRET || 'Secret123',
+        { expiresIn: '7d' }
+      );
+
       return res.status(201).json({
         success: true,
-        message: 'Signup successful'
+        message: 'Signup successful',
+        token,
+        user: {
+          id: user.id,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          email: user.email,
+          accountType: user.accountType,
+          image: user.image,
+          profile: fullUserRecord ? fullUserRecord.profile : null
+        }
       });
     } catch (error) {
       logger.error('SIGNUP FAILED:', error.message);

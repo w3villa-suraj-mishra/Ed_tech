@@ -2,6 +2,17 @@
 
 module.exports = {
   async up(queryInterface, Sequelize) {
+    const addIndexSafely = async (table, fields, options) => {
+      try {
+        await queryInterface.addIndex(table, fields, options);
+      } catch (error) {
+        if (error.message && (error.message.includes('already exists') || error.parent?.code === '42P07')) {
+          return;
+        }
+        throw error;
+      }
+    };
+
     await queryInterface.createTable('assignments', {
       id: { type: Sequelize.INTEGER, primaryKey: true, autoIncrement: true },
       course_id: {
@@ -31,9 +42,9 @@ module.exports = {
       updated_at: { allowNull: false, type: Sequelize.DATE }
     });
 
-    await queryInterface.addIndex('assignments', ['course_id'], { name: 'assignments_course_id_idx' });
-    await queryInterface.addIndex('assignments', ['instructor_id'], { name: 'assignments_instructor_id_idx' });
-    await queryInterface.addIndex('assignments', ['status'], { name: 'assignments_status_idx' });
+    await addIndexSafely('assignments', ['course_id'], { name: 'assignments_course_id_idx' });
+    await addIndexSafely('assignments', ['instructor_id'], { name: 'assignments_instructor_id_idx' });
+    await addIndexSafely('assignments', ['status'], { name: 'assignments_status_idx' });
 
     await queryInterface.createTable('assignment_questions', {
       id: { type: Sequelize.INTEGER, primaryKey: true, autoIncrement: true },
@@ -50,7 +61,7 @@ module.exports = {
       updated_at: { allowNull: false, type: Sequelize.DATE }
     });
 
-    await queryInterface.addIndex('assignment_questions', ['assignment_id'], { name: 'assignment_questions_assignment_id_idx' });
+    await addIndexSafely('assignment_questions', ['assignment_id'], { name: 'assignment_questions_assignment_id_idx' });
 
     await queryInterface.createTable('assignment_resources', {
       id: { type: Sequelize.INTEGER, primaryKey: true, autoIncrement: true },
@@ -69,7 +80,7 @@ module.exports = {
       updated_at: { allowNull: false, type: Sequelize.DATE }
     });
 
-    await queryInterface.addIndex('assignment_resources', ['assignment_id'], { name: 'assignment_resources_assignment_id_idx' });
+    await addIndexSafely('assignment_resources', ['assignment_id'], { name: 'assignment_resources_assignment_id_idx' });
 
     await queryInterface.createTable('assignment_submissions', {
       id: { type: Sequelize.INTEGER, primaryKey: true, autoIncrement: true },
@@ -105,12 +116,12 @@ module.exports = {
       updated_at: { allowNull: false, type: Sequelize.DATE }
     });
 
-    await queryInterface.addIndex('assignment_submissions', ['assignment_id', 'user_id'], {
+    await addIndexSafely('assignment_submissions', ['assignment_id', 'user_id'], {
       unique: true,
       name: 'assignment_submissions_assignment_user_unique'
     });
-    await queryInterface.addIndex('assignment_submissions', ['user_id'], { name: 'assignment_submissions_user_id_idx' });
-    await queryInterface.addIndex('assignment_submissions', ['status'], { name: 'assignment_submissions_status_idx' });
+    await addIndexSafely('assignment_submissions', ['user_id'], { name: 'assignment_submissions_user_id_idx' });
+    await addIndexSafely('assignment_submissions', ['status'], { name: 'assignment_submissions_status_idx' });
 
     await queryInterface.createTable('assignment_submission_files', {
       id: { type: Sequelize.INTEGER, primaryKey: true, autoIncrement: true },
@@ -129,7 +140,7 @@ module.exports = {
       updated_at: { allowNull: false, type: Sequelize.DATE }
     });
 
-    await queryInterface.addIndex('assignment_submission_files', ['submission_id'], { name: 'assignment_submission_files_submission_id_idx' });
+    await addIndexSafely('assignment_submission_files', ['submission_id'], { name: 'assignment_submission_files_submission_id_idx' });
   },
 
   async down(queryInterface) {

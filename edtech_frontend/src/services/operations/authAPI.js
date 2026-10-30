@@ -69,11 +69,53 @@ export function signUp(
 
       console.log("SIGNUP API RESPONSE............", response)
 
-      if (!response.data.success) {
-        throw new Error(response.data.message)
+      let token = response?.data?.token
+      let rawUser = response?.data?.user
+
+      if (!token && password) {
+        try {
+          const loginRes = await apiConnector("POST", LOGIN_API, {
+            email,
+            password,
+            accountType,
+            account_type: accountType,
+          })
+          if (loginRes?.data?.token) {
+            token = loginRes.data.token
+            rawUser = loginRes.data.user
+          }
+        } catch (loginErr) {
+          console.warn("Auto-login fallback error:", loginErr)
+        }
       }
-      toast.success("Signup Successful")
-      navigate("/login")
+
+      if (token) {
+        const account_type = rawUser?.accountType || rawUser?.account_type || accountType || "Student"
+        const first_name = rawUser?.firstName || rawUser?.first_name || firstName || ""
+        const last_name = rawUser?.lastName || rawUser?.last_name || lastName || ""
+        const userImage = rawUser?.image || `https://api.dicebear.com/5.x/initials/svg?seed=${first_name} ${last_name}`
+
+        const fullUser = {
+          ...rawUser,
+          account_type,
+          accountType: account_type,
+          first_name,
+          last_name,
+          image: userImage
+        }
+
+        toast.success("Signup Successful")
+        dispatch(setToken(token))
+        dispatch(setUser(fullUser))
+        localStorage.setItem("token", token)
+        localStorage.setItem("user", JSON.stringify(fullUser))
+
+        const targetDashboard = account_type === "Instructor" ? "/dashboard/instructor" : "/dashboard/global"
+        navigate(targetDashboard)
+      } else {
+        toast.success("Signup Successful")
+        navigate("/login")
+      }
     } catch (error) {
       console.log("SIGNUP API ERROR............", error)
       toast.error("Signup Failed")
