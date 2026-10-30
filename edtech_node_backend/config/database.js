@@ -3,9 +3,10 @@ require('dotenv').config();
 
 const poolOptions = {
   max: Math.max(1, Number.parseInt(process.env.DB_POOL_MAX, 10) || 5),
-  min: Math.max(0, Number.parseInt(process.env.DB_POOL_MIN, 10) || 0),
+  min: 0,
   acquire: Math.max(1000, Number.parseInt(process.env.DB_POOL_ACQUIRE_MS, 10) || 30000),
-  idle: Math.max(1000, Number.parseInt(process.env.DB_POOL_IDLE_MS, 10) || 10000)
+  idle: Math.max(1000, Number.parseInt(process.env.DB_POOL_IDLE_MS, 10) || 10000),
+  evict: Math.max(1000, Number.parseInt(process.env.DB_POOL_EVICT_MS, 10) || 1000)
 };
 
 const shouldUseSupabaseUrl = () => {

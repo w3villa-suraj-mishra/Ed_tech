@@ -15,6 +15,14 @@ const buildDialectOptions = (useDatabaseUrl) => (
   } : {}
 );
 
+const poolOptions = {
+  max: Math.max(1, Number.parseInt(process.env.DB_POOL_MAX, 10) || 5),
+  min: 0,
+  acquire: Math.max(1000, Number.parseInt(process.env.DB_POOL_ACQUIRE_MS, 10) || 30000),
+  idle: Math.max(1000, Number.parseInt(process.env.DB_POOL_IDLE_MS, 10) || 10000),
+  evict: Math.max(1000, Number.parseInt(process.env.DB_POOL_EVICT_MS, 10) || 1000)
+};
+
 const buildConnectionConfig = (overrides = {}) => {
   const useDatabaseUrl = shouldUseSupabaseUrl() && Boolean(process.env.DATABASE_URL);
 
@@ -24,6 +32,7 @@ const buildConnectionConfig = (overrides = {}) => {
       dialect: 'postgres',
       dialectOptions: buildDialectOptions(true),
       logging: false,
+      pool: poolOptions,
       ...overrides
     };
   }
@@ -37,6 +46,7 @@ const buildConnectionConfig = (overrides = {}) => {
     dialect: 'postgres',
     dialectOptions: buildDialectOptions(false),
     logging: false,
+    pool: poolOptions,
     ...overrides
   };
 };
