@@ -9,6 +9,8 @@ const stripe = stripeSecretKey && stripeSecretKey !== 'sk_test_placeholder_key_f
 const { PLAN_TYPES, PLAN_CONFIG, calculatePlanPrice } = require('../config/plans');
 const { calculateCoursePrice } = require('../services/pricingService');
 const logger = require('../utils/logger');
+const rewardService = require('../modules/referrals/services/reward.service');
+const walletService = require('../modules/referrals/services/wallet.service');
 
 /**
  * Create Stripe Checkout Session or process Free enrollment for course plan purchase
@@ -169,18 +171,89 @@ const createPaymentOrder = async (req, res) => {
       };
     });
 
-    const lineItems = purchaseItems.map(({ course, payablePrice }) => ({
-      price_data: {
-        currency: 'inr',
-        product_data: {
-          name: `${course.courseName} (${targetPlan.toUpperCase()} Plan)${validatedOffer ? ` - Coupon ${validatedOffer.code}` : ''}`,
-          description: targetPlan === PLAN_TYPES.SILVER ? '1 Year Full Course Access' : 'Lifetime Full Course Access',
-          images: course.thumbnail ? [course.thumbnail] : [],
+    // ── Reward Wallet Credit Deduction ──────────────────────────────────────────
+    const { useWalletCredits } = req.body;
+    let appliedWalletCreditsPaise = 0n;
+    const totalOrderRupees = purchaseItems.reduce((acc, item) => acc + item.payablePrice, 0);
+    let totalOrderPaise = BigInt(Math.round(totalOrderRupees * 100));
+
+    if (useWalletCredits && userId) {
+      try {
+        const wallet = await walletService.getOrCreateWallet(userId);
+        const availableCredits = BigInt(wallet.availableBalancePaise || 0);
+        if (availableCredits > 0n) {
+          appliedWalletCreditsPaise = availableCredits >= totalOrderPaise ? totalOrderPaise : availableCredits;
+        }
+      } catch (walletErr) {
+        logger.warn(`Wallet check warning in payment order: ${walletErr.message}`);
+      }
+    }
+
+    // If 100% of order is covered by reward wallet credits:
+    if (appliedWalletCreditsPaise > 0n && appliedWalletCreditsPaise >= totalOrderPaise) {
+      if (!userId) {
+        return res.status(401).json({ success: false, message: 'User not authenticated' });
+      }
+
+      const paymentRef = `WALLET_FULL_${Date.now()}`;
+      await walletService.debitWallet({
+        userId,
+        amountPaise: appliedWalletCreditsPaise,
+        referenceType: 'COURSE_PURCHASE',
+        referenceId: paymentRef,
+        description: `Full payment using reward credits for: ${validCourses.map(c => c.courseName).join(', ')}`
+      });
+
+      await activateEnrollments({
+        userId,
+        courseIds: validCourses.map(c => c.id),
+        plan: targetPlan,
+        paymentRef,
+        offerId: validatedOffer ? validatedOffer.id : null
+      });
+
+      // Distribute multi-level purchase commissions to ancestors based on course value
+      await rewardService.processCoursePurchaseRewards({
+        purchaserId: userId,
+        orderId: paymentRef,
+        paidAmountPaise: Number(appliedWalletCreditsPaise),
+        courseName: validCourses.map(c => c.courseName).join(', ')
+      });
+
+      return res.status(200).json({
+        success: true,
+        isFree: false,
+        paidWithCredits: true,
+        message: 'Course purchase successfully completed with reward credits',
+        data: { enrollments: validCourses }
+      });
+    }
+
+    // Calculate net payable amount after deducting partial wallet credits
+    const remainingNetPaise = totalOrderPaise - appliedWalletCreditsPaise;
+    const remainingNetRupees = Number(remainingNetPaise) / 100;
+
+    // Distribute remaining price proportionally across line items
+    const lineItems = purchaseItems.map(({ course, payablePrice }, index) => {
+      let finalItemPriceRupees = payablePrice;
+      if (appliedWalletCreditsPaise > 0n && totalOrderRupees > 0) {
+        const proportion = payablePrice / totalOrderRupees;
+        finalItemPriceRupees = Math.max(1, Math.round(remainingNetRupees * proportion));
+      }
+
+      return {
+        price_data: {
+          currency: 'inr',
+          product_data: {
+            name: `${course.courseName} (${targetPlan.toUpperCase()} Plan)${validatedOffer ? ` - Coupon ${validatedOffer.code}` : ''}${appliedWalletCreditsPaise > 0n ? ' (Wallet Applied)' : ''}`,
+            description: targetPlan === PLAN_TYPES.SILVER ? '1 Year Full Course Access' : 'Lifetime Full Course Access',
+            images: course.thumbnail ? [course.thumbnail] : [],
+          },
+          unit_amount: Math.round(finalItemPriceRupees * 100),
         },
-        unit_amount: Math.round(payablePrice * 100),
-      },
-      quantity: 1,
-    }));
+        quantity: 1,
+      };
+    });
 
     let session;
     // If Stripe is not configured (no valid secret key), skip Stripe checkout
@@ -219,7 +292,9 @@ const createPaymentOrder = async (req, res) => {
           plan: targetPlan,
           courseIds: JSON.stringify(validCourses.map(c => c.id)),
           offerId: validatedOffer ? String(validatedOffer.id) : null,
-          couponCode: validatedOffer ? validatedOffer.code : null
+          couponCode: validatedOffer ? validatedOffer.code : null,
+          appliedWalletCreditsPaise: String(appliedWalletCreditsPaise),
+          totalOrderPaise: String(totalOrderPaise)
         },
       });
     } catch (stripeErr) {
@@ -419,6 +494,40 @@ const verifyPayment = async (req, res) => {
             paymentRef: session.id,
             offerId: sessionOfferId
           });
+
+          // Deduct partial wallet credits if used
+          const appliedCreditsPaise = BigInt(session.metadata?.appliedWalletCreditsPaise || 0);
+          if (appliedCreditsPaise > 0n) {
+            try {
+              await walletService.debitWallet({
+                userId: targetUserId,
+                amountPaise: appliedCreditsPaise,
+                referenceType: 'COURSE_PURCHASE',
+                referenceId: session.id,
+                description: `Reward credit deduction for Stripe order ${session.id}`
+              });
+            } catch (debitErr) {
+              logger.warn(`Wallet debit warning during payment verification: ${debitErr.message}`);
+            }
+          }
+
+          // Trigger Multi-Level Course Purchase Rewards for ancestors (Depths 1 to 4)
+          try {
+            const paidAmountPaise = session.amount_total
+              ? BigInt(session.amount_total) + appliedCreditsPaise
+              : BigInt(session.metadata?.totalOrderPaise || 0);
+
+            if (paidAmountPaise > 0n) {
+              await rewardService.processCoursePurchaseRewards({
+                purchaserId: targetUserId,
+                orderId: session.id,
+                paidAmountPaise: Number(paidAmountPaise),
+                courseName: 'Course Purchase'
+              });
+            }
+          } catch (rewardErr) {
+            logger.error(`Multi-level reward distribution error for session ${sessionId}: ${rewardErr.message}`);
+          }
         }
 
         return res.status(200).json({ success: true, message: 'Payment verified and plan activated successfully' });
@@ -452,7 +561,7 @@ const handleWebhook = async (req, res) => {
   try {
     const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
     if (webhookSecret && sig) {
-      event = stripe.webhooks.constructEvent(req.body, sig, webhookSecret);
+      event = stripe.webhooks.constructEvent(req.rawBody || req.body, sig, webhookSecret);
     } else {
       event = req.body;
     }
@@ -478,9 +587,51 @@ const handleWebhook = async (req, res) => {
           offerId
         });
         logger.info(`Stripe webhook: Enrolled user ${userId} with plan ${plan} in courses: ${courseIds.join(', ')}`);
+
+        // Deduct partial wallet credits if used
+        const appliedCreditsPaise = BigInt(session.metadata?.appliedWalletCreditsPaise || 0);
+        if (appliedCreditsPaise > 0n) {
+          try {
+            await walletService.debitWallet({
+              userId,
+              amountPaise: appliedCreditsPaise,
+              referenceType: 'COURSE_PURCHASE',
+              referenceId: session.id,
+              description: `Reward credit deduction for Stripe order ${session.id}`
+            });
+          } catch (debitErr) {
+            logger.warn(`Webhook wallet debit warning: ${debitErr.message}`);
+          }
+        }
+
+        // Trigger Multi-Level Course Purchase Rewards for ancestors
+        const paidAmountPaise = session.amount_total
+          ? BigInt(session.amount_total) + appliedCreditsPaise
+          : BigInt(session.metadata?.totalOrderPaise || 0);
+
+        if (paidAmountPaise > 0n) {
+          await rewardService.processCoursePurchaseRewards({
+            purchaserId: userId,
+            orderId: session.id,
+            paidAmountPaise: Number(paidAmountPaise),
+            courseName: 'Course Purchase'
+          });
+        }
       }
     } catch (err) {
-      logger.error('WEBHOOK ENROLLMENT FAILED:', err.message);
+      logger.error('WEBHOOK ENROLLMENT OR REWARD FAILED:', err.message);
+    }
+  } else if (event.type === 'charge.refunded') {
+    const charge = event.data.object;
+    try {
+      const orderId = charge.payment_intent || charge.id;
+      logger.info(`Stripe charge refunded: ${charge.id}. Reversing rewards for order ${orderId}`);
+      await rewardService.reverseOrderRewards({
+        orderId,
+        reason: `Stripe charge refund: ${charge.id}`
+      });
+    } catch (refundErr) {
+      logger.error('WEBHOOK REFUND REVERSAL FAILED:', refundErr.message);
     }
   }
 

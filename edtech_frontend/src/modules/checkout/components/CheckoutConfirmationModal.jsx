@@ -14,7 +14,9 @@ const CheckoutConfirmationModal = ({
   subtotal,
   discountAmount,
   appliedCoupon,
-  courses
+  courses,
+  useWalletCredits = false,
+  appliedWalletCredits = 0
 }) => {
   if (!isOpen) return null;
 
@@ -120,6 +122,13 @@ const CheckoutConfirmationModal = ({
             </div>
           )}
 
+          {useWalletCredits && appliedWalletCredits > 0 && (
+            <div className="flex items-center justify-between text-[11px] text-sky-600 font-semibold">
+              <span>Reward Credits Applied</span>
+              <span>-₹{Number(appliedWalletCredits).toLocaleString()}</span>
+            </div>
+          )}
+
           <div className="border-t border-gray-200/80 pt-2 flex items-center justify-between">
             <span className="font-extrabold text-xs text-[#0F172A]">Payable Amount</span>
             <span className="font-black text-lg text-[#0F172A]">
@@ -138,12 +147,14 @@ const CheckoutConfirmationModal = ({
             {loading ? (
               <div className="flex items-center gap-2">
                 <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                <span>Opening Gateway...</span>
+                <span>{finalTotal === 0 ? 'Activating with Credits...' : 'Opening Gateway...'}</span>
               </div>
             ) : (
               <>
                 <FiLock className="text-xs" />
-                <span>Continue to Payment</span>
+                <span>
+                  {finalTotal === 0 ? 'Confirm & Enroll with Credits' : `Continue to Payment (₹${Number(finalTotal).toLocaleString()})`}
+                </span>
               </>
             )}
           </button>

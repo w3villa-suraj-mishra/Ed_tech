@@ -17,7 +17,8 @@ import {
   RiArticleLine,
   RiUserStarLine,
   RiMailLine,
-  RiChat3Line
+  RiChat3Line,
+  RiShareLine
 } from "react-icons/ri";
 
 const NAV = [
@@ -27,6 +28,7 @@ const NAV = [
   { label: 'Courses', path: '/admin/courses', icon: <RiBookOpenLine size={18} /> },
   { label: 'Categories', path: '/admin/categories', icon: <RiPriceTag3Line size={18} /> },
   { label: 'Enrollments', path: '/admin/enrollments', icon: <RiClipboardLine size={18} /> },
+  { label: 'Referrals & Rewards', path: '/admin/referrals', icon: <RiShareLine size={18} /> },
   {
     group: 'Practice',
     icon: <RiFlashlightLine size={18} />,

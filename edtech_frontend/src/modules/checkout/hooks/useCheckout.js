@@ -77,7 +77,7 @@ export const useCheckout = (overrideCourses = null) => {
    * Called when user clicks "Continue to Payment" in the confirmation modal.
    * NEVER marks as paid, NEVER enrolls, NEVER clears cart, NEVER redirects immediately.
    */
-  const initiatePayment = async (plan = 'gold', couponCode = null) => {
+  const initiatePayment = async (plan = 'gold', couponCode = null, useWalletCredits = false) => {
     if (!token) {
       toast.error('Please log in to continue with purchase');
       navigate('/login');
@@ -94,7 +94,7 @@ export const useCheckout = (overrideCourses = null) => {
     }
 
     setLoading(true);
-    const toastId = toast.loading('Initializing Stripe payment...');
+    const toastId = toast.loading('Initializing checkout...');
 
     try {
       // 1. Create Server-Side Order & Payment Intent
@@ -103,7 +103,8 @@ export const useCheckout = (overrideCourses = null) => {
         courses: coursesToCheckout,
         plan,
         couponCode,
-        customerDetails
+        customerDetails,
+        useWalletCredits
       });
 
       toast.dismiss(toastId);
@@ -112,13 +113,13 @@ export const useCheckout = (overrideCourses = null) => {
         throw new Error(res?.message || 'Failed to create payment order');
       }
 
-      // Handle Free Plan / 100% coupon discount direct activation
-      if (res.isFree) {
+      // Handle Free Plan / 100% coupon discount / 100% Wallet credit redemption direct activation
+      if (res.isFree || res.paidWithCredits || res.status === 'completed') {
         dispatch(resetCart());
         setStatusModal({
           isOpen: true,
           status: 'success',
-          message: 'Free access activated successfully! Enjoy learning.'
+          message: res.message || 'Course access activated successfully! Enjoy learning.'
         });
         setLoading(false);
         return;

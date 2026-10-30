@@ -158,3 +158,30 @@ export const announcementEndpoints = {
   DISMISS_ANNOUNCEMENT_API: BASE_URL + "/announcements",
   ADMIN_ANNOUNCEMENTS_API: BASE_URL + "/admin/announcements"
 }
+
+// REFERRAL, REWARD & WALLET ENDPOINTS
+export const referralEndpoints = {
+  PROFILE_API: BASE_URL + "/api/referrals/me",
+  NETWORK_API: BASE_URL + "/api/referrals/me/network",
+  HISTORY_API: BASE_URL + "/api/referrals/me/history",
+  STATS_API: BASE_URL + "/api/referrals/me/stats",
+  GENERATE_LINK_API: BASE_URL + "/api/referrals/generate-link",
+  VALIDATE_CODE_API: BASE_URL + "/api/referrals/validate",
+  CLAIM_CODE_API: BASE_URL + "/api/referrals/claim",
+  ATTRIBUTION_CAPTURE_API: BASE_URL + "/api/attribution/capture",
+
+  REWARDS_SUMMARY_API: BASE_URL + "/api/rewards/me",
+  REWARDS_HISTORY_API: BASE_URL + "/api/rewards/me/history",
+  REWARDS_EARNINGS_API: BASE_URL + "/api/rewards/me/network-earnings",
+
+  WALLET_BALANCE_API: BASE_URL + "/api/wallet/me",
+  WALLET_TRANSACTIONS_API: BASE_URL + "/api/wallet/me/transactions",
+  APPLY_CREDIT_API: BASE_URL + "/api/wallet/apply-credit",
+
+  ADMIN_OVERVIEW_API: BASE_URL + "/admin/referrals/overview",
+  ADMIN_NETWORK_API: BASE_URL + "/admin/referrals/network",
+  ADMIN_REWARDS_API: BASE_URL + "/admin/referrals/rewards",
+  ADMIN_RULES_API: BASE_URL + "/admin/referrals/rules",
+  ADMIN_TRANSACTIONS_API: BASE_URL + "/admin/referrals/transactions",
+  ADMIN_OVERRIDE_API: BASE_URL + "/admin/referrals/audit-override"
+}

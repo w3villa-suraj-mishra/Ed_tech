@@ -1,4 +1,6 @@
 // Import all models
+const sequelize = require('../config/database');
+const { Sequelize } = require('sequelize');
 const User = require('./User');
 const Profile = require('./Profile');
 const Category = require('./Category');
@@ -28,6 +30,14 @@ const AssignmentQuestion = require('./AssignmentQuestion');
 const AssignmentResource = require('./AssignmentResource');
 const AssignmentSubmission = require('./AssignmentSubmission');
 const AssignmentSubmissionFile = require('./AssignmentSubmissionFile');
+const ReferralCode = require('./ReferralCode');
+const ReferralRelationship = require('./ReferralRelationship');
+const ReferralTree = require('./ReferralTree');
+const ReferralAttribution = require('./ReferralAttribution');
+const ReferralRewardRule = require('./ReferralRewardRule');
+const ReferralRewardLedger = require('./ReferralRewardLedger');
+const Wallet = require('./Wallet');
+const WalletTransaction = require('./WalletTransaction');
 
 // Define associations
 
@@ -229,6 +239,36 @@ User.hasMany(AssignmentSubmission, { foreignKey: 'userId', as: 'assignmentSubmis
 AssignmentSubmission.hasMany(AssignmentSubmissionFile, { foreignKey: 'submissionId', as: 'files', onDelete: 'CASCADE' });
 AssignmentSubmissionFile.belongsTo(AssignmentSubmission, { foreignKey: 'submissionId', as: 'submission' });
 
+// ==========================================
+// REFERRAL & WALLET ASSOCIATIONS
+// ==========================================
+User.hasOne(ReferralCode, { foreignKey: 'userId', as: 'referralCode', onDelete: 'CASCADE' });
+ReferralCode.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+
+User.hasOne(Wallet, { foreignKey: 'userId', as: 'wallet', onDelete: 'CASCADE' });
+Wallet.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+
+Wallet.hasMany(WalletTransaction, { foreignKey: 'walletId', as: 'transactions', onDelete: 'CASCADE' });
+WalletTransaction.belongsTo(Wallet, { foreignKey: 'walletId', as: 'wallet' });
+User.hasMany(WalletTransaction, { foreignKey: 'userId', as: 'walletTransactions', onDelete: 'CASCADE' });
+WalletTransaction.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+
+User.hasMany(ReferralRelationship, { foreignKey: 'referrerId', as: 'directReferrals' });
+ReferralRelationship.belongsTo(User, { foreignKey: 'referrerId', as: 'referrer' });
+User.hasOne(ReferralRelationship, { foreignKey: 'referredUserId', as: 'referralParent' });
+ReferralRelationship.belongsTo(User, { foreignKey: 'referredUserId', as: 'referredUser' });
+
+User.hasMany(ReferralTree, { foreignKey: 'ancestorId', as: 'downlineTree', onDelete: 'CASCADE' });
+ReferralTree.belongsTo(User, { foreignKey: 'ancestorId', as: 'ancestor' });
+User.hasMany(ReferralTree, { foreignKey: 'descendantId', as: 'uplineTree', onDelete: 'CASCADE' });
+ReferralTree.belongsTo(User, { foreignKey: 'descendantId', as: 'descendant' });
+
+ReferralAttribution.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+
+User.hasMany(ReferralRewardLedger, { foreignKey: 'userId', as: 'rewardLedgers', onDelete: 'CASCADE' });
+ReferralRewardLedger.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+ReferralRewardLedger.belongsTo(ReferralRelationship, { foreignKey: 'referralId', as: 'referral' });
+
 module.exports = {
   User,
   Profile,
@@ -269,5 +309,15 @@ module.exports = {
   AssignmentQuestion,
   AssignmentResource,
   AssignmentSubmission,
-  AssignmentSubmissionFile
+  AssignmentSubmissionFile,
+  ReferralCode,
+  ReferralRelationship,
+  ReferralTree,
+  ReferralAttribution,
+  ReferralRewardRule,
+  ReferralRewardLedger,
+  Wallet,
+  WalletTransaction,
+  sequelize,
+  Sequelize
 };

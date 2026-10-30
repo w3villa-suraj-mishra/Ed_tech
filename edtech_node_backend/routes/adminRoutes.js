@@ -94,4 +94,8 @@ router.patch('/offers/:id/status', offerController.updateOfferStatus);
 router.post('/offers/:id/duplicate', offerController.duplicateOffer);
 router.delete('/offers/:id', offerController.deleteOffer);
 
+// Referrals & Reward Admin Management
+const referralAdminRoutes = require('../modules/referrals/routes/referralAdmin.routes');
+router.use('/', referralAdminRoutes);
+
 module.exports = router;

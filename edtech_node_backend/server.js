@@ -30,7 +30,15 @@ const {
   AssignmentSubmission,
   AssignmentSubmissionFile,
   LiveClass,
-  LiveClassAttendance
+  LiveClassAttendance,
+  ReferralCode,
+  ReferralRelationship,
+  ReferralTree,
+  ReferralAttribution,
+  ReferralRewardRule,
+  ReferralRewardLedger,
+  Wallet,
+  WalletTransaction
 } = require('./models');
 
 const ensureRequiredTables = async () => {
@@ -46,7 +54,15 @@ const ensureRequiredTables = async () => {
     AssignmentSubmission,
     AssignmentSubmissionFile,
     LiveClass,
-    LiveClassAttendance
+    LiveClassAttendance,
+    ReferralCode,
+    ReferralRelationship,
+    ReferralTree,
+    ReferralAttribution,
+    ReferralRewardRule,
+    ReferralRewardLedger,
+    Wallet,
+    WalletTransaction
   ];
 
   for (const model of requiredModels) {
@@ -56,6 +72,23 @@ const ensureRequiredTables = async () => {
 
     await model.sync();
     existingTables.add(normalized);
+  }
+
+  // Seed default referral rules if none exist
+  try {
+    const ruleCount = await ReferralRewardRule.count();
+    if (ruleCount === 0) {
+      const now = new Date();
+      await ReferralRewardRule.bulkCreate([
+        { rewardType: 'REGISTRATION', level: 0, rewardPercentage: 0.00, fixedAmountPaise: 2000, isActive: true, effectiveFrom: now },
+        { rewardType: 'COURSE_PURCHASE', level: 1, rewardPercentage: 10.00, fixedAmountPaise: 0, isActive: true, effectiveFrom: now },
+        { rewardType: 'COURSE_PURCHASE', level: 2, rewardPercentage: 5.00, fixedAmountPaise: 0, isActive: true, effectiveFrom: now },
+        { rewardType: 'COURSE_PURCHASE', level: 3, rewardPercentage: 2.00, fixedAmountPaise: 0, isActive: true, effectiveFrom: now },
+        { rewardType: 'COURSE_PURCHASE', level: 4, rewardPercentage: 1.00, fixedAmountPaise: 0, isActive: true, effectiveFrom: now }
+      ]);
+    }
+  } catch (ruleSeedErr) {
+    logger.warn(`Default reward rule seed check warning: ${ruleSeedErr.message}`);
   }
 };
 
@@ -162,7 +195,12 @@ app.use((req, res, next) => {
 });
 
 // Body parsing middleware
-app.use(express.json({ limit: '50mb' }));
+app.use(express.json({
+  limit: '50mb',
+  verify: (req, res, buf) => {
+    req.rawBody = buf;
+  }
+}));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 // Passport OAuth

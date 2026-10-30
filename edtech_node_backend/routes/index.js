@@ -39,6 +39,20 @@ const { chatRoutes } = require('../modules/chat');
 router.use('/api', chatRoutes);
 
 // ==========================================
+// REFERRALS, REWARDS & WALLET MODULES
+// ==========================================
+const referralRoutes = require('../modules/referrals/routes/referral.routes');
+const rewardRoutes = require('../modules/referrals/routes/reward.routes');
+const walletRoutes = require('../modules/referrals/routes/wallet.routes');
+
+router.use('/api', referralRoutes);
+router.use('/api', rewardRoutes);
+router.use('/api', walletRoutes);
+router.use('/', referralRoutes); // Direct /referrals/... and /attribution/... paths
+router.use('/', rewardRoutes);
+router.use('/', walletRoutes);
+
+// ==========================================
 // SITE CONFIG ROUTES
 // ==========================================
 router.get('/config/:key', siteConfigController.getConfigByKey);

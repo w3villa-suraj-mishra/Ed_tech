@@ -126,6 +126,16 @@ const sessionsController = {
         try {
           user = await User.create(userData);
           logger.info(`${logPrefix} 7] User created successfully (ID: ${user.id}, accountType: ${user.accountType})`);
+
+          // Initialize user referral code and wallet
+          try {
+            const referralService = require('../modules/referrals/services/referral.service');
+            const walletService = require('../modules/referrals/services/wallet.service');
+            await referralService.getOrCreateReferralCode(user);
+            await walletService.getOrCreateWallet(user.id);
+          } catch (refInitErr) {
+            logger.warn(`OAuth referral/wallet init warning: ${refInitErr.message}`);
+          }
         } catch (createErr) {
           logger.error(`${logPrefix} CREATE ERROR] User.create failed for ${email}: ${createErr.message}`, {
             name: createErr.name,

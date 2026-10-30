@@ -118,6 +118,9 @@ function VerifyOtp() {
         code: fullOtp,
       });
 
+      const refCode = signupData?.referralCode || sessionStorage.getItem("referralCode") || null;
+      const anonId = localStorage.getItem("referral_anon_id") || null;
+
       // 2. Complete User Signup & Auto-login
       const signupRes = await apiConnector("POST", endpoints.SIGNUP_API, {
         firstName,
@@ -131,10 +134,15 @@ function VerifyOtp() {
         password_confirmation: confirmPassword,
         accountType: accountType,
         account_type: accountType,
+        referralCode: refCode,
+        referral_code: refCode,
+        anonymousId: anonId,
         image: `https://api.dicebear.com/5.x/initials/svg?seed=${firstName} ${lastName}`,
       });
 
       localStorage.removeItem("signupData");
+      sessionStorage.removeItem("referralCode");
+      localStorage.removeItem("referral_anon_id");
 
       // Auto login user if token returned
       if (signupRes?.data?.token) {

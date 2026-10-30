@@ -48,6 +48,7 @@ import PreviousAttempts from "./pages/PreviousAttempts";
 import InstructorPracticeBuilder from "./pages/InstructorPracticeBuilder";
 import InstructorAssignmentsPage from "./pages/InstructorAssignmentsPage";
 import StudentAssignmentsPage from "./pages/StudentAssignmentsPage";
+import ReferralDashboard from "./modules/referrals/pages/ReferralDashboard";
 import StudentCoursePracticePage from "./pages/StudentCoursePracticePage.jsx";
 import StudentCourseTestRunner from "./pages/StudentCourseTestRunner.jsx";
 import UpgradePlanPage from "./pages/UpgradePlanPage.jsx";
@@ -81,6 +82,7 @@ import AdminArticles     from "./pages/admin/AdminArticles";
 import AdminAnnouncements from "./pages/admin/AdminAnnouncements";
 import AdminOffers from "./pages/admin/AdminOffers";
 import AdminInstructors from "./pages/admin/AdminInstructors";
+import AdminReferrals from "./pages/admin/AdminReferrals";
 import AnnouncementBanner from "./components/Common/AnnouncementBanner";
 import { BASE_URL } from "./services/apis";
 
@@ -143,6 +145,7 @@ function App() {
           <Route path="/admin/announcements" element={<AdminAnnouncements />} />
           <Route path="/admin/offers"        element={<AdminOffers />} />
           <Route path="/admin/instructors"   element={<AdminInstructors />} />
+          <Route path="/admin/referrals"     element={<AdminReferrals />} />
           <Route path="/admin/live-sessions" element={<AdminLiveSessions />} />
           <Route path="/admin/contacts"     element={<AdminContacts />} />
         </Routes>
@@ -177,6 +180,7 @@ function App() {
           <Route path="/forgot-password"      element={<ForgotPassword />} />
           <Route path="/reset-password"       element={<ResetPassword />} />
           <Route path="/signup"               element={<Signup />} />
+          <Route path="/register"             element={<Signup />} />
           
           {/* Practice Center Routes */}
           <Route path="/practice"             element={<PracticeCenter />} />
@@ -209,6 +213,7 @@ function App() {
             <Route path="practice/topic"      element={<TopicPractice />} />
             <Route path="practice/attempts"   element={<PreviousAttempts />} />
             <Route path="student-assignments" element={<StudentAssignmentsPage />} />
+            <Route path="referrals"           element={<ReferralDashboard />} />
             <Route path="settings"            element={<Settings />} />
             <Route path="add-course"          element={<AddCourse />} />
             <Route path="edit-course/:courseId" element={<EditCourse />} />

@@ -11,6 +11,7 @@ import { setSignupData } from "../../../services/slices/authSlice"
 import { ACCOUNT_TYPE } from "../../../utils/constants"
 import { apiConnector } from "../../../services/apiConnector"
 import { endpoints, BASE_URL } from "../../../services/apis"
+import { validateReferralCodeAPI, captureAttributionAPI } from "../../../services/operations/referralAPI"
 import Tab from "../../Common/Tab"
 
 function Signup() {
@@ -41,6 +42,28 @@ function Signup() {
     password: "",
     confirmPassword: "",
   })
+
+  const [referralCode, setReferralCode] = useState(() => {
+    try {
+      const urlParams = new URLSearchParams(window.location.search);
+      const codeFromUrl = urlParams.get('ref') || urlParams.get('referral');
+      if (codeFromUrl) {
+        const clean = codeFromUrl.trim().toUpperCase();
+        sessionStorage.setItem('referralCode', clean);
+        return clean;
+      }
+      return sessionStorage.getItem('referralCode') || '';
+    } catch {
+      return '';
+    }
+  });
+
+  const [referrerStatus, setReferrerStatus] = useState({
+    loading: false,
+    valid: null,
+    name: null,
+    message: null,
+  });
 
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
@@ -81,6 +104,7 @@ function Signup() {
           password,
           confirmPassword,
           accountType,
+          referralCode: referralCode ? referralCode.trim().toUpperCase() : null
         })
       )
 
@@ -113,7 +137,70 @@ function Signup() {
       })
       window.history.replaceState({}, document.title, "/signup")
     }
+
+    // Capture first-touch referral attribution if present in URL
+    const codeFromUrl = params.get("ref") || params.get("referral");
+    if (codeFromUrl) {
+      const clean = codeFromUrl.trim().toUpperCase();
+      let anonId = localStorage.getItem("referral_anon_id");
+      if (!anonId) {
+        anonId = "anon_" + Math.random().toString(36).substring(2, 11);
+        localStorage.setItem("referral_anon_id", anonId);
+      }
+      captureAttributionAPI({
+        referralCode: clean,
+        channel: "web",
+        landingPage: window.location.pathname,
+        anonymousId: anonId,
+      });
+    }
   }, [])
+
+  // Live validate referral code with debounce
+  useEffect(() => {
+    const cleanCode = referralCode ? referralCode.trim().toUpperCase() : "";
+    if (!cleanCode) {
+      setReferrerStatus({ loading: false, valid: null, name: null, message: null });
+      return;
+    }
+
+    let isMounted = true;
+    const timer = setTimeout(async () => {
+      setReferrerStatus((prev) => ({ ...prev, loading: true }));
+      try {
+        const res = await validateReferralCodeAPI(cleanCode);
+        if (!isMounted) return;
+        if (res && res.valid) {
+          setReferrerStatus({
+            loading: false,
+            valid: true,
+            name: res?.data?.referrerName || "Verified Member",
+            message: `Invited by ${res?.data?.referrerName || "Verified Member"}`,
+          });
+        } else {
+          setReferrerStatus({
+            loading: false,
+            valid: false,
+            name: null,
+            message: res?.message || "Invalid referral code",
+          });
+        }
+      } catch (err) {
+        if (!isMounted) return;
+        setReferrerStatus({
+          loading: false,
+          valid: false,
+          name: null,
+          message: err?.response?.data?.message || "Invalid referral code",
+        });
+      }
+    }, 450);
+
+    return () => {
+      isMounted = false;
+      clearTimeout(timer);
+    };
+  }, [referralCode])
 
   return (
     <div className="min-h-[calc(100vh-4.5rem)] flex flex-col justify-center items-center bg-[#F9FAFE] relative overflow-hidden py-6 lg:py-8 px-4 sm:px-6 lg:px-8">
@@ -266,6 +353,54 @@ function Signup() {
                   {showConfirmPassword ? <AiOutlineEyeInvisible size={16} /> : <AiOutlineEye size={16} />}
                 </button>
               </div>
+            </div>
+
+            {/* Referral Code (Optional) */}
+            <div>
+              <div className="flex items-center justify-between mb-1">
+                <label className="block text-xs font-semibold text-gray-700">
+                  Referral Code <span className="text-gray-400 font-normal">(Optional)</span>
+                </label>
+                {referrerStatus.loading ? (
+                  <span className="text-[10px] text-gray-400 font-medium animate-pulse">
+                    Checking...
+                  </span>
+                ) : referrerStatus.valid === true ? (
+                  <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-100 flex items-center gap-1">
+                    ✓ Code Verified
+                  </span>
+                ) : null}
+              </div>
+              <input
+                type="text"
+                name="referralCode"
+                value={referralCode}
+                onChange={(e) => {
+                  const val = e.target.value.toUpperCase();
+                  setReferralCode(val);
+                  if (val) sessionStorage.setItem('referralCode', val);
+                  else sessionStorage.removeItem('referralCode');
+                }}
+                placeholder="e.g. USR_A123456"
+                className={`w-full uppercase tracking-wider font-mono rounded-xl border bg-white px-3.5 py-2 text-xs sm:text-sm text-gray-800 placeholder-gray-400 placeholder:normal-case placeholder:font-sans focus:outline-none transition-all shadow-2xs ${
+                  referrerStatus.valid === true
+                    ? "border-emerald-300 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
+                    : referrerStatus.valid === false
+                    ? "border-rose-300 focus:border-rose-500 focus:ring-2 focus:ring-rose-100"
+                    : "border-gray-200 focus:border-[#3BA7F2] focus:ring-2 focus:ring-indigo-100"
+                }`}
+              />
+              {referrerStatus.valid === true && (
+                <div className="mt-1 flex items-center gap-1.5 text-[11px] font-medium text-emerald-700 bg-emerald-50/70 px-2.5 py-1 rounded-md border border-emerald-100">
+                  <span>🎉</span>
+                  <span>{referrerStatus.message} — you'll both be part of the learning network!</span>
+                </div>
+              )}
+              {referrerStatus.valid === false && (
+                <p className="mt-1 text-[11px] font-medium text-rose-500">
+                  {referrerStatus.message}
+                </p>
+              )}
             </div>
 
             {/* Terms Checkbox */}

@@ -1,10 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { useSelector } from 'react-redux';
 import useCheckout from '../hooks/useCheckout';
 import PaymentStatusModal from '../components/PaymentStatusModal';
 import CheckoutConfirmationModal from '../components/CheckoutConfirmationModal';
 import StripePaymentModal from '../components/StripePaymentModal';
-import { FiChevronDown, FiChevronUp, FiCheck, FiX, FiShield, FiLayers, FiBookOpen, FiAward, FiChevronLeft } from 'react-icons/fi';
+import { getWalletBalanceAPI } from '../../../services/operations/referralAPI';
+import { FiChevronDown, FiChevronUp, FiCheck, FiX, FiShield, FiLayers, FiBookOpen, FiAward, FiChevronLeft, FiGift } from 'react-icons/fi';
 import toast from 'react-hot-toast';
 
 const CheckoutPage = () => {
@@ -57,6 +59,25 @@ const CheckoutPage = () => {
   const [couponInput, setCouponInput] = useState('');
   const [showConfirmModal, setShowConfirmModal] = useState(false);
 
+  // Wallet Credits State
+  const { token } = useSelector((state) => state.auth);
+  const [walletBalanceRupees, setWalletBalanceRupees] = useState(0);
+  const [useWalletCredits, setUseWalletCredits] = useState(false);
+
+  useEffect(() => {
+    if (token) {
+      getWalletBalanceAPI(token)
+        .then((data) => {
+          if (data && typeof data.availableBalanceRupees !== 'undefined') {
+            setWalletBalanceRupees(Number(data.availableBalanceRupees || 0));
+          }
+        })
+        .catch((err) => {
+          console.debug('Wallet balance fetch warning:', err.message);
+        });
+    }
+  }, [token]);
+
   // Dynamic Prices based on primary course or fallback
   const basePrice = Number(primaryCourse?.price || primaryCourse?.pricing?.finalPrice || 4999);
   const planPrices = {
@@ -68,7 +89,11 @@ const CheckoutPage = () => {
   const currentPlanPrice = planPrices[selectedPlan] || basePrice;
   const discountPercent = appliedCoupon ? appliedCoupon.discountPercent : 0;
   const discountAmount = Math.round((currentPlanPrice * discountPercent) / 100);
-  const finalPrice = Math.max(0, currentPlanPrice - discountAmount);
+  const priceAfterCoupon = Math.max(0, currentPlanPrice - discountAmount);
+  
+  // Wallet credit application
+  const appliedWalletCredits = useWalletCredits ? Math.min(walletBalanceRupees, priceAfterCoupon) : 0;
+  const finalPrice = Math.max(0, priceAfterCoupon - appliedWalletCredits);
 
   const handleApplyCoupon = (e) => {
     e.preventDefault();
@@ -115,7 +140,7 @@ const CheckoutPage = () => {
 
   const handleConfirmAndPay = () => {
     setShowConfirmModal(false);
-    initiatePayment(selectedPlan, appliedCoupon?.code);
+    initiatePayment(selectedPlan, appliedCoupon?.code || null, useWalletCredits);
   };
 
   if (coursesToCheckout.length === 0) {
@@ -386,9 +411,9 @@ const CheckoutPage = () => {
 
               {/* Price Row */}
               <div className="flex items-center justify-between pt-2">
-                <span className="text-xs font-medium text-gray-500">Price</span>
+                <span className="text-xs font-medium text-gray-500">Total Payable</span>
                 <div className="flex items-center gap-2">
-                  {discountPercent > 0 && (
+                  {(discountPercent > 0 || (useWalletCredits && appliedWalletCredits > 0)) && (
                     <span className="text-xs text-gray-400 line-through font-medium">
                       ₹{currentPlanPrice.toLocaleString()}
                     </span>
@@ -398,6 +423,43 @@ const CheckoutPage = () => {
                   </span>
                 </div>
               </div>
+
+              {/* Wallet Credits Section (if user has available credits) */}
+              {walletBalanceRupees > 0 && (
+                <div className="bg-gradient-to-r from-sky-50 to-indigo-50/70 border border-sky-200/90 rounded-2xl p-3.5 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <label className="flex items-center gap-2.5 cursor-pointer select-none">
+                      <input
+                        type="checkbox"
+                        checked={useWalletCredits}
+                        onChange={(e) => setUseWalletCredits(e.target.checked)}
+                        className="w-4 h-4 rounded text-[#3BA7F2] accent-[#3BA7F2] cursor-pointer"
+                      />
+                      <div>
+                        <span className="text-xs font-bold text-[#0F172A] flex items-center gap-1.5">
+                          <FiGift className="text-[#3BA7F2] text-xs" />
+                          Apply Referral Reward Credits
+                        </span>
+                        <span className="text-[11px] text-gray-500 block">
+                          Available balance: ₹{walletBalanceRupees.toLocaleString()}
+                        </span>
+                      </div>
+                    </label>
+                    {useWalletCredits && appliedWalletCredits > 0 && (
+                      <span className="text-xs font-black text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                        -₹{appliedWalletCredits.toLocaleString()}
+                      </span>
+                    )}
+                  </div>
+                  {useWalletCredits && (
+                    <p className="text-[11px] text-sky-700 font-medium">
+                      {finalPrice === 0
+                        ? '🎉 100% covered by your reward credits! No card required.'
+                        : `₹${appliedWalletCredits.toLocaleString()} deducted from credits. Remaining ₹${finalPrice.toLocaleString()} payable.`}
+                    </p>
+                  )}
+                </div>
+              )}
 
               {/* Coupon Section */}
               <div className="space-y-2">
@@ -490,6 +552,8 @@ const CheckoutPage = () => {
         discountAmount={discountAmount}
         appliedCoupon={appliedCoupon}
         courses={coursesToCheckout}
+        useWalletCredits={useWalletCredits}
+        appliedWalletCredits={appliedWalletCredits}
       />
 
       {/* STRIPE PAYMENT MODAL */}

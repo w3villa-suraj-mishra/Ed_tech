@@ -42,6 +42,13 @@ export const sidebarLinks = [
     icon: "FiVideo",
   },
   {
+    id: 25,
+    name: "Referrals & Rewards",
+    path: "/dashboard/referrals",
+    type: ACCOUNT_TYPE.STUDENT,
+    icon: "FiGift",
+  },
+  {
     id: 14,
     name: "Notifications",
     path: "/dashboard/notifications",

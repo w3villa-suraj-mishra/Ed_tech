@@ -3,7 +3,7 @@ import { studentEndpoints } from '../../../services/apis';
 
 const { COURSE_PAYMENT_API, COURSE_VERIFY_API } = studentEndpoints;
 
-export const createServerOrder = async ({ token, courses, plan = 'gold', couponCode = null, customerDetails }) => {
+export const createServerOrder = async ({ token, courses, plan = 'gold', couponCode = null, customerDetails, useWalletCredits = false }) => {
   const headers = token ? { Authorization: `Bearer ${token}` } : null;
   const courseIds = courses.map((c) => (typeof c === 'object' ? c._id || c.id : c));
 
@@ -15,7 +15,8 @@ export const createServerOrder = async ({ token, courses, plan = 'gold', couponC
       plan,
       couponCode,
       paymentGateway: 'stripe',
-      customerDetails
+      customerDetails,
+      useWalletCredits
     },
     headers
   );

@@ -4,6 +4,10 @@ const { User, Otp } = require('../models');
 const mailService = require('../services/mailService');
 const helpers = require('../utils/helpers');
 const logger = require('../utils/logger');
+const referralService = require('../modules/referrals/services/referral.service');
+const rewardService = require('../modules/referrals/services/reward.service');
+const walletService = require('../modules/referrals/services/wallet.service');
+const attributionService = require('../modules/referrals/services/attribution.service');
 
 const authController = {
   /**
@@ -73,6 +77,45 @@ const authController = {
 
       // Delete OTP after successful signup
       await otp.destroy();
+
+      // Initialize user's own Referral Code and Reward Wallet
+      try {
+        await referralService.getOrCreateReferralCode(user);
+        await walletService.getOrCreateWallet(user.id);
+      } catch (refInitErr) {
+        logger.warn(`Referral/Wallet auto-init warning for user ${user.id}: ${refInitErr.message}`);
+      }
+
+      // If user was invited via a referral code, establish permanent relationship & award ₹20 to direct referrer
+      const incomingReferralCode = req.body.referralCode || req.body.referral_code;
+      if (incomingReferralCode && typeof incomingReferralCode === 'string' && incomingReferralCode.trim()) {
+        try {
+          const referrer = await referralService.resolveReferralCode(incomingReferralCode);
+          if (referrer && String(referrer.id) !== String(user.id)) {
+            await referralService.establishReferralRelationship({
+              referrerId: referrer.id,
+              referredUserId: user.id,
+              referralCode: incomingReferralCode.trim().toUpperCase(),
+              attributionId: req.body.attributionId || null
+            });
+            // Award one-time verified registration reward (₹20) to direct referrer
+            await rewardService.processRegistrationReward(user.id);
+
+            // Link attribution touchpoint to newly registered user
+            try {
+              await attributionService.linkAttributionToUser({
+                referralCode: incomingReferralCode.trim().toUpperCase(),
+                userId: user.id,
+                anonymousId: req.body.anonymousId || null
+              });
+            } catch (attrErr) {
+              logger.warn(`Attribution linking warning for user ${user.id}: ${attrErr.message}`);
+            }
+          }
+        } catch (linkErr) {
+          logger.warn(`Referral linking during signup warning for user ${user.id}: ${linkErr.message}`);
+        }
+      }
 
       return res.status(201).json({
         success: true,
