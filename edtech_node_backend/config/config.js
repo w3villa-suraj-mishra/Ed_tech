@@ -42,8 +42,7 @@ const buildConnectionConfig = (overrides = {}) => {
       dialect: 'postgres',
       dialectOptions: buildDialectOptions(true),
       logging: false,
-      pool: poolOptions,
-      ...overrides
+      pool: poolOptions
     };
   }
 
