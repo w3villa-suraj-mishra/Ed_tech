@@ -8,9 +8,15 @@ const poolOptions = {
   idle: Math.max(1000, Number.parseInt(process.env.DB_POOL_IDLE_MS, 10) || 10000)
 };
 
+const shouldUseSupabaseUrl = () => {
+  if (process.env.USE_SUPABASE_DB === 'true') return true;
+  if (process.env.VERCEL === '1' || process.env.NODE_ENV === 'production') return Boolean(process.env.DATABASE_URL);
+  return false;
+};
+
 let sequelize;
 
-if (process.env.DATABASE_URL) {
+if (shouldUseSupabaseUrl() && process.env.DATABASE_URL) {
   sequelize = new Sequelize(process.env.DATABASE_URL, {
     dialect: 'postgres',
     dialectModule: require('pg'),

@@ -122,95 +122,10 @@ export default function PracticeCenter() {
   return (
     <div className="w-full space-y-6 text-gray-800 pb-10 font-sans">
       
-      {/* 1. HERO BANNER CARD */}
-      <div className="bg-white border border-gray-200/80 rounded-2xl sm:rounded-3xl p-6 sm:p-8 lg:p-10 shadow-xs relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-6">
-        
-        {/* Subtle decorative background gradient on right */}
-        <div className="absolute right-0 top-0 bottom-0 w-2/5 pointer-events-none bg-gradient-to-l from-indigo-50/60 via-blue-50/20 to-transparent rounded-r-3xl" />
-
-        {/* Left Content */}
-        <div className="relative z-10 max-w-xl space-y-3.5">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#13AA92]/10 text-[#3BA7F2] border border-[#13AA92]/30 text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider">
-            <span>🚀 100% FREE FOR ALL LOGGED-IN LEARNERS</span>
-          </div>
-
-          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-[#0F172A] tracking-tight leading-tight">
-            CodeLearn <span className="text-[#3BA7F2]">Practice Center</span>
-          </h1>
-
-          <p className="text-xs sm:text-sm text-gray-500 leading-relaxed font-normal">
-            Sharpen your coding skills with daily quizzes, topic tests, full-length mock exams, and real tech interview questions. Unlimited attempts with instant dynamic score analytics.
-          </p>
-        </div>
-
-        {/* Right Illustration: 3D Laptop, Floating Analytics Card, Checklist, and Potted Plant */}
-        <div className="relative z-10 shrink-0 w-full md:w-auto flex justify-center">
-          <svg width="270" height="175" viewBox="0 0 280 180" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full max-w-[270px] h-auto select-none">
-            {/* Sparkles top right */}
-            <line x1="238" y1="18" x2="244" y2="13" stroke="#818CF8" strokeWidth="2.5" strokeLinecap="round" />
-            <line x1="247" y1="26" x2="254" y2="26" stroke="#818CF8" strokeWidth="2.5" strokeLinecap="round" />
-            <line x1="242" y1="34" x2="248" y2="39" stroke="#818CF8" strokeWidth="2.5" strokeLinecap="round" />
-
-            {/* Floating Chart Card (Left) */}
-            <g filter="drop-shadow(0 4px 10px rgba(0,0,0,0.06))">
-              <rect x="12" y="60" width="46" height="38" rx="8" fill="#FFFFFF" />
-              <rect x="12" y="60" width="46" height="38" rx="8" stroke="#E2E8F0" strokeWidth="1" />
-              <path d="M20 83L27 75L33 80L42 69" stroke="#3BA7F2" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-              <rect x="21" y="86" width="3.5" height="6" rx="1" fill="#93C5FD" />
-              <rect x="27.5" y="81" width="3.5" height="11" rx="1" fill="#60A5FA" />
-              <rect x="34" y="77" width="3.5" height="15" rx="1" fill="#3BA7F2" />
-            </g>
-
-            {/* 3D Laptop Body */}
-            {/* Screen Bezel */}
-            <rect x="68" y="28" width="130" height="92" rx="10" fill="#3BA7F2" />
-            {/* Screen Interior */}
-            <rect x="73" y="33" width="120" height="82" rx="6" fill="#1E293B" />
-            {/* Code Brackets on Screen */}
-            <text x="133" y="80" textAnchor="middle" fill="#60A5FA" fontSize="26" fontWeight="bold" fontFamily="monospace">&lt;/&gt;</text>
-            
-            {/* Laptop Base */}
-            <path d="M50 120L68 120L198 120L216 120C222 120 226 124 224 129L220 136C218 139 214 141 210 141H56C52 141 48 139 46 136L42 129C40 124 44 120 50 120Z" fill="#1D4ED8" />
-            {/* Trackpad */}
-            <rect x="115" y="128" width="38" height="5" rx="2" fill="#3BA7F2" />
-
-            {/* Floating Checklist Card (Overlapping Laptop Screen Right) */}
-            <g filter="drop-shadow(0 6px 16px rgba(0,0,0,0.08))">
-              <rect x="162" y="26" width="64" height="86" rx="8" fill="#FFFFFF" />
-              <rect x="162" y="26" width="64" height="86" rx="8" stroke="#E2E8F0" strokeWidth="1" />
-              
-              {/* Checklist Row 1 */}
-              <rect x="170" y="38" width="11" height="11" rx="2.5" fill="#10B981" />
-              <path d="M172.5 43.5L175 46L179 41" stroke="#FFFFFF" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-              <rect x="185" y="42" width="32" height="4" rx="2" fill="#E2E8F0" />
-
-              {/* Checklist Row 2 */}
-              <rect x="170" y="55" width="11" height="11" rx="2.5" fill="#10B981" />
-              <path d="M172.5 60.5L175 63L179 58" stroke="#FFFFFF" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-              <rect x="185" y="59" width="26" height="4" rx="2" fill="#E2E8F0" />
-
-              {/* Checklist Row 3 */}
-              <rect x="170" y="72" width="11" height="11" rx="2.5" fill="#10B981" />
-              <path d="M172.5 77.5L175 80L179 75" stroke="#FFFFFF" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-              <rect x="185" y="76" width="30" height="4" rx="2" fill="#E2E8F0" />
-
-              {/* Checklist Row 4 */}
-              <rect x="170" y="89" width="11" height="11" rx="2.5" fill="#E2E8F0" />
-              <rect x="185" y="93" width="22" height="4" rx="2" fill="#E2E8F0" />
-            </g>
-
-            {/* Potted Plant (Far Right) */}
-            {/* White Planter Pot */}
-            <path d="M232 116L234 140H248L250 116H232Z" fill="#FFFFFF" stroke="#CBD5E1" strokeWidth="1.5" />
-            {/* Green Foliage */}
-            <path d="M241 116C241 108 245 102 247 100C247 104 245 112 241 116Z" fill="#10B981" />
-            <path d="M241 116C239 106 235 102 232 102C234 106 237 112 241 116Z" fill="#059669" />
-            <path d="M241 116C241 100 240 92 241 86C243 92 244 102 241 116Z" fill="#34D399" />
-            <path d="M241 116C245 110 250 108 252 108C250 112 246 114 241 116Z" fill="#10B981" />
-          </svg>
-        </div>
-
-      </div>
+      {/* Simple Heading */}
+      <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-[#0F172A] tracking-tight leading-tight mb-6">
+        Practice Center
+      </h1>
 
       {/* 2. 6 FEATURE PRACTICE CARDS GRID (3 columns x 2 rows) */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">

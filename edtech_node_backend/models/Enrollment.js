@@ -28,7 +28,7 @@ const Enrollment = sequelize.define('Enrollment', {
     onDelete: 'CASCADE'
   },
   plan: {
-    type: DataTypes.ENUM('free', 'silver', 'gold'),
+    type: DataTypes.ENUM('free', 'silver', 'gold', 'plus', 'pro'),
     allowNull: false,
     defaultValue: 'free'
   },
