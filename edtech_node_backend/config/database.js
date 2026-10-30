@@ -1,12 +1,24 @@
 const { Sequelize } = require('sequelize');
 require('dotenv').config();
 
+const isServerless = process.env.VERCEL === '1' || Boolean(process.env.AWS_LAMBDA_FUNCTION_NAME);
+
 const poolOptions = {
-  max: Math.max(1, Number.parseInt(process.env.DB_POOL_MAX, 10) || 5),
+  max: isServerless ? 1 : Math.max(1, Number.parseInt(process.env.DB_POOL_MAX, 10) || 4),
   min: 0,
   acquire: Math.max(1000, Number.parseInt(process.env.DB_POOL_ACQUIRE_MS, 10) || 30000),
-  idle: Math.max(1000, Number.parseInt(process.env.DB_POOL_IDLE_MS, 10) || 10000),
+  idle: Math.max(1000, Number.parseInt(process.env.DB_POOL_IDLE_MS, 10) || 5000),
   evict: Math.max(1000, Number.parseInt(process.env.DB_POOL_EVICT_MS, 10) || 1000)
+};
+
+const getEffectiveDatabaseUrl = () => {
+  let url = process.env.DATABASE_URL;
+  if (!url) return null;
+  // If Supabase pooler is set to port 5432 (Session mode limit: 15), automatically use port 6543 (Transaction mode)
+  if (url.includes('.pooler.supabase.com:5432')) {
+    url = url.replace('.pooler.supabase.com:5432', '.pooler.supabase.com:6543');
+  }
+  return url;
 };
 
 const shouldUseSupabaseUrl = () => {
@@ -16,9 +28,10 @@ const shouldUseSupabaseUrl = () => {
 };
 
 let sequelize;
+const effectiveDbUrl = getEffectiveDatabaseUrl();
 
-if (shouldUseSupabaseUrl() && process.env.DATABASE_URL) {
-  sequelize = new Sequelize(process.env.DATABASE_URL, {
+if (shouldUseSupabaseUrl() && effectiveDbUrl) {
+  sequelize = new Sequelize(effectiveDbUrl, {
     dialect: 'postgres',
     dialectModule: require('pg'),
     dialectOptions: {

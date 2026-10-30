@@ -23,12 +23,22 @@ const poolOptions = {
   evict: Math.max(1000, Number.parseInt(process.env.DB_POOL_EVICT_MS, 10) || 1000)
 };
 
+const getEffectiveDatabaseUrl = () => {
+  let url = process.env.DATABASE_URL;
+  if (!url) return null;
+  if (url.includes('.pooler.supabase.com:5432')) {
+    url = url.replace('.pooler.supabase.com:5432', '.pooler.supabase.com:6543');
+  }
+  return url;
+};
+
 const buildConnectionConfig = (overrides = {}) => {
-  const useDatabaseUrl = shouldUseSupabaseUrl() && Boolean(process.env.DATABASE_URL);
+  const effectiveUrl = getEffectiveDatabaseUrl();
+  const useDatabaseUrl = shouldUseSupabaseUrl() && Boolean(effectiveUrl);
 
   if (useDatabaseUrl) {
     return {
-      url: process.env.DATABASE_URL,
+      url: effectiveUrl,
       dialect: 'postgres',
       dialectOptions: buildDialectOptions(true),
       logging: false,

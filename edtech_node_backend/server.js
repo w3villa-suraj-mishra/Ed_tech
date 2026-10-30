@@ -311,6 +311,18 @@ if (!process.env.VERCEL) {
       logger.error('Database connection warning (server started without DB):', error.message);
     }
 
+    server.on('error', (err) => {
+      if (err.code === 'EADDRINUSE') {
+        logger.error(`Port ${PORT} is already in use by another process.`);
+        console.error(`\n❌ Error: Port ${PORT} is already in use.`);
+        console.error(`👉 Run 'npx kill-port ${PORT}' or 'fuser -k ${PORT}/tcp' to kill the existing process, then restart.\n`);
+        process.exit(1);
+      } else {
+        logger.error('Server error:', err.message);
+        process.exit(1);
+      }
+    });
+
     server.listen(PORT, () => {
       logger.info(`Server is running on port ${PORT}`);
       console.log(`\n✓ EdTech Backend Server with Socket.IO`);
