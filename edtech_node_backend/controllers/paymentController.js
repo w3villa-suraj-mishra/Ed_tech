@@ -8,6 +8,7 @@ const stripe = stripeSecretKey && stripeSecretKey !== 'sk_test_placeholder_key_f
 
 const { PLAN_TYPES, PLAN_CONFIG, calculatePlanPrice } = require('../config/plans');
 const { calculateCoursePrice } = require('../services/pricingService');
+const { Course, Enrollment, User, Offer, OfferRedemption, CourseProgress, sequelize } = require('../models');
 const logger = require('../utils/logger');
 const rewardService = require('../modules/referrals/services/reward.service');
 const walletService = require('../modules/referrals/services/wallet.service');
@@ -418,6 +419,18 @@ const activateEnrollments = async ({ userId, courseIds, plan = PLAN_TYPES.GOLD, 
           expiresAt,
           paymentReference: paymentRef || 'STRIPE_PAYMENT'
         });
+      }
+
+      // Initialize CourseProgress if not already created
+      try {
+        if (CourseProgress) {
+          await CourseProgress.findOrCreate({
+            where: { userId, courseId: parsedCourseId },
+            defaults: { userId, courseId: parsedCourseId }
+          });
+        }
+      } catch (progErr) {
+        logger.warn(`CourseProgress auto-init warning for user ${userId}, course ${parsedCourseId}: ${progErr.message}`);
       }
 
       // Automatically send dynamic course purchase confirmation email

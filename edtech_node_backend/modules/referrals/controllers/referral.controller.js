@@ -28,8 +28,8 @@ const referralController = {
         data: {
           referralCode: linkData.referralCode,
           referralUrl: linkData.referralUrl,
-          directReferrer: directParentRelation ? {
-            name: `${directParentRelation.referrer.firstName || ''} ${directParentRelation.referrer.lastName || ''}`.trim(),
+          directReferrer: (directParentRelation && directParentRelation.referrer) ? {
+            name: `${directParentRelation.referrer.firstName || ''} ${directParentRelation.referrer.lastName || ''}`.trim() || 'Referrer',
             registeredAt: directParentRelation.registeredAt
           } : null,
           stats: {

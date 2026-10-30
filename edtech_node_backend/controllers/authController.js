@@ -88,7 +88,12 @@ const authController = {
 
       // If user was invited via a referral code, establish permanent relationship & award ₹20 to direct referrer
       const incomingReferralCode = req.body.referralCode || req.body.referral_code;
-      if (incomingReferralCode && typeof incomingReferralCode === 'string' && incomingReferralCode.trim()) {
+      if (
+        incomingReferralCode &&
+        typeof incomingReferralCode === 'string' &&
+        incomingReferralCode.trim() &&
+        !incomingReferralCode.includes('...')
+      ) {
         try {
           const referrer = await referralService.resolveReferralCode(incomingReferralCode);
           if (referrer && String(referrer.id) !== String(user.id)) {
