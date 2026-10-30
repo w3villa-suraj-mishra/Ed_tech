@@ -3,7 +3,8 @@ import { useSelector } from 'react-redux';
 import {
   getReferralProfileAPI,
   getReferralNetworkAPI,
-  getRewardSummaryAPI
+  getRewardSummaryAPI,
+  generateReferralLinkAPI
 } from '../../../services/operations/referralAPI';
 import ReferralMetricsBanner from '../components/ReferralMetricsBanner';
 import ReferralLinkShareCard from '../components/ReferralLinkShareCard';
@@ -25,14 +26,39 @@ export default function ReferralDashboard() {
     if (!token) return;
     setLoading(true);
     try {
-      const [profileRes, networkRes, rewardRes] = await Promise.all([
+      const results = await Promise.allSettled([
         getReferralProfileAPI(token),
         getReferralNetworkAPI(token),
         getRewardSummaryAPI(token)
       ]);
-      setProfile(profileRes);
-      setNetwork(networkRes);
-      setRewardSummary(rewardRes);
+
+      let loadedProfile = null;
+      if (results[0].status === 'fulfilled' && results[0].value) {
+        loadedProfile = results[0].value;
+        setProfile(loadedProfile);
+      }
+      if (results[1].status === 'fulfilled' && results[1].value) {
+        setNetwork(results[1].value);
+      }
+      if (results[2].status === 'fulfilled' && results[2].value) {
+        setRewardSummary(results[2].value);
+      }
+
+      // If profile API failed or returned no referralCode, generate/fetch it directly
+      if (!loadedProfile?.referralCode) {
+        try {
+          const linkData = await generateReferralLinkAPI(token);
+          if (linkData?.referralCode) {
+            setProfile((prev) => ({
+              ...(prev || {}),
+              referralCode: linkData.referralCode,
+              referralUrl: linkData.referralUrl
+            }));
+          }
+        } catch (linkErr) {
+          console.warn('Fallback link generation failed:', linkErr.message);
+        }
+      }
     } catch (err) {
       console.error('Failed to load referral dashboard data:', err);
     } finally {

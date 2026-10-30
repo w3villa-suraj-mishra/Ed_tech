@@ -118,7 +118,8 @@ function VerifyOtp() {
         code: fullOtp,
       });
 
-      const refCode = signupData?.referralCode || sessionStorage.getItem("referralCode") || null;
+      const rawRef = signupData?.referralCode || sessionStorage.getItem("referralCode") || null;
+      const refCode = (rawRef && rawRef !== '...' && !rawRef.includes('...')) ? rawRef : null;
       const anonId = localStorage.getItem("referral_anon_id") || null;
 
       // 2. Complete User Signup & Auto-login

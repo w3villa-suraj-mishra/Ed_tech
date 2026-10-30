@@ -47,12 +47,13 @@ function Signup() {
     try {
       const urlParams = new URLSearchParams(window.location.search);
       const codeFromUrl = urlParams.get('ref') || urlParams.get('referral');
-      if (codeFromUrl) {
+      if (codeFromUrl && codeFromUrl !== '...' && !codeFromUrl.includes('...')) {
         const clean = codeFromUrl.trim().toUpperCase();
         sessionStorage.setItem('referralCode', clean);
         return clean;
       }
-      return sessionStorage.getItem('referralCode') || '';
+      const stored = sessionStorage.getItem('referralCode') || '';
+      return (stored && stored !== '...' && !stored.includes('...')) ? stored : '';
     } catch {
       return '';
     }

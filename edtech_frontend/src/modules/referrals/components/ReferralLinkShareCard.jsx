@@ -7,11 +7,18 @@ export default function ReferralLinkShareCard({ profile }) {
   const [copiedCode, setCopiedCode] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
 
-  const referralCode = profile?.referralCode || '...';
-  const referralUrl = profile?.referralUrl || (typeof window !== 'undefined' ? `${window.location.origin}/register?ref=${referralCode}` : '');
+  const hasValidCode = Boolean(
+    profile?.referralCode &&
+    profile.referralCode !== '...' &&
+    !profile.referralCode.includes('...')
+  );
+
+  const referralCode = hasValidCode ? profile.referralCode : '';
+  const origin = typeof window !== 'undefined' ? window.location.origin : '';
+  const referralUrl = hasValidCode ? `${origin}/register?ref=${encodeURIComponent(referralCode)}` : '';
 
   const copyToClipboard = (text, type) => {
-    if (!text) return;
+    if (!text || !hasValidCode) return;
     navigator.clipboard.writeText(text);
     if (type === 'code') {
       setCopiedCode(true);
@@ -25,6 +32,7 @@ export default function ReferralLinkShareCard({ profile }) {
   };
 
   const handleWhatsAppShare = () => {
+    if (!hasValidCode) return;
     const text = encodeURIComponent(
       `🚀 Hey! I'm learning on CodeLearn. Use my invite link to join, get verified, and explore top tech courses:\n\n${referralUrl}\n\nReferral Code: ${referralCode}`
     );
@@ -32,6 +40,7 @@ export default function ReferralLinkShareCard({ profile }) {
   };
 
   const handleNativeShare = async () => {
+    if (!hasValidCode) return;
     if (navigator.share) {
       try {
         await navigator.share({
@@ -73,13 +82,24 @@ export default function ReferralLinkShareCard({ profile }) {
           <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
             Your Unique Code
           </div>
-          <div className="flex items-center justify-between gap-2 bg-white border border-gray-200 rounded-xl px-3 py-2.5">
-            <span className="font-mono font-black text-lg sm:text-xl text-[#0F172A] tracking-wider">
-              {referralCode}
-            </span>
+          <div className="flex items-center justify-between gap-2 bg-white border border-gray-200 rounded-xl px-3 py-2.5 min-h-[46px]">
+            {hasValidCode ? (
+              <span className="font-mono font-black text-lg sm:text-xl text-[#0F172A] tracking-wider">
+                {referralCode}
+              </span>
+            ) : (
+              <span className="text-xs text-gray-400 italic animate-pulse">
+                Generating unique code...
+              </span>
+            )}
             <button
               onClick={() => copyToClipboard(referralCode, 'code')}
-              className="p-1.5 text-gray-400 hover:text-[#3BA7F2] transition cursor-pointer"
+              disabled={!hasValidCode}
+              className={`p-1.5 transition ${
+                hasValidCode
+                  ? 'text-gray-400 hover:text-[#3BA7F2] cursor-pointer'
+                  : 'text-gray-300 cursor-not-allowed opacity-50'
+              }`}
               title="Copy code"
             >
               {copiedCode ? <FiCheck className="text-emerald-500 text-lg" /> : <FiCopy className="text-lg" />}
@@ -101,11 +121,17 @@ export default function ReferralLinkShareCard({ profile }) {
                 type="text"
                 readOnly
                 value={referralUrl}
-                className="w-full bg-white border border-gray-200 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm font-medium text-gray-700 outline-none select-all"
+                placeholder={hasValidCode ? '' : 'Generating your personal referral link...'}
+                className="w-full bg-white border border-gray-200 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm font-medium text-gray-700 outline-none select-all placeholder:text-gray-400 placeholder:italic"
               />
               <button
                 onClick={() => copyToClipboard(referralUrl, 'link')}
-                className="px-4 py-2.5 rounded-xl bg-[#3BA7F2] hover:bg-[#2895E0] text-white text-xs sm:text-sm font-bold transition shadow-xs flex items-center gap-1.5 shrink-0 cursor-pointer active:scale-95"
+                disabled={!hasValidCode}
+                className={`px-4 py-2.5 rounded-xl text-white text-xs sm:text-sm font-bold transition shadow-xs flex items-center gap-1.5 shrink-0 ${
+                  hasValidCode
+                    ? 'bg-[#3BA7F2] hover:bg-[#2895E0] cursor-pointer active:scale-95'
+                    : 'bg-gray-300 cursor-not-allowed opacity-60'
+                }`}
               >
                 {copiedLink ? <FiCheck /> : <FiCopy />}
                 <span>{copiedLink ? 'Copied!' : 'Copy'}</span>
@@ -116,7 +142,12 @@ export default function ReferralLinkShareCard({ profile }) {
           <div className="flex flex-wrap items-center gap-2.5 pt-1">
             <button
               onClick={handleWhatsAppShare}
-              className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition shadow-xs flex items-center gap-1.5 cursor-pointer active:scale-95"
+              disabled={!hasValidCode}
+              className={`px-4 py-2 rounded-xl text-white text-xs font-bold transition shadow-xs flex items-center gap-1.5 ${
+                hasValidCode
+                  ? 'bg-emerald-600 hover:bg-emerald-700 cursor-pointer active:scale-95'
+                  : 'bg-emerald-300 cursor-not-allowed opacity-60'
+              }`}
             >
               <FaWhatsapp className="text-sm" />
               <span>Share on WhatsApp</span>
@@ -124,17 +155,26 @@ export default function ReferralLinkShareCard({ profile }) {
 
             <button
               onClick={handleNativeShare}
-              className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold transition shadow-xs flex items-center gap-1.5 cursor-pointer active:scale-95"
+              disabled={!hasValidCode}
+              className={`px-4 py-2 rounded-xl text-white text-xs font-bold transition shadow-xs flex items-center gap-1.5 ${
+                hasValidCode
+                  ? 'bg-slate-800 hover:bg-slate-900 cursor-pointer active:scale-95'
+                  : 'bg-slate-400 cursor-not-allowed opacity-60'
+              }`}
             >
               <FiShare2 className="text-sm" />
               <span>Share Link</span>
             </button>
 
             <a
-              href={referralUrl}
+              href={hasValidCode ? referralUrl : undefined}
               target="_blank"
               rel="noreferrer"
-              className="px-3 py-2 rounded-xl border border-gray-200 text-gray-600 hover:bg-gray-100 text-xs font-semibold transition flex items-center gap-1.5"
+              className={`px-3 py-2 rounded-xl border border-gray-200 text-xs font-semibold transition flex items-center gap-1.5 ${
+                hasValidCode
+                  ? 'text-gray-600 hover:bg-gray-100 cursor-pointer'
+                  : 'text-gray-300 cursor-not-allowed opacity-50 pointer-events-none'
+              }`}
             >
               <FiExternalLink className="text-xs" />
               <span>Test Link</span>
