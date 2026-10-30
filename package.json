@@ -5,7 +5,9 @@
     "start": "concurrently \"npm run frontend\" \"npm run backend\"",
     "dev": "concurrently \"npm run frontend\" \"npm run backend\"",
     "frontend": "cd edtech_frontend && PORT=3001 CHOKIDAR_USEPOLLING=true WATCHPACK_POLLING=true npm start",
-    "backend": "cd edtech_node_backend && npm run dev"
+    "backend": "cd edtech_node_backend && npm run dev",
+    "migrate:status": "cd edtech_node_backend && npx sequelize-cli db:migrate:status",
+    "migrate": "cd edtech_node_backend && npx sequelize-cli db:migrate"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.2.2",
