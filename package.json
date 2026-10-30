@@ -4,7 +4,7 @@
   "scripts": {
     "start": "concurrently \"npm run frontend\" \"npm run backend\"",
     "dev": "concurrently \"npm run frontend\" \"npm run backend\"",
-    "frontend": "cd edtech_frontend && PORT=3001 npm start",
+    "frontend": "cd edtech_frontend && PORT=3001 CHOKIDAR_USEPOLLING=true WATCHPACK_POLLING=true npm start",
     "backend": "cd edtech_node_backend && npm run dev"
   },
   "devDependencies": {

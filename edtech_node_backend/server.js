@@ -41,54 +41,62 @@ const {
   WalletTransaction
 } = require('./models');
 
+let isSchemaChecked = false;
 const ensureRequiredTables = async () => {
-  const queryInterface = sequelize.getQueryInterface();
-  const existingTables = new Set(
-    (await queryInterface.showAllTables()).map((tableName) => String(tableName).toLowerCase())
-  );
-
-  const requiredModels = [
-    Assignment,
-    AssignmentQuestion,
-    AssignmentResource,
-    AssignmentSubmission,
-    AssignmentSubmissionFile,
-    LiveClass,
-    LiveClassAttendance,
-    ReferralCode,
-    ReferralRelationship,
-    ReferralTree,
-    ReferralAttribution,
-    ReferralRewardRule,
-    ReferralRewardLedger,
-    Wallet,
-    WalletTransaction
-  ];
-
-  for (const model of requiredModels) {
-    const tableName = model?.getTableName?.() || model?.tableName || model?.name || '';
-    const normalized = String(tableName).toLowerCase();
-    if (!normalized || existingTables.has(normalized)) continue;
-
-    await model.sync();
-    existingTables.add(normalized);
-  }
-
-  // Seed default referral rules if none exist
+  if (isSchemaChecked) return;
   try {
-    const ruleCount = await ReferralRewardRule.count();
-    if (ruleCount === 0) {
-      const now = new Date();
-      await ReferralRewardRule.bulkCreate([
-        { rewardType: 'REGISTRATION', level: 0, rewardPercentage: 0.00, fixedAmountPaise: 2000, isActive: true, effectiveFrom: now },
-        { rewardType: 'COURSE_PURCHASE', level: 1, rewardPercentage: 10.00, fixedAmountPaise: 0, isActive: true, effectiveFrom: now },
-        { rewardType: 'COURSE_PURCHASE', level: 2, rewardPercentage: 5.00, fixedAmountPaise: 0, isActive: true, effectiveFrom: now },
-        { rewardType: 'COURSE_PURCHASE', level: 3, rewardPercentage: 2.00, fixedAmountPaise: 0, isActive: true, effectiveFrom: now },
-        { rewardType: 'COURSE_PURCHASE', level: 4, rewardPercentage: 1.00, fixedAmountPaise: 0, isActive: true, effectiveFrom: now }
-      ]);
+    const queryInterface = sequelize.getQueryInterface();
+    const existingTables = new Set(
+      (await queryInterface.showAllTables()).map((tableName) => String(tableName).toLowerCase())
+    );
+
+    const requiredModels = [
+      Assignment,
+      AssignmentQuestion,
+      AssignmentResource,
+      AssignmentSubmission,
+      AssignmentSubmissionFile,
+      LiveClass,
+      LiveClassAttendance,
+      ReferralCode,
+      ReferralRelationship,
+      ReferralTree,
+      ReferralAttribution,
+      ReferralRewardRule,
+      ReferralRewardLedger,
+      Wallet,
+      WalletTransaction
+    ];
+
+    for (const model of requiredModels) {
+      const tableName = model?.getTableName?.() || model?.tableName || model?.name || '';
+      const normalized = String(tableName).toLowerCase();
+      if (!normalized || existingTables.has(normalized)) continue;
+
+      await model.sync();
+      existingTables.add(normalized);
     }
-  } catch (ruleSeedErr) {
-    logger.warn(`Default reward rule seed check warning: ${ruleSeedErr.message}`);
+
+    // Seed default referral rules if none exist
+    try {
+      const ruleCount = await ReferralRewardRule.count();
+      if (ruleCount === 0) {
+        const now = new Date();
+        await ReferralRewardRule.bulkCreate([
+          { rewardType: 'REGISTRATION', level: 0, rewardPercentage: 0.00, fixedAmountPaise: 2000, isActive: true, effectiveFrom: now },
+          { rewardType: 'COURSE_PURCHASE', level: 1, rewardPercentage: 10.00, fixedAmountPaise: 0, isActive: true, effectiveFrom: now },
+          { rewardType: 'COURSE_PURCHASE', level: 2, rewardPercentage: 5.00, fixedAmountPaise: 0, isActive: true, effectiveFrom: now },
+          { rewardType: 'COURSE_PURCHASE', level: 3, rewardPercentage: 2.00, fixedAmountPaise: 0, isActive: true, effectiveFrom: now },
+          { rewardType: 'COURSE_PURCHASE', level: 4, rewardPercentage: 1.00, fixedAmountPaise: 0, isActive: true, effectiveFrom: now }
+        ]);
+      }
+    } catch (ruleSeedErr) {
+      logger.warn(`Default reward rule seed check warning: ${ruleSeedErr.message}`);
+    }
+
+    isSchemaChecked = true;
+  } catch (schemaErr) {
+    logger.warn(`ensureRequiredTables warning: ${schemaErr.message}`);
   }
 };
 

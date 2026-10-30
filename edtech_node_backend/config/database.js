@@ -15,8 +15,8 @@ const getEffectiveDatabaseUrl = () => {
   let url = process.env.DATABASE_URL;
   if (!url) return null;
   // If Supabase pooler is set to port 5432 (Session mode limit: 15), automatically use port 6543 (Transaction mode)
-  if (url.includes('.pooler.supabase.com:5432')) {
-    url = url.replace('.pooler.supabase.com:5432', '.pooler.supabase.com:6543');
+  if (/pooler\.supabase\.com:5432/.test(url)) {
+    url = url.replace(/pooler\.supabase\.com:5432/g, 'pooler.supabase.com:6543');
   }
   return url;
 };
