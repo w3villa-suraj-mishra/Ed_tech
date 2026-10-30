@@ -130,15 +130,70 @@ const deleteUserAndRelationsQuery = async (userId) => {
   const user = await User.findByPk(userId);
   if (!user) return null;
 
-  await Profile.destroy({ where: { userId } });
-  await Enrollment.destroy({ where: { userId } });
-  await RatingAndReview.destroy({ where: { userId } });
-  await CourseProgress.destroy({ where: { userId } });
-  await LiveChatMessage.destroy({ where: { userId } });
-  await Course.destroy({ where: { instructorId: userId } });
+  return await sequelize.transaction(async (transaction) => {
+    // 1. Chat & Support Conversations
+    try {
+      const { Conversation, Message } = require('../modules/chat/models');
+      if (Conversation) {
+        const userConversations = await Conversation.findAll({
+          where: { userId },
+          attributes: ['id'],
+          transaction
+        });
+        const convIds = userConversations.map(c => c.id);
+        if (convIds.length > 0 && Message) {
+          await Message.destroy({ where: { conversationId: convIds }, transaction });
+        }
+        if (Message) {
+          await Message.destroy({ where: { senderId: userId }, transaction });
+        }
+        await Conversation.destroy({ where: { userId }, transaction });
+        await Conversation.update({ assignedTo: null }, { where: { assignedTo: userId }, transaction });
+      }
+    } catch (chatErr) {
+      console.warn('Chat cleanup warning during user delete:', chatErr.message);
+    }
 
-  await user.destroy();
-  return true;
+    // 2. Referral & Rewards System
+    try {
+      const {
+        ReferralCode, ReferralRelationship, ReferralTree,
+        ReferralAttribution, ReferralRewardLedger, Wallet, WalletTransaction
+      } = require('../models');
+
+      if (WalletTransaction) await WalletTransaction.destroy({ where: { userId }, transaction });
+      if (ReferralRewardLedger) await ReferralRewardLedger.destroy({ where: { userId }, transaction });
+      if (ReferralTree) await ReferralTree.destroy({ where: { [Op.or]: [{ ancestorId: userId }, { descendantId: userId }] }, transaction });
+      if (ReferralRelationship) await ReferralRelationship.destroy({ where: { [Op.or]: [{ referrerId: userId }, { referredUserId: userId }] }, transaction });
+      if (ReferralAttribution) await ReferralAttribution.destroy({ where: { userId }, transaction });
+      if (ReferralCode) await ReferralCode.destroy({ where: { userId }, transaction });
+      if (Wallet) await Wallet.destroy({ where: { userId }, transaction });
+    } catch (refErr) {
+      console.warn('Referral cleanup warning during user delete:', refErr.message);
+    }
+
+    // 3. Live Classes, Assignments & Practice
+    try {
+      const { LiveClassAttendance, AssignmentSubmission, PracticeAttempt } = require('../models');
+      if (LiveClassAttendance) await LiveClassAttendance.destroy({ where: { studentId: userId }, transaction });
+      if (AssignmentSubmission) await AssignmentSubmission.destroy({ where: { userId }, transaction });
+      if (PracticeAttempt) await PracticeAttempt.destroy({ where: { userId }, transaction });
+    } catch (actErr) {
+      console.warn('Activity cleanup warning during user delete:', actErr.message);
+    }
+
+    // 4. Standard User Relations
+    if (Profile) await Profile.destroy({ where: { userId }, transaction });
+    if (Enrollment) await Enrollment.destroy({ where: { userId }, transaction });
+    if (RatingAndReview) await RatingAndReview.destroy({ where: { userId }, transaction });
+    if (CourseProgress) await CourseProgress.destroy({ where: { userId }, transaction });
+    if (LiveChatMessage) await LiveChatMessage.destroy({ where: { userId }, transaction });
+    if (Course) await Course.destroy({ where: { instructorId: userId }, transaction });
+
+    // 5. Delete the User
+    await user.destroy({ transaction });
+    return true;
+  });
 };
 
 const findCategoriesWithCourseCountQuery = async (where = {}) => {
