@@ -10,6 +10,7 @@ const {
 } = require('../../../models');
 const referralService = require('../services/referral.service');
 const walletService = require('../services/wallet.service');
+const { buildNetworkUserSearch } = require('../utils/networkSearch');
 const { Op } = require('sequelize');
 
 const referralAdminController = {
@@ -86,31 +87,52 @@ const referralAdminController = {
    */
   getNetwork: async (req, res) => {
     try {
-      const { userId, email } = req.query;
+      const { userId, email, studentId, q } = req.query;
+      const rawSearch = userId || email || studentId || q;
+      const search = buildNetworkUserSearch(rawSearch);
+
       let targetUser = null;
 
-      if (userId) {
-        targetUser = await User.findByPk(userId);
-      } else if (email) {
-        targetUser = await User.findOne({ where: { email: String(email).trim().toLowerCase() } });
+      if (search) {
+        if (search.type === 'id') {
+          targetUser = await User.findByPk(search.where.id);
+        } else {
+          targetUser = await User.findOne({
+            where: search.where,
+            order: [['createdAt', 'DESC']]
+          });
+        }
       }
 
       if (!targetUser) {
         return res.status(404).json({ success: false, message: 'User not found' });
       }
 
-      // Fetch downline
-      const downline = await referralService.getNetworkHierarchy(targetUser.id);
+      const downlineHierarchy = await referralService.getNetworkHierarchy(targetUser.id);
+      const downlines = (downlineHierarchy.network && Array.isArray(downlineHierarchy.network.level1) ? [
+        ...downlineHierarchy.network.level1,
+        ...downlineHierarchy.network.level2,
+        ...downlineHierarchy.network.level3,
+        ...downlineHierarchy.network.level4
+      ] : []).map(item => ({
+        id: item.userId,
+        name: item.name || 'Student',
+        email: item.email || '',
+        registeredAt: item.joinedAt,
+        depth: item.depth
+      }));
 
-      // Fetch upline ancestors
       const uplineRecords = await ReferralTree.findAll({
         where: { descendantId: targetUser.id },
         include: [{ model: User, as: 'ancestor', attributes: ['id', 'firstName', 'lastName', 'email'] }],
         order: [['depth', 'ASC']]
       });
 
-      const upline = uplineRecords.map(r => ({
+      const ancestors = uplineRecords.map(r => ({
         depth: r.depth,
+        id: r.ancestor?.id || null,
+        name: r.ancestor ? `${r.ancestor.firstName || ''} ${r.ancestor.lastName || ''}`.trim() || 'Parent' : 'Unknown',
+        email: r.ancestor?.email || '',
         user: r.ancestor ? {
           id: r.ancestor.id,
           name: `${r.ancestor.firstName || ''} ${r.ancestor.lastName || ''}`.trim(),
@@ -127,8 +149,14 @@ const referralAdminController = {
             email: targetUser.email,
             accountType: targetUser.accountType
           },
-          downline,
-          upline
+          downlines,
+          ancestors,
+          network: {
+            downlines,
+            ancestors
+          },
+          upline: ancestors,
+          downline: downlineHierarchy
         }
       });
     } catch (error) {

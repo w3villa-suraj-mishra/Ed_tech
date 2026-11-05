@@ -177,12 +177,18 @@ export default function AdminReferrals() {
 
   const handleSearchNetwork = async (e) => {
     e.preventDefault();
-    if (!networkQuery.trim()) return;
+    const trimmedQuery = networkQuery.trim();
+    if (!trimmedQuery) return;
     setNetworkLoading(true);
     try {
-      const param = networkQuery.includes('@')
-        ? `email=${encodeURIComponent(networkQuery.trim().toLowerCase())}`
-        : `studentId=${encodeURIComponent(networkQuery.trim())}`;
+      let param = `q=${encodeURIComponent(trimmedQuery)}`;
+
+      if (/^\d+$/.test(trimmedQuery)) {
+        param = `studentId=${encodeURIComponent(trimmedQuery)}`;
+      } else if (trimmedQuery.includes('@')) {
+        param = `email=${encodeURIComponent(trimmedQuery.toLowerCase())}`;
+      }
+
       const data = await getAdminReferralNetworkAPI(null, param);
       setNetworkData(data);
     } catch (err) {
@@ -614,7 +620,7 @@ export default function AdminReferrals() {
                   <FiSearch className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-xs" />
                   <input
                     type="text"
-                    placeholder="Enter student email or ID..."
+                    placeholder="Search student name, email or ID..."
                     value={networkQuery}
                     onChange={(e) => setNetworkQuery(e.target.value)}
                     className="w-full pl-9 pr-3.5 py-2 rounded-xl bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-xs text-gray-800 dark:text-white placeholder-gray-400 focus:outline-none focus:border-[#3BA7F2]"
