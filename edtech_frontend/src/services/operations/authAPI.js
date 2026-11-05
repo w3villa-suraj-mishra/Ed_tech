@@ -5,6 +5,7 @@ import { resetCart } from "../../services/slices/cartSlice"
 import { setUser } from "../../services/slices/profileSlice"
 import { apiConnector } from "../apiConnector"
 import { endpoints } from "../apis"
+import { getDashboardPathForUser } from "../../utils/authNavigation"
 
 const {
   SENDOTP_API,
@@ -110,16 +111,16 @@ export function signUp(
         localStorage.setItem("token", token)
         localStorage.setItem("user", JSON.stringify(fullUser))
 
-        const targetDashboard = account_type === "Instructor" ? "/dashboard/instructor" : "/dashboard/global"
-        navigate(targetDashboard)
+        const targetDashboard = getDashboardPathForUser(account_type)
+        navigate(targetDashboard, { replace: true })
       } else {
         toast.success("Signup Successful")
-        navigate("/login")
+        navigate("/login", { replace: true })
       }
     } catch (error) {
       console.log("SIGNUP API ERROR............", error)
       toast.error("Signup Failed")
-      navigate("/signup")
+      navigate("/signup", { replace: true })
     }
     dispatch(setLoading(false))
     toast.dismiss(toastId)

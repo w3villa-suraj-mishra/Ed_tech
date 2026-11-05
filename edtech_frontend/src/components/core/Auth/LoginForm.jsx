@@ -71,11 +71,8 @@ function LoginForm() {
 
       toast.success("Login Successful")
 
-      if (account_type === "Instructor") {
-        navigate("/dashboard/instructor")
-      } else {
-        navigate("/dashboard/my-profile")
-      }
+      const targetDashboard = account_type === "Instructor" ? "/dashboard/instructor" : "/dashboard/global"
+      navigate(targetDashboard, { replace: true })
     } catch (error) {
       console.log(error)
       toast.error(error.response?.data?.message || "Invalid email or password")

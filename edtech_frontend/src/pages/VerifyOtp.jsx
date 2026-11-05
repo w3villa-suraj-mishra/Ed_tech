@@ -192,10 +192,10 @@ function VerifyOtp() {
 
         toast.success("Account Created & Logged In!");
         const targetDashboard = account_type === "Instructor" ? "/dashboard/instructor" : "/dashboard/global";
-        navigate(targetDashboard);
+        navigate(targetDashboard, { replace: true });
       } else {
         toast.success("Account Created Successfully. Please log in.");
-        navigate("/login");
+        navigate("/login", { replace: true });
       }
     } catch (error) {
       console.error("VERIFY OTP / SIGNUP ERROR:", error);
