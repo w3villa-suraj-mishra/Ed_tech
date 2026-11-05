@@ -167,7 +167,17 @@ const deleteUserAndRelationsQuery = async (userId) => {
       if (ReferralRelationship) await ReferralRelationship.destroy({ where: { [Op.or]: [{ referrerId: userId }, { referredUserId: userId }] }, transaction });
       if (ReferralAttribution) await ReferralAttribution.destroy({ where: { userId }, transaction });
       if (ReferralCode) await ReferralCode.destroy({ where: { userId }, transaction });
-      if (Wallet) await Wallet.destroy({ where: { userId }, transaction });
+      if (Wallet) {
+        const wallet = await Wallet.findOne({ where: { userId }, transaction });
+        if (wallet) {
+          await wallet.update({
+            availableBalancePaise: 0,
+            pendingBalancePaise: 0,
+            lifetimeEarnedPaise: 0,
+            lifetimeSpentPaise: 0
+          }, { transaction });
+        }
+      }
     } catch (refErr) {
       console.warn('Referral cleanup warning during user delete:', refErr.message);
     }

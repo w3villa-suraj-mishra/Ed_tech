@@ -26,6 +26,23 @@ class WalletService {
   }
 
   /**
+   * Clears wallet balances while preserving the wallet row so UI and downstream logic
+   * do not continue showing stale reward totals after referral data cleanup.
+   */
+  async resetWalletBalances(userId, transaction = null) {
+    const wallet = await this.getOrCreateWallet(userId, transaction);
+
+    await wallet.update({
+      availableBalancePaise: 0,
+      pendingBalancePaise: 0,
+      lifetimeEarnedPaise: 0,
+      lifetimeSpentPaise: 0
+    }, { transaction });
+
+    return wallet;
+  }
+
+  /**
    * Credits a user's wallet with ledger entry (within a DB transaction)
    */
   async creditWallet({ userId, amountPaise, referenceType, referenceId, description = '' }, transaction = null) {

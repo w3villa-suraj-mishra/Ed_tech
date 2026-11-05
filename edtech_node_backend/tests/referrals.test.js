@@ -239,4 +239,21 @@ describe('Multi-Level Referral and Reward System', () => {
     const walletH_postRefund = await walletService.getWalletSummary(users.H.id);
     expect(walletH_postRefund.availableBalanceRupees).toBe(40);
   });
+
+  test('5. Resets stored wallet balances to zero when referral data is removed', async () => {
+    const target = users.A;
+    const before = await walletService.getWalletSummary(target.id);
+    expect(before.availableBalanceRupees).toBeGreaterThanOrEqual(0);
+
+    const wallet = await walletService.resetWalletBalances(target.id);
+    expect(Number(wallet.availableBalancePaise)).toBe(0);
+    expect(Number(wallet.pendingBalancePaise)).toBe(0);
+    expect(Number(wallet.lifetimeEarnedPaise)).toBe(0);
+    expect(Number(wallet.lifetimeSpentPaise)).toBe(0);
+
+    const after = await walletService.getWalletSummary(target.id);
+    expect(after.availableBalanceRupees).toBe(0);
+    expect(after.lifetimeEarnedRupees).toBe(0);
+    expect(after.lifetimeSpentRupees).toBe(0);
+  });
 });
