@@ -167,7 +167,7 @@ export const useCheckout = (overrideCourses = null) => {
         verificationPayload: {
           paymentIntentId,
           sessionId,
-          courses: courses || coursesToCheckout.map((c) => c._id || c.id),
+          courses: courses || coursesToCheckout.map((c) => c != null && typeof c === 'object' ? c._id || c.id : c),
           plan,
           offerId
         }

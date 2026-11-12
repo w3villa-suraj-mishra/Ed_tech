@@ -5,7 +5,7 @@ const { COURSE_PAYMENT_API, COURSE_VERIFY_API } = studentEndpoints;
 
 export const createServerOrder = async ({ token, courses, plan = 'gold', couponCode = null, customerDetails, useWalletCredits = false }) => {
   const headers = token ? { Authorization: `Bearer ${token}` } : null;
-  const courseIds = courses.map((c) => (typeof c === 'object' ? c._id || c.id : c));
+  const courseIds = courses.map((c) => (c != null && typeof c === 'object' ? c._id || c.id : c));
 
   const response = await apiConnector(
     'POST',
