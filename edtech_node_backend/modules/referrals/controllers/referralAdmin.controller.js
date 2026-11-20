@@ -4,6 +4,8 @@ const {
   ReferralTree,
   ReferralRewardRule,
   ReferralRewardLedger,
+  Enrollment,
+  Course,
   Wallet,
   WalletTransaction,
   sequelize
@@ -23,7 +25,12 @@ const referralAdminController = {
         totalReferrals,
         totalTreeLinks,
         activeRules,
-        rewardSums
+        rewardSums,
+        activeReferrersCount,
+        topReferrerRows,
+        recentReferralRows,
+        earnedRows,
+        earnedDetailsRows
       ] = await Promise.all([
         ReferralRelationship.count(),
         ReferralTree.count(),
@@ -31,11 +38,41 @@ const referralAdminController = {
         ReferralRewardLedger.findAll({
           attributes: [
             'status',
-            [sequelize.fn('SUM', sequelize.col('amount_paise')), 'totalAmountPaise'],
-            [sequelize.fn('COUNT', sequelize.col('id')), 'count']
+            [sequelize.fn('SUM', sequelize.col('amount_paise')), 'totalAmountPaise']
           ],
           group: ['status'],
           raw: true
+        }),
+        ReferralRelationship.count({ distinct: true, col: 'referrerId' }),
+        ReferralRelationship.findAll({
+          include: [{ model: User, as: 'referrer', attributes: ['id', 'firstName', 'lastName', 'email'] }],
+          order: [['registeredAt', 'DESC']]
+        }),
+        ReferralRelationship.findAll({
+          include: [
+            { model: User, as: 'referrer', attributes: ['id', 'firstName', 'lastName', 'email'] },
+            { model: User, as: 'referredUser', attributes: ['id', 'firstName', 'lastName', 'email'] }
+          ],
+          order: [['registeredAt', 'DESC']],
+          limit: 10
+        }),
+        ReferralRewardLedger.findAll({
+          attributes: [
+            'userId',
+            [sequelize.fn('SUM', sequelize.col('amount_paise')), 'totalEarnedPaise']
+          ],
+          group: ['userId'],
+          raw: true
+        }),
+        ReferralRewardLedger.findAll({
+          include: [
+            {
+              model: User,
+              as: 'user',
+              attributes: ['id', 'firstName', 'lastName', 'email']
+            }
+          ],
+          order: [['createdAt', 'DESC']]
         })
       ]);
 
@@ -43,40 +80,156 @@ const referralAdminController = {
       let totalAvailablePaise = 0n;
       let totalReversedPaise = 0n;
 
-      rewardSums.forEach(r => {
-        const sum = BigInt(r.totalAmountPaise || 0);
-        if (r.status === 'AVAILABLE' || r.status === 'USED') {
-          totalAwardedPaise += sum;
-        }
-        if (r.status === 'AVAILABLE') {
-          totalAvailablePaise += sum;
-        }
-        if (r.status === 'REVERSED') {
-          totalReversedPaise += sum;
-        }
+      rewardSums.forEach((row) => {
+        const sum = BigInt(row.totalAmountPaise || 0);
+        if (row.status === 'AVAILABLE' || row.status === 'USED') totalAwardedPaise += sum;
+        if (row.status === 'AVAILABLE') totalAvailablePaise += sum;
+        if (row.status === 'REVERSED') totalReversedPaise += sum;
       });
 
-      return res.status(200).json({
-        success: true,
-        data: {
-          metrics: {
-            totalRegisteredReferrals: totalReferrals,
-            totalTreeConnections: totalTreeLinks,
-            totalRewardsDistributedRupees: Number(totalAwardedPaise) / 100,
-            activeLiabilityRupees: Number(totalAvailablePaise) / 100,
-            totalReversalsRupees: Number(totalReversedPaise) / 100
-          },
-          activeRules: activeRules.map(r => ({
-            id: r.id,
-            rewardType: r.rewardType,
-            level: r.level,
-            rewardPercentage: Number(r.rewardPercentage),
-            fixedAmountRupees: Number(r.fixedAmountPaise) / 100,
-            maximumRewardRupees: r.maximumRewardPaise ? Number(r.maximumRewardPaise) / 100 : null,
-            isActive: r.isActive
-          }))
-        }
+      const earnedByUser = new Map();
+      earnedRows.forEach((row) => {
+        earnedByUser.set(String(row.userId), BigInt(row.totalEarnedPaise || 0));
       });
+
+      const earningsDetailsByUser = new Map();
+      for (const ledgerEntry of earnedDetailsRows) {
+        const key = String(ledgerEntry.userId);
+        const details = earningsDetailsByUser.get(key) || [];
+        let purchaserName = '';
+        let courseName = '';
+
+        if (ledgerEntry.rewardType === 'COURSE_PURCHASE' && ledgerEntry.orderId) {
+          const enrollment = await Enrollment.findOne({
+            where: { paymentReference: ledgerEntry.orderId },
+            include: [
+              { model: User, as: 'user', attributes: ['id', 'firstName', 'lastName', 'email'] },
+              { model: Course, as: 'course', attributes: ['id', 'courseName'] }
+            ],
+            order: [['createdAt', 'DESC']]
+          });
+          purchaserName = enrollment?.user
+            ? `${enrollment.user.firstName || ''} ${enrollment.user.lastName || ''}`.trim()
+            : '';
+          courseName = enrollment?.course?.courseName || '';
+        }
+
+        let sourceName = 'Referral reward';
+        if (ledgerEntry.rewardType === 'REGISTRATION') {
+          const relationship = ledgerEntry.referralId
+            ? await ReferralRelationship.findByPk(ledgerEntry.referralId, {
+                include: [{ model: User, as: 'referredUser', attributes: ['id', 'firstName', 'lastName', 'email'] }]
+              })
+            : null;
+          purchaserName = relationship?.referredUser
+            ? `${relationship.referredUser.firstName || ''} ${relationship.referredUser.lastName || ''}`.trim()
+            : '';
+          sourceName = purchaserName ? `Used referral code · Referred by ${purchaserName}` : 'Used referral code';
+        } else if (ledgerEntry.rewardType === 'COURSE_PURCHASE') {
+          sourceName = purchaserName
+            ? `Course bought by ${purchaserName}${courseName ? ` · ${courseName}` : ''}`
+            : `Course purchase · ${ledgerEntry.orderId || 'Order'}`;
+        }
+
+        details.push({
+          id: ledgerEntry.id,
+          rewardType: ledgerEntry.rewardType,
+          referralLevel: ledgerEntry.referralLevel,
+          amountRupees: Number(ledgerEntry.amountPaise) / 100,
+          status: ledgerEntry.status,
+          orderId: ledgerEntry.orderId,
+          purchaserName,
+          courseName,
+          createdAt: ledgerEntry.createdAt,
+          sourceName
+        });
+        earningsDetailsByUser.set(key, details);
+      }
+
+      const referrerTotals = new Map();
+      topReferrerRows.forEach((row) => {
+        const referrer = row.referrer;
+        const key = String(row.referrerId);
+        const current = referrerTotals.get(key) || {
+          userId: referrer?.id || row.referrerId,
+          name: `${referrer?.firstName || ''} ${referrer?.lastName || ''}`.trim(),
+          email: referrer?.email || '',
+          referralCount: 0,
+          totalEarnedRupees: 0
+        };
+        current.referralCount += 1;
+        referrerTotals.set(key, current);
+      });
+
+      const topReferrers = Array.from(referrerTotals.values())
+        .map((referrer) => ({
+          ...referrer,
+          totalEarnedRupees: Number(earnedByUser.get(String(referrer.userId)) || 0n) / 100,
+          earnings: earningsDetailsByUser.get(String(referrer.userId)) || []
+        }))
+        .sort((a, b) => b.referralCount - a.referralCount)
+        .slice(0, 10);
+
+      const recentReferrals = recentReferralRows.map((row) => {
+        const referred = row.referredUser;
+        const referrer = row.referrer;
+        return {
+          referrerId: row.referrerId,
+          referrerName: `${referrer?.firstName || ''} ${referrer?.lastName || ''}`.trim(),
+          referredUserId: row.referredUserId,
+          referredName: `${referred?.firstName || ''} ${referred?.lastName || ''}`.trim(),
+          referredEmail: referred?.email || '',
+          referralCode: row.referralCode,
+          registeredAt: row.registeredAt
+        };
+      });
+
+      const overview = {
+        totalReferrals,
+        activeReferrersCount,
+        totalCommissionsPaidRupees: Number(totalAwardedPaise) / 100,
+        topReferrers,
+        recentReferrals,
+        metrics: {
+          totalRegisteredReferrals: totalReferrals,
+          totalTreeConnections: totalTreeLinks,
+          totalRewardsDistributedRupees: Number(totalAwardedPaise) / 100,
+          activeLiabilityRupees: Number(totalAvailablePaise) / 100,
+          totalReversalsRupees: Number(totalReversedPaise) / 100,
+          activeReferrersCount
+        },
+        activeRules: activeRules.map((rule) => ({
+          id: rule.id,
+          rewardType: rule.rewardType,
+          level: rule.level,
+          rewardPercentage: Number(rule.rewardPercentage),
+          fixedAmountRupees: Number(rule.fixedAmountPaise) / 100,
+          maximumRewardRupees: rule.maximumRewardPaise ? Number(rule.maximumRewardPaise) / 100 : null,
+          isActive: rule.isActive
+        })),
+        perUserEarnings: Array.from(earnedByUser.entries()).map(([userId, totalPaise]) => ({
+          userId,
+          totalEarnedRupees: Number(totalPaise) / 100
+        })),
+        earnedDetails: earnedDetailsRows.map(r => ({
+          id: r.id,
+          user: r.user ? {
+            id: r.user.id,
+            name: `${r.user.firstName || ''} ${r.user.lastName || ''}`.trim(),
+            email: r.user.email
+          } : null,
+          rewardType: r.rewardType,
+          referralLevel: r.referralLevel,
+          amountRupees: Number(r.amountPaise) / 100,
+          amountPaise: Number(r.amountPaise),
+          status: r.status,
+          orderId: r.orderId,
+          idempotencyKey: r.idempotencyKey,
+          createdAt: r.createdAt
+        }))
+      };
+
+      return res.status(200).json({ success: true, data: overview });
     } catch (error) {
       return res.status(500).json({ success: false, message: error.message });
     }
@@ -165,7 +318,7 @@ const referralAdminController = {
   },
 
   /**
-   * Search and review reward ledger events
+   * Search and review reward ledger events with complete referral relationship details
    */
   getRewards: async (req, res) => {
     try {
@@ -185,11 +338,176 @@ const referralAdminController = {
             model: User,
             as: 'user',
             attributes: ['id', 'firstName', 'lastName', 'email']
+          },
+          {
+            model: ReferralRelationship,
+            as: 'referral',
+            attributes: ['id', 'referrerId', 'referredUserId', 'referralCode']
           }
         ],
         limit: Number(limit),
         offset,
         order: [['createdAt', 'DESC']]
+      });
+
+      // Collect all unique user IDs from reward rows
+      const userIds = [...new Set(rows.map(r => r.userId))];
+
+      // Batch-fetch referral relationships where the user is the referred child
+      // (i.e. someone referred them — this tells us their parent)
+      const childRelationships = userIds.length > 0
+        ? await ReferralRelationship.findAll({
+            where: { referredUserId: { [Op.in]: userIds } },
+            include: [
+              { model: User, as: 'referrer', attributes: ['id', 'firstName', 'lastName', 'email'] }
+            ]
+          })
+        : [];
+
+      // Map: referredUserId -> { referrer (parent), referralCode }
+      const parentByUserId = new Map();
+      childRelationships.forEach(rel => {
+        parentByUserId.set(rel.referredUserId, rel);
+      });
+
+      // Batch-fetch direct children for each user (where the user is the referrer)
+      const parentRelationships = userIds.length > 0
+        ? await ReferralRelationship.findAll({
+            where: { referrerId: { [Op.in]: userIds } },
+            include: [
+              { model: User, as: 'referredUser', attributes: ['id', 'firstName', 'lastName', 'email'] }
+            ]
+          })
+        : [];
+
+      // Map: referrerId -> [children]
+      const childrenByUserId = new Map();
+      parentRelationships.forEach(rel => {
+        const list = childrenByUserId.get(rel.referrerId) || [];
+        list.push(rel);
+        childrenByUserId.set(rel.referrerId, list);
+      });
+
+      // Collect parent user IDs to look up grandparents
+      const parentUserIds = [...new Set(
+        childRelationships.map(rel => rel.referrerId).filter(Boolean)
+      )];
+
+      // Fetch parent-of-parent relationships (grandparent lookup for CHILD users)
+      const grandparentRelationships = parentUserIds.length > 0
+        ? await ReferralRelationship.findAll({
+            where: { referredUserId: { [Op.in]: parentUserIds } },
+            include: [
+              { model: User, as: 'referrer', attributes: ['id', 'firstName', 'lastName', 'email'] }
+            ]
+          })
+        : [];
+
+      // Map: parentUserId -> their parent (grandparent of the original user)
+      const grandparentByParentId = new Map();
+      grandparentRelationships.forEach(rel => {
+        grandparentByParentId.set(rel.referredUserId, rel);
+      });
+
+      // For grandparent role detection: collect all child IDs of current users,
+      // then check which of those children are themselves referrers
+      const allChildIds = [...new Set(
+        parentRelationships.map(rel => rel.referredUserId)
+      )];
+      const grandchildCounts = allChildIds.length > 0
+        ? await ReferralRelationship.findAll({
+            where: { referrerId: { [Op.in]: allChildIds } },
+            attributes: ['referrerId'],
+            group: ['referrerId'],
+            raw: true
+          })
+        : [];
+      // Set of child IDs that are themselves parents (making the original user a grandparent)
+      const childIdsWithChildren = new Set(grandchildCounts.map(r => r.referrerId));
+
+      // Helper: format user object
+      const formatUser = (user) => {
+        if (!user) return null;
+        return {
+          id: String(user.id),
+          name: `${user.firstName || ''} ${user.lastName || ''}`.trim(),
+          email: user.email
+        };
+      };
+
+      // Build enriched rewards
+      const rewards = rows.map(r => {
+        const uid = r.userId;
+        const hasChildren = childrenByUserId.has(uid) && childrenByUserId.get(uid).length > 0;
+        const parentRel = parentByUserId.get(uid); // relationship where this user is the child
+        const isChild = !!parentRel;
+
+        // Determine role
+        let role;
+        if (isChild) {
+          role = 'CHILD';
+        } else if (hasChildren) {
+          role = 'PARENT';
+        } else {
+          role = 'PARENT'; // user with no parent and no children defaults to PARENT
+        }
+
+        // Check if this user is a grandparent (any of their children have their own children)
+        if (hasChildren) {
+          const children = childrenByUserId.get(uid);
+          const isGrandparent = children.some(childRel =>
+            childIdsWithChildren.has(childRel.referredUserId)
+          );
+          if (isGrandparent) {
+            role = 'GRANDPARENT';
+          }
+        }
+
+        // Build referralDetails
+        let referralDetails = null;
+        if (role === 'CHILD') {
+          const parentUser = parentRel.referrer;
+          const grandparentRel = grandparentByParentId.get(parentRel.referrerId);
+
+          referralDetails = {
+            usedReferralCode: parentRel.referralCode || null,
+            parent: formatUser(parentUser),
+            grandparent: grandparentRel ? formatUser(grandparentRel.referrer) : null
+          };
+        } else if (role === 'PARENT' || role === 'GRANDPARENT') {
+          const children = (childrenByUserId.get(uid) || []).map(rel => formatUser(rel.referredUser));
+          referralDetails = {
+            children
+          };
+
+          // If this user is also a child of someone, include upline info
+          if (isChild) {
+            const parentUser = parentRel.referrer;
+            const grandparentRel = grandparentByParentId.get(parentRel.referrerId);
+            referralDetails.usedReferralCode = parentRel.referralCode || null;
+            referralDetails.parent = formatUser(parentUser);
+            referralDetails.grandparent = grandparentRel ? formatUser(grandparentRel.referrer) : null;
+          }
+        }
+
+        return {
+          id: r.id,
+          user: r.user ? {
+            id: String(r.user.id),
+            name: `${r.user.firstName || ''} ${r.user.lastName || ''}`.trim(),
+            email: r.user.email,
+            role
+          } : null,
+          referralDetails,
+          rewardType: r.rewardType,
+          referralLevel: r.referralLevel,
+          amountRupees: Number(r.amountPaise) / 100,
+          amountPaise: Number(r.amountPaise),
+          status: r.status,
+          orderId: r.orderId,
+          idempotencyKey: r.idempotencyKey,
+          createdAt: r.createdAt
+        };
       });
 
       return res.status(200).json({
@@ -199,22 +517,7 @@ const referralAdminController = {
           page: Number(page),
           limit: Number(limit),
           totalPages: Math.ceil(count / limit),
-          rewards: rows.map(r => ({
-            id: r.id,
-            user: r.user ? {
-              id: r.user.id,
-              name: `${r.user.firstName || ''} ${r.user.lastName || ''}`.trim(),
-              email: r.user.email
-            } : null,
-            rewardType: r.rewardType,
-            referralLevel: r.referralLevel,
-            amountRupees: Number(r.amountPaise) / 100,
-            amountPaise: Number(r.amountPaise),
-            status: r.status,
-            orderId: r.orderId,
-            idempotencyKey: r.idempotencyKey,
-            createdAt: r.createdAt
-          }))
+          rewards
         }
       });
     } catch (error) {

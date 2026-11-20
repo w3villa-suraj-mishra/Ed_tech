@@ -26,7 +26,7 @@ const createPaymentOrder = async (req, res) => {
     }
 
     const courseDetails = await Promise.all(
-      courses.map(id => Course.findByPk(typeof id === 'object' ? id.id || id._id : id))
+      courses.map(id => Course.findByPk(id != null && typeof id === 'object' ? id.id || id._id : id))
     );
 
     const validCourses = courseDetails.filter(c => c !== null);
@@ -338,7 +338,7 @@ const activateEnrollments = async ({ userId, courseIds, plan = PLAN_TYPES.GOLD, 
 
   await Promise.all(
     courseIds.map(async (cId) => {
-      const parsedCourseId = typeof cId === 'object' ? cId.id || cId._id : cId;
+      const parsedCourseId = cId != null && typeof cId === 'object' ? cId.id || cId._id : cId;
       if (!parsedCourseId) return;
 
       const course = await Course.findByPk(parsedCourseId);

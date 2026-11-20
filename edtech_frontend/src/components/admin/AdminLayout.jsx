@@ -254,7 +254,7 @@ export default function AdminLayout({ children }) {
   );
 
   return (
-    <div className="min-h-screen flex font-inter bg-[#f4f5f8] text-gray-800">
+    <div className="h-screen overflow-hidden flex font-inter bg-[#f4f5f8] text-gray-800">
       
       {/* ──────────────────────────────────────────────────────────── */}
       {/* 1. DESKTOP SIDEBAR (Visible on md and larger)              */}
@@ -371,7 +371,7 @@ export default function AdminLayout({ children }) {
       {/* ──────────────────────────────────────────────────────────── */}
       {/* MAIN CONTENT CONTAINER                                       */}
       {/* ──────────────────────────────────────────────────────────── */}
-      <div className="flex-1 flex flex-col min-w-0 bg-[#f4f5f8]">
+      <div className="flex-1 flex flex-col min-w-0 min-h-0 overflow-hidden bg-[#f4f5f8]">
         
         {/* Topbar */}
         <header className="h-[52px] bg-white border-b border-gray-200 flex items-center justify-between px-4 flex-shrink-0">
@@ -510,7 +510,7 @@ export default function AdminLayout({ children }) {
         </div>
 
         {/* Content */}
-        <main className="flex-1 overflow-y-auto p-6 text-gray-800">
+        <main className="flex-1 min-h-0 overflow-y-auto p-6 text-gray-800">
           {children}
         </main>
       </div>

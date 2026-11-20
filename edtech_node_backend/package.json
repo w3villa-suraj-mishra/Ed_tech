@@ -9,6 +9,8 @@
     "dev": "nodemon server.js",
     "kill:port": "npx kill-port 5000",
     "health": "node scripts/health-check.js",
+    "verify:referrals": "NODE_ENV=development USE_SUPABASE_DB=false node scripts/verify-referral-simulation.js",
+    "verify:referrals:keep": "NODE_ENV=development USE_SUPABASE_DB=false node scripts/verify-referral-simulation.js --keep",
     "migrate": "npx sequelize-cli db:migrate",
     "migrate:undo": "npx sequelize-cli db:migrate:undo",
     "migrate:undo:all": "npx sequelize-cli db:migrate:undo:all",
