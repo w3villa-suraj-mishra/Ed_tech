@@ -127,12 +127,23 @@ const sessionsController = {
           user = await User.create(userData);
           logger.info(`${logPrefix} 7] User created successfully (ID: ${user.id}, accountType: ${user.accountType})`);
 
-          // Initialize user referral code and wallet
+          // Initialize user referral code and wallet, and attribute if previously referred
           try {
             const referralService = require('../modules/referrals/services/referral.service');
             const walletService = require('../modules/referrals/services/wallet.service');
+            const attributionService = require('../modules/referrals/services/attribution.service');
+            const rewardService = require('../modules/referrals/services/reward.service');
+
             await referralService.getOrCreateReferralCode(user);
             await walletService.getOrCreateWallet(user.id);
+
+            const attrRes = await attributionService.attributeOnRegistration({
+              email: user.email,
+              userId: user.id
+            });
+            if (attrRes && attrRes.attributed) {
+              await rewardService.processRegistrationReward(user.id);
+            }
           } catch (refInitErr) {
             logger.warn(`OAuth referral/wallet init warning: ${refInitErr.message}`);
           }

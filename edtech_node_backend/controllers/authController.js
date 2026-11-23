@@ -86,40 +86,27 @@ const authController = {
         logger.warn(`Referral/Wallet auto-init warning for user ${user.id}: ${refInitErr.message}`);
       }
 
-      // If user was invited via a referral code, establish permanent relationship & award ₹20 to direct referrer
+      // Establish durable referral attribution (handles new signups, re-registrations, first-touch, and identity hash)
       const incomingReferralCode = req.body.referralCode || req.body.referral_code;
-      if (
-        incomingReferralCode &&
-        typeof incomingReferralCode === 'string' &&
-        incomingReferralCode.trim() &&
-        !incomingReferralCode.includes('...')
-      ) {
-        try {
-          const referrer = await referralService.resolveReferralCode(incomingReferralCode);
-          if (referrer && String(referrer.id) !== String(user.id)) {
-            await referralService.establishReferralRelationship({
-              referrerId: referrer.id,
-              referredUserId: user.id,
-              referralCode: incomingReferralCode.trim().toUpperCase(),
-              attributionId: req.body.attributionId || null
-            });
-            // Award one-time verified registration reward (₹20) to direct referrer
-            await rewardService.processRegistrationReward(user.id);
+      try {
+        const cleanRefCode = (incomingReferralCode && typeof incomingReferralCode === 'string' && !incomingReferralCode.includes('...'))
+          ? incomingReferralCode.trim().toUpperCase()
+          : null;
 
-            // Link attribution touchpoint to newly registered user
-            try {
-              await attributionService.linkAttributionToUser({
-                referralCode: incomingReferralCode.trim().toUpperCase(),
-                userId: user.id,
-                anonymousId: req.body.anonymousId || null
-              });
-            } catch (attrErr) {
-              logger.warn(`Attribution linking warning for user ${user.id}: ${attrErr.message}`);
-            }
-          }
-        } catch (linkErr) {
-          logger.warn(`Referral linking during signup warning for user ${user.id}: ${linkErr.message}`);
+        const attributionResult = await attributionService.attributeOnRegistration({
+          email: user.email,
+          userId: user.id,
+          incomingReferralCode: cleanRefCode,
+          anonymousId: req.body.anonymousId || null,
+          attributionId: req.body.attributionId || null
+        });
+
+        // Award one-time verified registration reward (₹20) to direct referrer (idempotent by identityHash)
+        if (attributionResult && attributionResult.attributed) {
+          await rewardService.processRegistrationReward(user.id);
         }
+      } catch (attrErr) {
+        logger.warn(`Referral attribution during registration warning for user ${user.id}: ${attrErr.message}`);
       }
 
       // Retrieve full user record with profile for auto-login

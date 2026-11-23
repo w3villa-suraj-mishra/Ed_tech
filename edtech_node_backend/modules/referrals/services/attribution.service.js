@@ -241,11 +241,12 @@ class AttributionService {
           transaction: tx
         });
 
-        if (codeRecord && codeRecord.user) {
-          const referrerUser = codeRecord.user;
+        if (codeRecord) {
+          const referrerUserId = codeRecord.userId || (codeRecord.user && codeRecord.user.id);
+          const referrerEmail = codeRecord.user && typeof codeRecord.user === 'object' ? codeRecord.user.email : null;
 
           // Self-referral validation
-          if (String(referrerUser.id) === String(userId) || this.normalizeEmail(referrerUser.email) === normalizedEmail) {
+          if (String(referrerUserId) === String(userId) || (referrerEmail && this.normalizeEmail(referrerEmail) === normalizedEmail)) {
             logger.warn(`Self-referral rejected for user ${userId} using code ${cleanCode}`);
             return { attributed: false, reason: 'self_referral' };
           }
@@ -254,7 +255,7 @@ class AttributionService {
           try {
             attribution = await ReferralAttribution.create({
               referredIdentityHash: identityHash,
-              referrerUserId: referrerUser.id,
+              referrerUserId: referrerUserId,
               referralCode: cleanCode,
               originalAttributedAt: new Date(),
               currentUserId: userId,
@@ -272,7 +273,7 @@ class AttributionService {
 
           if (attribution) {
             await referralService.establishReferralRelationship({
-              referrerId: referrerUser.id,
+              referrerId: referrerUserId,
               referredUserId: userId,
               referredIdentityHash: identityHash,
               referralCode: cleanCode,
@@ -281,7 +282,7 @@ class AttributionService {
 
             return {
               attributed: true,
-              referrerId: referrerUser.id,
+              referrerId: referrerUserId,
               referralCode: cleanCode,
               isReRegistration: false
             };

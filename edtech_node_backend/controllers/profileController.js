@@ -151,8 +151,9 @@ const profileController = {
   deleteAccount: async (req, res) => {
     try {
       const user = req.user;
+      const adminQuery = require('../nativequery/admin.query');
 
-      await user.destroy();
+      await adminQuery.deleteUserAndRelationsQuery(user.id);
 
       return res.status(200).json({
         success: true,

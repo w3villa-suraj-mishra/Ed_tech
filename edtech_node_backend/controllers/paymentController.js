@@ -1,10 +1,10 @@
-const stripeSecretKey = process.env.STRIPE_SECRET_KEY || 'sk_test_placeholder_key_for_build';
-
-// Initialize Stripe only if we have a real key (not the placeholder)
-// If using the placeholder, stripe will be set to null and payments will use direct enrollment
-const stripe = stripeSecretKey && stripeSecretKey !== 'sk_test_placeholder_key_for_build'
-  ? require('stripe')(stripeSecretKey)
-  : null;
+const getStripe = () => {
+  const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
+  if (!stripeSecretKey || stripeSecretKey === 'sk_test_placeholder_key_for_build') {
+    return null;
+  }
+  return require('stripe')(stripeSecretKey);
+};
 
 const { PLAN_TYPES, PLAN_CONFIG, calculatePlanPrice } = require('../config/plans');
 const { calculateCoursePrice } = require('../services/pricingService');
@@ -248,7 +248,7 @@ const createPaymentOrder = async (req, res) => {
           product_data: {
             name: `${course.courseName} (${targetPlan.toUpperCase()} Plan)${validatedOffer ? ` - Coupon ${validatedOffer.code}` : ''}${appliedWalletCreditsPaise > 0n ? ' (Wallet Applied)' : ''}`,
             description: targetPlan === PLAN_TYPES.SILVER ? '1 Year Full Course Access' : 'Lifetime Full Course Access',
-            images: course.thumbnail ? [course.thumbnail] : [],
+            images: (typeof course.thumbnail === 'string' && (course.thumbnail.startsWith('http://') || course.thumbnail.startsWith('https://'))) ? [course.thumbnail] : [],
           },
           unit_amount: Math.round(finalItemPriceRupees * 100),
         },
@@ -257,6 +257,7 @@ const createPaymentOrder = async (req, res) => {
     });
 
     let session;
+    const stripe = getStripe();
     // If Stripe is not configured (no valid secret key), open modal with order details
     if (!stripe) {
       if (!userId) {
@@ -467,6 +468,7 @@ const activateEnrollments = async ({ userId, courseIds, plan = PLAN_TYPES.GOLD, 
 const verifyPayment = async (req, res) => {
   try {
     const { sessionId, paymentIntentId, courses, plan, offerId } = req.body;
+    const stripe = getStripe();
 
     if (sessionId && stripe) {
       const session = await stripe.checkout.sessions.retrieve(sessionId);
@@ -541,6 +543,31 @@ const verifyPayment = async (req, res) => {
         paymentRef,
         offerId: offerId || null
       });
+
+      // Distribute multi-level referral rewards for direct modal payment verification
+      try {
+        if (rewardService && typeof rewardService.processCoursePurchaseRewards === 'function') {
+          const courseList = await Promise.all(
+            courses.map(cId => Course.findByPk(cId != null && typeof cId === 'object' ? cId.id || cId._id : cId))
+          );
+          const validCourses = courseList.filter(Boolean);
+          const totalAmount = validCourses.reduce((sum, c) => {
+            const p = calculatePlanPrice(c, plan || PLAN_TYPES.GOLD);
+            return sum + (Number(p) || 0);
+          }, 0);
+          const paidAmountPaise = Math.round(totalAmount * 100);
+
+          await rewardService.processCoursePurchaseRewards({
+            buyerUserId: Number(req.user.id),
+            orderId: paymentRef,
+            paidAmountPaise,
+            courseName: validCourses.map(c => c.courseName).join(', ') || 'Course Purchase'
+          });
+        }
+      } catch (rewardErr) {
+        logger.error(`Reward distribution error for direct verify ${paymentRef}: ${rewardErr.message}`);
+      }
+
       return res.status(200).json({ success: true, message: 'Payment verified and course access granted successfully' });
     }
 
@@ -555,6 +582,7 @@ const verifyPayment = async (req, res) => {
  * Stripe Webhook Handler
  */
 const handleWebhook = async (req, res) => {
+  const stripe = getStripe();
   const sig = req.headers['stripe-signature'];
   let event;
 

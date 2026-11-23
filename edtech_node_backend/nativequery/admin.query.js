@@ -164,9 +164,25 @@ const deleteUserAndRelationsQuery = async (userId) => {
       if (WalletTransaction) await WalletTransaction.destroy({ where: { userId }, transaction });
       if (ReferralRewardLedger) await ReferralRewardLedger.destroy({ where: { userId }, transaction });
       if (ReferralTree) await ReferralTree.destroy({ where: { [Op.or]: [{ ancestorId: userId }, { descendantId: userId }] }, transaction });
-      if (ReferralRelationship) await ReferralRelationship.destroy({ where: { [Op.or]: [{ referrerId: userId }, { referredUserId: userId }] }, transaction });
-      if (ReferralAttribution) await ReferralAttribution.destroy({ where: { userId }, transaction });
-      if (ReferralCode) await ReferralCode.destroy({ where: { userId }, transaction });
+      // Soft-decouple referral relationships so attribution history survives referred user account deletion
+      if (ReferralRelationship) {
+        await ReferralRelationship.update({
+          status: 'inactive',
+          deletedUserId: userId,
+          referredUserId: null
+        }, { where: { referredUserId: userId }, transaction });
+        // If the deleted user was a referrer, remove outgoing referrer records to satisfy RESTRICT constraint
+        await ReferralRelationship.destroy({ where: { referrerId: userId }, transaction });
+      }
+      // Preserve persistent ReferralAttribution for re-registration / first-touch identity matching
+      if (ReferralAttribution) {
+        await ReferralAttribution.update({
+          status: 'user_deleted',
+          userId: null,
+          currentUserId: null
+        }, { where: { [Op.or]: [{ userId }, { currentUserId: userId }] }, transaction });
+      }
+      if (ReferralCode) await ReferralCode.update({ isActive: false }, { where: { userId }, transaction });
       if (Wallet) {
         const wallet = await Wallet.findOne({ where: { userId }, transaction });
         if (wallet) {
