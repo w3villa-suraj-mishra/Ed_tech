@@ -42,7 +42,7 @@ const Sidebar = () => {
 
   return (
     <>
-      <aside className={`dashboard-sidebar ${isInstructor ? 'is-instructor' : 'is-learner'}`}>
+      <aside className={`dashboard-sidebar sticky top-[84px] self-start z-30 ${isInstructor ? 'is-instructor' : 'is-learner'}`}>
         <nav className="dashboard-nav" aria-label="Workspace navigation">
           <p className="dashboard-nav-label"><FiGrid /> WORKSPACE</p>
           <div className="dashboard-nav-list">
