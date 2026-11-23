@@ -56,7 +56,7 @@ import LiveClassesPage from "./pages/LiveClassesPage.jsx";
 import LiveClassroomPage from "./pages/LiveClassroomPage.jsx";
 import NotFoundPage from "./pages/NotFoundPage";
 import ErrorButton from "./components/Common/ErrorButton.jsx";
-import { Toaster } from "react-hot-toast";
+import CustomToaster from "./components/Common/ToastNotification";
 import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { getUserDetails } from "./services/operations/profileAPI";
@@ -126,7 +126,7 @@ function App() {
   if (isAdminRoute) {
     return (
       <>
-        <Toaster position="top-right" toastOptions={{ max: 1 }} />
+        <CustomToaster />
         <Routes>
           <Route path="/admin"              element={<AdminIndex />} />
           <Route path="/admin/login"        element={<AdminLogin />} />
@@ -159,7 +159,7 @@ function App() {
   return (
     <div className={`min-h-screen bg-[#F8FAFC] text-[#111827] ${isPlayerRoute ? "h-screen overflow-hidden flex flex-col" : ""}`}>
       <ScrollToTop />
-      <Toaster position="top-right" toastOptions={{ max: 1 }} />
+      <CustomToaster />
       {!location.pathname.startsWith("/t/u/activeCourses") &&
        !isPlayerRoute && (
         <>

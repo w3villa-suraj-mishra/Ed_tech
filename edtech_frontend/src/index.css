@@ -761,3 +761,23 @@ body {
 .dashboard-drawer-link::before { display: none; }
 .dashboard-drawer-link .dashboard-nav-icon { width: 22px; height: 22px; flex-basis: 22px; }
 
+/* Custom Toast Notification Styling */
+@keyframes toast-progress-shrink {
+  from {
+    transform: scaleX(1);
+  }
+  to {
+    transform: scaleX(0);
+  }
+}
+
+.toast-progress-bar {
+  transform-origin: left;
+  animation: toast-progress-shrink linear forwards;
+}
+
+.toast-card:hover .toast-progress-bar {
+  animation-play-state: paused;
+}
+
+
