@@ -19,14 +19,23 @@ const ReferralRelationship = sequelize.define('ReferralRelationship', {
   },
   referredUserId: {
     type: DataTypes.INTEGER,
-    allowNull: false,
-    unique: true,
+    allowNull: true,
     field: 'referred_user_id',
     references: {
       model: 'users',
       key: 'id'
     },
-    onDelete: 'RESTRICT'
+    onDelete: 'SET NULL'
+  },
+  referredIdentityHash: {
+    type: DataTypes.STRING(64),
+    allowNull: true,
+    field: 'referred_identity_hash'
+  },
+  deletedUserId: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    field: 'deleted_user_id'
   },
   referralCode: {
     type: DataTypes.STRING(50),
@@ -54,11 +63,11 @@ const ReferralRelationship = sequelize.define('ReferralRelationship', {
   underscored: true,
   timestamps: true,
   indexes: [
-    { unique: true, fields: ['referred_user_id'] },
+    { fields: ['referred_user_id'] },
+    { fields: ['referred_identity_hash'] },
     { fields: ['referrer_id'] },
     { fields: ['referral_code'] }
   ]
 });
 
 module.exports = ReferralRelationship;
-

@@ -60,25 +60,82 @@ class ReferralService {
    * - Student can only have ONE direct referrer (immutable after registration)
    * - Prevent circular referrals (child cannot already be an ancestor of parent)
    * - Inserts direct link and transitive closure tree rows (depth 1 to 4)
+   * - Supports persistent identity restoration on re-registration
    */
-  async establishReferralRelationship({ referrerId, referredUserId, referralCode, attributionId = null }, transaction = null) {
+  async establishReferralRelationship({ referrerId, referredUserId, referralCode, attributionId = null, referredIdentityHash = null }, transaction = null) {
     if (String(referrerId) === String(referredUserId)) {
       throw new Error('Self-referral is not permitted');
     }
 
     const executeLink = async (tx) => {
-      // 1. Check if user is already referred (immutable direct parent rule)
-      const existingParent = await ReferralRelationship.findOne({
-        where: { referredUserId },
-        transaction: tx
-      });
+      // 1. Check if user or identity is already referred (immutable direct parent / first-touch rule)
+      let existingRelationship = null;
+      if (referredUserId) {
+        existingRelationship = await ReferralRelationship.findOne({
+          where: { referredUserId },
+          transaction: tx
+        });
+      }
 
-      if (existingParent) {
-        if (String(existingParent.referrerId) !== String(referrerId)) {
-          throw new Error(`User ${referredUserId} already has a permanent referrer (${existingParent.referrerId}). Referrer cannot be changed.`);
+      if (!existingRelationship && referredIdentityHash) {
+        existingRelationship = await ReferralRelationship.findOne({
+          where: { referredIdentityHash },
+          order: [['registeredAt', 'ASC']],
+          transaction: tx
+        });
+      }
+
+      if (existingRelationship) {
+        // If user is already active and currently bound to a different referrer, block changing referrer
+        if (existingRelationship.referredUserId && String(existingRelationship.referredUserId) === String(referredUserId)) {
+          if (String(existingRelationship.referrerId) !== String(referrerId)) {
+            throw new Error('User already has a referrer. Referrer cannot be changed.');
+          }
+          return existingRelationship;
         }
-        logger.warn(`User ${referredUserId} already has a direct referrer (${existingParent.referrerId}). Referral immutable.`);
-        return existingParent;
+
+        const effectiveReferrerId = existingRelationship.referrerId;
+
+        // Re-associate if referredUserId is updated or re-registered
+        await existingRelationship.update({
+          referredUserId,
+          referredIdentityHash: referredIdentityHash || existingRelationship.referredIdentityHash,
+          status: 'active'
+        }, { transaction: tx });
+
+        // Ensure closure tree nodes are accurately restored for this referredUserId
+        await ReferralTree.destroy({
+          where: { descendantId: referredUserId },
+          transaction: tx
+        });
+
+        const treeRows = [
+          {
+            ancestorId: effectiveReferrerId,
+            descendantId: referredUserId,
+            depth: 1
+          }
+        ];
+
+        const referrerAncestors = await ReferralTree.findAll({
+          where: {
+            descendantId: effectiveReferrerId,
+            depth: { [Op.lt]: 4 }
+          },
+          transaction: tx
+        });
+
+        for (const ancestorRow of referrerAncestors) {
+          treeRows.push({
+            ancestorId: ancestorRow.ancestorId,
+            descendantId: referredUserId,
+            depth: ancestorRow.depth + 1
+          });
+        }
+
+        await ReferralTree.bulkCreate(treeRows, { transaction: tx });
+        logger.info(`Referral relationship restored: Parent ${effectiveReferrerId} -> Child ${referredUserId} (Tree nodes: ${treeRows.length})`);
+        return existingRelationship;
       }
 
       // 2. Prevent circular referral: Verify referredUserId is NOT already an ancestor of referrerId
@@ -100,8 +157,9 @@ class ReferralService {
       const relationship = await ReferralRelationship.create({
         referrerId,
         referredUserId,
+        referredIdentityHash,
         referralCode: String(referralCode).trim().toUpperCase(),
-        attributionId: attributionId || null,
+        attributionId: attributionId ? String(attributionId) : null,
         status: 'active',
         registeredAt: new Date()
       }, { transaction: tx });

@@ -15,13 +15,21 @@ class RewardService {
    * Process one-time Unique Registration Reward for the direct referrer
    * Triggered when a new student completes eligible verified registration
    */
-  async processRegistrationReward(referredUserId, transaction = null) {
+  async processRegistrationReward(referredUserId, transaction = null, identityHash = null) {
     const execute = async (tx) => {
       // 1. Find direct referral relationship
-      const relationship = await ReferralRelationship.findOne({
+      let relationship = await ReferralRelationship.findOne({
         where: { referredUserId },
         transaction: tx
       });
+
+      if (!relationship && identityHash) {
+        relationship = await ReferralRelationship.findOne({
+          where: { referredIdentityHash: identityHash },
+          order: [['registeredAt', 'ASC']],
+          transaction: tx
+        });
+      }
 
       if (!relationship) {
         logger.info(`Registration reward skipped: User ${referredUserId} was not referred by anyone`);
@@ -29,16 +37,24 @@ class RewardService {
       }
 
       const referrerId = relationship.referrerId;
-      const idempotencyKey = `REG_REWARD_${referredUserId}`;
+      const effectiveHash = identityHash || relationship.referredIdentityHash;
+      const primaryKey = effectiveHash ? `REG_REWARD_IDENTITY_${effectiveHash}` : `REG_REWARD_${referredUserId}`;
 
-      // 2. Check if registration reward already awarded (Idempotency guarantee)
+      // 2. Check if registration reward already awarded (Idempotency guarantee for identity or user)
+      const possibleKeys = [primaryKey, `REG_REWARD_${referredUserId}`];
+      if (effectiveHash) {
+        possibleKeys.push(`REG_REWARD_IDENTITY_${effectiveHash}`);
+      }
+
       const existingLedger = await ReferralRewardLedger.findOne({
-        where: { idempotencyKey },
+        where: {
+          idempotencyKey: { [Op.in]: possibleKeys }
+        },
         transaction: tx
       });
 
       if (existingLedger) {
-        logger.info(`Registration reward already processed for referred user ${referredUserId}`);
+        logger.info(`Registration reward already processed for referred user ${referredUserId} / identity ${effectiveHash}`);
         return existingLedger;
       }
 
@@ -69,7 +85,7 @@ class RewardService {
         amountPaise: rewardAmountPaise,
         currency: 'INR',
         status: 'AVAILABLE',
-        idempotencyKey
+        idempotencyKey: primaryKey
       }, { transaction: tx });
 
       // 5. Credit Referrer Wallet
@@ -155,6 +171,13 @@ class RewardService {
         const percentage = rateMap[depth] !== undefined ? rateMap[depth] : defaultRates[depth] || 0;
 
         if (percentage <= 0) continue;
+
+        // TC_014: Inactive or deleted referrer -> commission skipped without reassigning to others
+        const ancestorUser = await User.findByPk(ancestorId, { transaction: tx });
+        if (!ancestorUser || ancestorUser.active === false) {
+          logger.info(`Commission skipped for ancestor ${ancestorId}: user is deleted or inactive`);
+          continue;
+        }
 
         // Mathematical calculation in integer minor units (paise)
         let commissionPaise = BigInt(Math.round((Number(totalPaidPaise) * percentage) / 100));
