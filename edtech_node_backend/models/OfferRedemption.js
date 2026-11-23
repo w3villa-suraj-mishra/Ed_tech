@@ -35,7 +35,7 @@ const OfferRedemption = sequelize.define('OfferRedemption', {
     }
   },
   plan: {
-    type: DataTypes.ENUM('free', 'silver', 'gold'),
+    type: DataTypes.ENUM('free', 'basic', 'silver', 'gold', 'plus', 'pro'),
     allowNull: false,
     defaultValue: 'gold'
   },

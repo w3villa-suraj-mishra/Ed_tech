@@ -243,6 +243,19 @@ function InstructorsInner() {
 
   const activeCount = instructors.filter((i) => i.published).length;
 
+  const parseMentoredCount = (value) => {
+    if (value === null || value === undefined) return 0;
+    if (typeof value === 'number') return Number.isFinite(value) ? value : 0;
+
+    const numeric = String(value).replace(/[^\d]/g, '');
+    return numeric ? Number(numeric) : 0;
+  };
+
+  const totalMentoredCount = instructors.reduce(
+    (sum, instructor) => sum + parseMentoredCount(instructor.studentsMentored),
+    0
+  );
+
   return (
     <AdminLayout>
       <div className="space-y-6 pb-12">
@@ -296,7 +309,7 @@ function InstructorsInner() {
           <div className="bg-white border border-gray-200 rounded-sm p-5 shadow-sm">
             <span className="text-xs text-gray-500 font-semibold uppercase tracking-wider">Total Mentored Count</span>
             <div className="text-2xl font-bold text-purple-700 mt-1.5">
-              83,000+
+              {new Intl.NumberFormat('en-IN').format(totalMentoredCount)}
             </div>
           </div>
         </div>

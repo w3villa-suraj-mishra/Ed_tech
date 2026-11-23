@@ -18,6 +18,8 @@ const getEffectiveDatabaseUrl = () => {
   if (/pooler\.supabase\.com:5432/.test(url)) {
     url = url.replace(/pooler\.supabase\.com:5432/g, 'pooler.supabase.com:6543');
   }
+  // Strip sslmode from query string to allow dialectOptions.ssl (rejectUnauthorized: false) to take effect
+  url = url.replace(/[?&]sslmode=[^&]+/g, '');
   return url;
 };
 
