@@ -5,7 +5,13 @@ const { COURSE_PAYMENT_API, COURSE_VERIFY_API } = studentEndpoints;
 
 export const createServerOrder = async ({ token, courses, plan = 'gold', couponCode = null, customerDetails, useWalletCredits = false }) => {
   const headers = token ? { Authorization: `Bearer ${token}` } : null;
-  const courseIds = courses.map((c) => (c != null && typeof c === 'object' ? c._id || c.id : c));
+  const courseIds = (courses || []).map((c) => {
+    if (c == null) return null;
+    if (typeof c === 'object') {
+      return c.id || c._id || c.courseId || c.data?.id || c.data?._id || c.course?.id || c.course?._id;
+    }
+    return c;
+  }).filter(Boolean);
 
   const response = await apiConnector(
     'POST',

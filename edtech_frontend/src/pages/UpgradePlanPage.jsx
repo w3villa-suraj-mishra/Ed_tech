@@ -33,11 +33,14 @@ const UpgradePlanPage = () => {
       setLoading(true);
       fetchCourseDetails(effectiveCourseId)
         .then((res) => {
-          const courseData = res?.courseDetails || res?.data?.courseDetails || res;
-          if (courseData) {
-            setCourse(courseData);
-            if (courseData?.activeCoupon || courseData?.coupon) {
-              const c = courseData.activeCoupon || courseData.coupon;
+          const courseData = res?.courseDetails || res?.data?.courseDetails || res?.data || res;
+          const actualCourse = (courseData && typeof courseData === 'object' && courseData.data && (courseData.data.id || courseData.data._id))
+            ? courseData.data
+            : courseData;
+          if (actualCourse) {
+            setCourse(actualCourse);
+            if (actualCourse?.activeCoupon || actualCourse?.coupon) {
+              const c = actualCourse.activeCoupon || actualCourse.coupon;
               setAppliedCoupon({
                 code: c.code || c.couponCode || "LUCKY20",
                 discountPercent: c.discountPercent || c.discount || 20,
@@ -52,11 +55,14 @@ const UpgradePlanPage = () => {
   }, [effectiveCourseId]);
 
   // Dynamic Plan Prices (Fallback to standard defaults if course price not set)
-  const basePrice = Number(course?.price || 4999);
+  const activeCourse = (course && typeof course === 'object' && course.data && (course.data.id || course.data._id))
+    ? course.data
+    : course;
+  const basePrice = Number(activeCourse?.price || activeCourse?.pricing?.finalPrice || 4999);
   const planPrices = {
-    basic: Number(course?.planPrices?.basic || course?.pricing?.basicPrice || Math.round(basePrice * 0.1) || 499),
-    plus: Number(course?.planPrices?.plus || course?.pricing?.plusPrice || basePrice || 4999),
-    pro: Number(course?.planPrices?.pro || course?.pricing?.proPrice || Math.round(basePrice * 1.4) || 6999),
+    basic: Number(activeCourse?.planPrices?.basic || activeCourse?.pricing?.basicPrice || Math.round(basePrice * 0.1) || 499),
+    plus: Number(activeCourse?.planPrices?.plus || activeCourse?.pricing?.plusPrice || basePrice || 4999),
+    pro: Number(activeCourse?.planPrices?.pro || activeCourse?.pricing?.proPrice || Math.round(basePrice * 1.4) || 6999),
   };
 
   const currentPlanPrice = planPrices[selectedPlan] || 4999;
@@ -111,9 +117,17 @@ const UpgradePlanPage = () => {
       navigate("/login");
       return;
     }
+    const resolvedCourse = (course && typeof course === 'object' && course.data && (course.data.id || course.data._id))
+      ? course.data
+      : course;
+    const courseIdToUse = resolvedCourse?.id || resolvedCourse?._id || Number(effectiveCourseId) || effectiveCourseId;
+    const finalDirectCourse = resolvedCourse && (resolvedCourse.id || resolvedCourse._id)
+      ? resolvedCourse
+      : { id: courseIdToUse, _id: courseIdToUse, price: basePrice, courseName: resolvedCourse?.courseName || 'Course' };
+
     navigate("/checkout", {
       state: {
-        directCourse: course || (effectiveCourseId ? { id: effectiveCourseId, price: basePrice } : null),
+        directCourse: finalDirectCourse,
         appliedCoupon: appliedCoupon?.active ? appliedCoupon : null,
         selectedPlan
       }

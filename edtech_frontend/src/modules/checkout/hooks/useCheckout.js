@@ -13,9 +13,11 @@ export const useCheckout = (overrideCourses = null) => {
   const { cart } = useSelector((state) => state.cart);
 
   // Selected courses for checkout: override if direct buy, else cart items
-  const coursesToCheckout = overrideCourses && Array.isArray(overrideCourses) && overrideCourses.length > 0
-    ? overrideCourses
-    : cart;
+  const normalizedOverrideCourses = overrideCourses && Array.isArray(overrideCourses) && overrideCourses.length > 0
+    ? overrideCourses.map((c) => (c && typeof c === 'object' && c.data && (c.data.id || c.data._id) ? c.data : c))
+    : null;
+
+  const coursesToCheckout = normalizedOverrideCourses || cart;
 
   const [customerDetails, setCustomerDetails] = useState({
     name: '',

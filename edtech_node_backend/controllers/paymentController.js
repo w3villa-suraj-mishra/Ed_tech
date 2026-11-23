@@ -26,7 +26,12 @@ const createPaymentOrder = async (req, res) => {
     }
 
     const courseDetails = await Promise.all(
-      courses.map(id => Course.findByPk(id != null && typeof id === 'object' ? id.id || id._id : id))
+      courses.map(id => {
+        const cleanId = id != null && typeof id === 'object'
+          ? (id.id || id._id || id.courseId || id.data?.id || id.data?._id || id.course?.id || id.course?._id)
+          : id;
+        return cleanId ? Course.findByPk(cleanId) : null;
+      })
     );
 
     const validCourses = courseDetails.filter(c => c !== null);
@@ -567,7 +572,12 @@ const verifyPayment = async (req, res) => {
       try {
         if (rewardService && typeof rewardService.processCoursePurchaseRewards === 'function') {
           const courseList = await Promise.all(
-            courses.map(cId => Course.findByPk(cId != null && typeof cId === 'object' ? cId.id || cId._id : cId))
+            courses.map(cId => {
+              const cleanId = cId != null && typeof cId === 'object'
+                ? (cId.id || cId._id || cId.courseId || cId.data?.id || cId.data?._id || cId.course?.id || cId.course?._id)
+                : cId;
+              return cleanId ? Course.findByPk(cleanId) : null;
+            })
           );
           const validCourses = courseList.filter(Boolean);
           const totalAmount = validCourses.reduce((sum, c) => {

@@ -14,7 +14,10 @@ const CheckoutPage = () => {
   const navigate = useNavigate();
 
   // Selected course passed via state (e.g. from Buy Course button) or cart
-  const directCourse = location.state?.directCourse;
+  const rawDirectCourse = location.state?.directCourse;
+  const directCourse = (rawDirectCourse && typeof rawDirectCourse === 'object' && rawDirectCourse.data && (rawDirectCourse.data.id || rawDirectCourse.data._id))
+    ? rawDirectCourse.data
+    : rawDirectCourse;
   const directCourses = directCourse ? [directCourse] : null;
 
   const {
