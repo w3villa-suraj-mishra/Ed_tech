@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { useSelector } from "react-redux";
-import { fetchCourseCertificate, verifyCertificateAPI } from "../services/operations/courseDetailsAPI";
+import { fetchCourseCertificate, verifyCertificateAPI, markAllLecturesAsComplete } from "../services/operations/courseDetailsAPI";
 import { FiDownload, FiPrinter, FiCheckCircle, FiAward, FiArrowLeft, FiLock } from "react-icons/fi";
 
 const CourseCertificatePage = () => {
@@ -99,12 +99,36 @@ const CourseCertificatePage = () => {
               </div>
             </div>
           )}
-          <button
-            onClick={() => courseId ? navigate(`/s/courses/${courseId}/take`) : navigate("/t/u/activeCourses")}
-            className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow transition"
-          >
-            Continue Learning
-          </button>
+          <div className="flex flex-col gap-2.5">
+            <button
+              onClick={() => courseId ? navigate(`/s/courses/${courseId}/take`) : navigate("/t/u/activeCourses")}
+              className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow transition cursor-pointer"
+            >
+              Continue Learning
+            </button>
+            {courseId && token && (
+              <button
+                type="button"
+                onClick={async () => {
+                  setLoading(true);
+                  const res = await markAllLecturesAsComplete(courseId, token);
+                  if (res?.success) {
+                    const certRes = await fetchCourseCertificate(courseId, token);
+                    if (certRes && !certRes.isLocked) {
+                      setCertData(certRes);
+                      setErrorInfo(null);
+                    } else {
+                      setErrorInfo(certRes);
+                    }
+                  }
+                  setLoading(false);
+                }}
+                className="w-full py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition cursor-pointer"
+              >
+                ✓ Mark Course as Complete & Unlock
+              </button>
+            )}
+          </div>
         </div>
       </div>
     );

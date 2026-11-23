@@ -70,8 +70,10 @@ const formatCourse = async (course, currentUserId = null) => {
   const completedVideos = [];
   if (currentUserId && coursePlain.courseProgresses) {
     coursePlain.courseProgresses.forEach((progress) => {
-      if (progress.courseProgressVideos) {
-        progress.courseProgressVideos.forEach((video) => {
+      const pUserId = progress.userId || progress.user_id;
+      if (String(pUserId) === String(currentUserId)) {
+        const videos = progress.courseProgressVideos || progress.course_progress_videos || [];
+        videos.forEach((video) => {
           completedVideos.push(video.subSectionId || video.sub_section_id);
         });
       }

@@ -303,9 +303,9 @@ const sectionController = {
    */
   updateCourseProgress: async (req, res) => {
     try {
-      const { courseId, subSectionId } = req.body;
+      const { courseId, subSectionId, markAll } = req.body;
 
-      if (!courseId || !subSectionId) {
+      if (!courseId || (!subSectionId && !markAll)) {
         return res.status(400).json({
           success: false,
           message: 'Missing fields'
@@ -313,6 +313,52 @@ const sectionController = {
       }
 
       const userId = req.user.id;
+
+      let progress = await CourseProgress.findOne({
+        where: { userId: Number(userId), courseId: Number(courseId) }
+      });
+
+      if (!progress) {
+        progress = await CourseProgress.create({
+          userId: Number(userId),
+          courseId: Number(courseId)
+        });
+      }
+
+      if (markAll) {
+        const sections = await Section.findAll({
+          where: { courseId: Number(courseId) },
+          include: [{ model: SubSection, as: 'subSections' }]
+        });
+
+        const allSubSectionIds = [];
+        sections.forEach(sec => {
+          (sec.subSections || []).forEach(sub => {
+            allSubSectionIds.push(sub.id);
+          });
+        });
+
+        for (const subId of allSubSectionIds) {
+          const existing = await CourseProgressVideo.findOne({
+            where: {
+              courseProgressId: progress.id,
+              subSectionId: subId
+            }
+          });
+          if (!existing) {
+            await CourseProgressVideo.create({
+              courseProgressId: progress.id,
+              subSectionId: subId
+            });
+          }
+        }
+
+        return res.status(200).json({
+          success: true,
+          message: 'All lectures marked as completed',
+          completedVideos: allSubSectionIds.map(String)
+        });
+      }
 
       // Enforce backend access control before allowing video progress update
       const accessCheck = await accessControlService.canAccessVideo(userId, courseId, subSectionId);
@@ -323,22 +369,11 @@ const sectionController = {
         });
       }
 
-      let progress = await CourseProgress.findOne({
-        where: { userId, courseId }
-      });
-
-      if (!progress) {
-        progress = await CourseProgress.create({
-          userId,
-          courseId
-        });
-      }
-
       // Check if video already marked as completed
       const completedVideo = await CourseProgressVideo.findOne({
         where: {
           courseProgressId: progress.id,
-          subSectionId
+          subSectionId: Number(subSectionId)
         }
       });
 
@@ -351,7 +386,7 @@ const sectionController = {
 
       await CourseProgressVideo.create({
         courseProgressId: progress.id,
-        subSectionId
+        subSectionId: Number(subSectionId)
       });
 
       return res.status(200).json({

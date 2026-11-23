@@ -391,29 +391,46 @@ export const getFullDetailsOfCourse = async (courseId, token) => {
 // mark a lecture as complete
 export const markLectureAsComplete = async (data, token) => {
   let result = null
-  console.log("mark complete data", data)
-  const toastId = toast.loading("Loading...")
+  const toastId = toast.loading("Saving progress...")
   try {
     const response = await apiConnector("POST", LECTURE_COMPLETION_API, data, {
       Authorization: `Bearer ${token}`,
     })
-    console.log(
-      "MARK_LECTURE_AS_COMPLETE_API API RESPONSE............",
-      response
-    )
 
     if (!response.data.message) {
-      throw new Error(response.data.error)
+      throw new Error(response.data.error || "Failed to mark lecture")
     }
-    toast.success("Lecture Completed")
-    result = true
+    toast.success(response.data.message || "Lecture Completed")
+    result = response.data || true
   } catch (error) {
     console.log("MARK_LECTURE_AS_COMPLETE_API API ERROR............", error)
-    toast.error(error.message)
+    toast.error(error.response?.data?.message || error.message)
     result = false
+  } finally {
+    toast.dismiss(toastId)
   }
-  toast.dismiss(toastId)
   return result
+}
+
+// mark all lectures as complete
+export const markAllLecturesAsComplete = async (courseId, token) => {
+  const toastId = toast.loading("Completing all lectures...")
+  try {
+    const response = await apiConnector("POST", LECTURE_COMPLETION_API, { courseId, markAll: true }, {
+      Authorization: `Bearer ${token}`,
+    })
+    if (!response?.data?.success) {
+      throw new Error(response?.data?.message || "Could not complete course")
+    }
+    toast.success("Course 100% completed! Certificate unlocked.")
+    return response.data
+  } catch (error) {
+    console.log("MARK_ALL_COMPLETE_API ERROR............", error)
+    toast.error(error.response?.data?.message || error.message || "Failed to complete course")
+    return null
+  } finally {
+    toast.dismiss(toastId)
+  }
 }
 
 // create a rating for course

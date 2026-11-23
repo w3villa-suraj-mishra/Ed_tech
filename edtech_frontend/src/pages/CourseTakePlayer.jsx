@@ -10,13 +10,14 @@ import {
   setCompletedLectures,
   updateCompletedLectures,
 } from "../services/slices/viewCourseSlice";
-import { markLectureAsComplete, fetchCourseReviews, createRating, postCommentAPI, fetchCourseComments, deleteCommentAPI } from "../services/operations/courseDetailsAPI";
+import { markLectureAsComplete, markAllLecturesAsComplete, fetchCourseReviews, createRating, postCommentAPI, fetchCourseComments, deleteCommentAPI } from "../services/operations/courseDetailsAPI";
 import {
   FiArrowLeft,
   FiMenu,
   FiChevronLeft,
   FiChevronRight,
   FiCheckCircle,
+  FiCircle,
   FiPlayCircle,
   FiLock,
   FiAward,
@@ -233,18 +234,16 @@ const CourseTakePlayer = () => {
   const handleCompleteAndContinue = async () => {
     if (!currentLecture) return;
 
-    if (!isCompleted(currentLecture._id)) {
-      try {
-        const res = await markLectureAsComplete(
-          { courseId, subSectionId: currentLecture._id },
-          token
-        );
-        if (res) {
-          dispatch(updateCompletedLectures(String(currentLecture._id)));
-        }
-      } catch (err) {
-        console.error("Failed to mark completed:", err);
+    try {
+      const res = await markLectureAsComplete(
+        { courseId, subSectionId: currentLecture._id },
+        token
+      );
+      if (res) {
+        dispatch(updateCompletedLectures(String(currentLecture._id)));
       }
+    } catch (err) {
+      console.error("Failed to mark completed:", err);
     }
 
     const currentSubSections =
@@ -268,6 +267,15 @@ const CourseTakePlayer = () => {
           nextSec.subSection[0]
         );
       }
+    }
+  };
+
+  // Complete all lectures handler
+  const handleCompleteAll = async () => {
+    if (!courseId) return;
+    const res = await markAllLecturesAsComplete(courseId, token);
+    if (res?.completedVideos) {
+      dispatch(setCompletedLectures(res.completedVideos.map(String)));
     }
   };
 
@@ -387,15 +395,29 @@ const CourseTakePlayer = () => {
         {sidebarOpen && (
           <aside className="w-80 border-r border-slate-200 bg-white flex flex-col shrink-0 select-none overflow-y-auto h-full">
             <div className="p-5 border-b border-slate-200 space-y-2">
+              <div className="flex items-center justify-between">
+                <p className="text-xs font-bold text-slate-700">
+                  {progressPercentage}% completed
+                </p>
+                {progressPercentage < 100 && (
+                  <button
+                    type="button"
+                    onClick={handleCompleteAll}
+                    className="text-[11px] font-bold text-indigo-600 hover:text-indigo-800 transition cursor-pointer"
+                    title="Mark all course lectures as completed"
+                  >
+                    ✓ Complete All
+                  </button>
+                )}
+              </div>
               <div className="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
                 <div
                   className="bg-indigo-600 h-full rounded-full transition-all duration-500"
                   style={{ width: `${progressPercentage}%` }}
                 />
               </div>
-              <p className="text-xs font-bold text-slate-700">
-                {progressPercentage}% completed{" "}
-                <span className="font-normal text-slate-400">in {formattedDuration}</span>
+              <p className="text-[11px] text-slate-400">
+                Duration: {formattedDuration}
               </p>
             </div>
 
@@ -450,10 +472,27 @@ const CourseTakePlayer = () => {
                               <div className="flex items-center gap-2.5 line-clamp-1 pr-2">
                                 {locked ? (
                                   <FiLock className="text-amber-500 shrink-0" size={14} />
-                                ) : completed ? (
-                                  <FiCheckCircle className="text-emerald-500 shrink-0" size={14} />
                                 ) : (
-                                  <FiPlayCircle className="text-indigo-400 shrink-0" size={14} />
+                                  <span
+                                    onClick={async (e) => {
+                                      e.stopPropagation();
+                                      const res = await markLectureAsComplete(
+                                        { courseId, subSectionId: lecture._id },
+                                        token
+                                      );
+                                      if (res) {
+                                        dispatch(updateCompletedLectures(String(lecture._id)));
+                                      }
+                                    }}
+                                    className="cursor-pointer hover:scale-110 transition"
+                                    title={completed ? "Completed" : "Click to mark as complete"}
+                                  >
+                                    {completed ? (
+                                      <FiCheckCircle className="text-emerald-500 shrink-0" size={14} />
+                                    ) : (
+                                      <FiCircle className="text-slate-300 hover:text-emerald-500 shrink-0" size={14} />
+                                    )}
+                                  </span>
                                 )}
                                 <span className="line-clamp-1">
                                   {lecture.title}

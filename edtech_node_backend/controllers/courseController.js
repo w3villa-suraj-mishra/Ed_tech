@@ -89,20 +89,34 @@ const courseController = {
         return res.status(404).json({ success: false, message: 'Course not found' });
       }
 
-      // Calculate total lectures
-      let totalLectures = 0;
+      // Collect all valid course lecture IDs
+      const courseSubSectionIds = new Set();
       (course.sections || []).forEach((sec) => {
-        totalLectures += sec.subSections ? sec.subSections.length : 0;
+        const subList = sec.subSections || sec.sub_sections || [];
+        subList.forEach((sub) => {
+          courseSubSectionIds.add(String(sub.id));
+        });
       });
+      const totalLectures = courseSubSectionIds.size;
 
       // Calculate completed lectures from user progress
       const userProgress = await CourseProgress.findOne({
-        where: { userId, courseId },
+        where: { userId: Number(userId), courseId: Number(courseId) },
         include: [{ model: CourseProgressVideo, as: 'courseProgressVideos' }]
       });
 
-      const completedCount = userProgress?.courseProgressVideos ? userProgress.courseProgressVideos.length : 0;
-      const progressPercentage = totalLectures > 0 ? Math.round((completedCount / totalLectures) * 100) : 0;
+      const completedSubSectionIds = new Set();
+      if (userProgress?.courseProgressVideos) {
+        userProgress.courseProgressVideos.forEach((cpv) => {
+          const subId = String(cpv.subSectionId || cpv.sub_section_id);
+          if (courseSubSectionIds.has(subId)) {
+            completedSubSectionIds.add(subId);
+          }
+        });
+      }
+
+      const completedCount = completedSubSectionIds.size;
+      const progressPercentage = totalLectures > 0 ? Math.round((completedCount / totalLectures) * 100) : 100;
 
       // Backend completion verification rule
       if (progressPercentage < 100 && totalLectures > 0) {
@@ -417,6 +431,8 @@ const courseController = {
           },
           {
             association: 'courseProgresses',
+            where: req.user?.id ? { userId: req.user.id } : undefined,
+            required: false,
             include: [{ association: 'courseProgressVideos' }]
           }
         ]
@@ -459,6 +475,8 @@ const courseController = {
           },
           {
             association: 'courseProgresses',
+            where: req.user?.id ? { userId: req.user.id } : undefined,
+            required: false,
             include: [{ association: 'courseProgressVideos' }]
           }
         ]
