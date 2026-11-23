@@ -132,16 +132,7 @@ export const useCheckout = (overrideCourses = null) => {
         return;
       }
 
-      // Fallback for modal if clientSecret is provided
-      const paymentInfo = res.data || {};
-      setStripeModal({
-        isOpen: true,
-        paymentData: {
-          ...paymentInfo,
-          customerDetails
-        }
-      });
-      setLoading(false);
+      throw new Error(res?.message || 'Unable to open Stripe Checkout page. Please verify your payment details.');
 
     } catch (error) {
       toast.dismiss(toastId);

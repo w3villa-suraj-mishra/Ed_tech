@@ -258,34 +258,22 @@ const createPaymentOrder = async (req, res) => {
 
     let session;
     const stripe = getStripe();
-    // If Stripe is not configured (no valid secret key), open modal with order details
+    
+    // Stripe secret key is required for official Stripe Checkout gateway
     if (!stripe) {
-      if (!userId) {
-        return res.status(401).json({ success: false, message: 'User not authenticated' });
-      }
-
-      return res.status(200).json({
-        success: true,
-        isFree: false,
-        message: 'Payment order created. Please complete payment.',
-        data: {
-          amount: remainingNetRupees,
-          currency: 'INR',
-          courses: validCourses.map(c => c.id),
-          plan: targetPlan,
-          offerId: validatedOffer ? validatedOffer.id : null,
-          paymentIntentId: `pi_stripe_${Date.now()}`
-        }
+      logger.error('Stripe is not configured: STRIPE_SECRET_KEY is missing');
+      return res.status(400).json({
+        success: false,
+        message: 'Stripe payment gateway is not configured. Please set STRIPE_SECRET_KEY in your backend environment variables.'
       });
     }
 
     try {
-      const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
-      session = await stripe.checkout.sessions.create({
+      const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3001';
+      const sessionPayload = {
         payment_method_types: ['card'],
         line_items: lineItems,
         mode: 'payment',
-        customer_email: req.user?.email,
         success_url: `${frontendUrl}/dashboard/enrolled-courses?session_id={CHECKOUT_SESSION_ID}&plan=${targetPlan}`,
         cancel_url: `${frontendUrl}/dashboard/cart`,
         metadata: {
@@ -297,21 +285,18 @@ const createPaymentOrder = async (req, res) => {
           appliedWalletCreditsPaise: String(appliedWalletCreditsPaise),
           totalOrderPaise: String(totalOrderPaise)
         },
-      });
+      };
+
+      if (req.user?.email && typeof req.user.email === 'string' && req.user.email.includes('@')) {
+        sessionPayload.customer_email = req.user.email;
+      }
+
+      session = await stripe.checkout.sessions.create(sessionPayload);
     } catch (stripeErr) {
-      logger.warn(`Stripe session creation bypassed/failed (${stripeErr.message}). Opening Stripe modal.`);
-      return res.status(200).json({
-        success: true,
-        isFree: false,
-        message: 'Payment order created. Please complete payment in modal.',
-        data: {
-          amount: remainingNetRupees,
-          currency: 'INR',
-          courses: validCourses.map(c => c.id),
-          plan: targetPlan,
-          offerId: validatedOffer ? validatedOffer.id : null,
-          paymentIntentId: `pi_stripe_${Date.now()}`
-        }
+      logger.error(`Stripe session creation failed: ${stripeErr.message}`);
+      return res.status(400).json({
+        success: false,
+        message: `Stripe Checkout error: ${stripeErr.message}`
       });
     }
 
