@@ -86,8 +86,60 @@ MAIL_PASS=your_email_app_password
 ```
 
 ### 4. Running Database Migrations
+
+#### Local Database Migrations
 ```bash
+# Run all pending migrations on local database
+npm run migrate
+# or directly with Sequelize CLI:
 npx sequelize-cli db:migrate
+
+# Check migration status on local database
+npx sequelize-cli db:migrate:status
+
+# Rollback the last migration on local database (if needed)
+npm run migrate:undo
+# or:
+npx sequelize-cli db:migrate:undo
+```
+
+#### Production (Supabase) Database Migrations
+The database configuration automatically switches to Supabase PostgreSQL over SSL when `NODE_ENV=production` or `USE_SUPABASE_DB=true`:
+
+```bash
+# Run all pending migrations on production (Supabase)
+NODE_ENV=production npx sequelize-cli db:migrate
+# or:
+USE_SUPABASE_DB=true npx sequelize-cli db:migrate
+
+# Check migration status on production (Supabase)
+NODE_ENV=production npx sequelize-cli db:migrate:status
+
+# Rollback the last migration on production (if needed)
+NODE_ENV=production npx sequelize-cli db:migrate:undo
+```
+
+#### Running a Single Specific Migration File
+```bash
+# On Local Database:
+node -e "
+require('dotenv').config();
+const { sequelize } = require('./models');
+const migration = require('./migrations/20261123120000-persistent-referral-attribution');
+migration.up(sequelize.getQueryInterface(), sequelize.Sequelize)
+  .then(() => { console.log('✓ Migration applied to local DB'); process.exit(0); })
+  .catch(err => { console.error('Migration error:', err); process.exit(1); });
+"
+
+# On Production (Supabase) Database:
+USE_SUPABASE_DB=true node -e "
+require('dotenv').config();
+const { sequelize } = require('./models');
+const migration = require('./migrations/20261123120000-persistent-referral-attribution');
+migration.up(sequelize.getQueryInterface(), sequelize.Sequelize)
+  .then(() => { console.log('✓ Migration applied to Supabase DB'); process.exit(0); })
+  .catch(err => { console.error('Migration error:', err); process.exit(1); });
+"
 ```
 
 ### 5. Start Development Server

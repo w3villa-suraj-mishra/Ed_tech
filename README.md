@@ -126,18 +126,64 @@ REACT_APP_BASE_URL=http://localhost:5000/api/v1
 CI=false
 ```
 
-### 4. Setup Database
+### 4. Setup Database & Migrations
 
-Run migrations and seeders from the backend directory:
-
+#### Local Database Migrations
 ```bash
 cd edtech_node_backend
 
-# Run migrations
+# Run all migrations on local database
 npm run migrate
+# or:
+npx sequelize-cli db:migrate
+
+# Check migration status on local database
+npx sequelize-cli db:migrate:status
+
+# Undo the last migration (if needed)
+npm run migrate:undo
 
 # Run seeders (optional - adds initial data)
 npm run seed
+```
+
+#### Production (Supabase) Database Migrations
+```bash
+cd edtech_node_backend
+
+# Run migrations on production (Supabase)
+NODE_ENV=production npx sequelize-cli db:migrate
+# or:
+USE_SUPABASE_DB=true npx sequelize-cli db:migrate
+
+# Check migration status on production (Supabase)
+NODE_ENV=production npx sequelize-cli db:migrate:status
+
+# Undo the last migration on production (if needed)
+NODE_ENV=production npx sequelize-cli db:migrate:undo
+```
+
+#### Running a Specific Migration Script Directly
+```bash
+# On Local Database:
+node -e "
+require('dotenv').config();
+const { sequelize } = require('./models');
+const migration = require('./migrations/20261123120000-persistent-referral-attribution');
+migration.up(sequelize.getQueryInterface(), sequelize.Sequelize)
+  .then(() => { console.log('✓ Migration applied to local DB'); process.exit(0); })
+  .catch(err => { console.error('Migration error:', err); process.exit(1); });
+"
+
+# On Production (Supabase) Database:
+USE_SUPABASE_DB=true node -e "
+require('dotenv').config();
+const { sequelize } = require('./models');
+const migration = require('./migrations/20261123120000-persistent-referral-attribution');
+migration.up(sequelize.getQueryInterface(), sequelize.Sequelize)
+  .then(() => { console.log('✓ Migration applied to Supabase DB'); process.exit(0); })
+  .catch(err => { console.error('Migration error:', err); process.exit(1); });
+"
 ```
 
 ### 5. Run the Application
