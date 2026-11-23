@@ -273,7 +273,8 @@ const createPaymentOrder = async (req, res) => {
 
       return res.status(200).json({
         success: true,
-        isFree: false,
+        isFree: true,
+        status: 'completed',
         message: 'Course access activated directly (Stripe not configured)',
         data: { enrollments: validCourses }
       });

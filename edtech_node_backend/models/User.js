@@ -70,7 +70,7 @@ const User = sequelize.define('User', {
     allowNull: true
   },
   githubToken: {
-    type: DataTypes.STRING,
+    type: DataTypes.TEXT,
     field: 'github_token',
     allowNull: true
   },
@@ -80,7 +80,7 @@ const User = sequelize.define('User', {
     allowNull: true
   },
   googleToken: {
-    type: DataTypes.STRING,
+    type: DataTypes.TEXT,
     field: 'google_token',
     allowNull: true
   },

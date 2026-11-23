@@ -2,6 +2,7 @@ require('dotenv').config();
 
 const shouldUseSupabaseUrl = () => {
   if (process.env.USE_SUPABASE_DB === 'true') return true;
+  if (process.env.USE_SUPABASE_DB === 'false') return false;
   if (process.env.VERCEL === '1' || process.env.NODE_ENV === 'production') return Boolean(process.env.DATABASE_URL);
   return false;
 };
