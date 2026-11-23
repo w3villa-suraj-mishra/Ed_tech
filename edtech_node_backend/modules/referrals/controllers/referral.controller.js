@@ -3,7 +3,7 @@ const attributionService = require('../services/attribution.service');
 const walletService = require('../services/wallet.service');
 const rewardService = require('../services/reward.service');
 const referralGenerator = require('../services/referral.generator');
-const { ReferralRelationship, ReferralCode, User } = require('../../../models');
+const { referralQuery } = require('../../../nativequery');
 
 const referralController = {
   /**
@@ -15,10 +15,7 @@ const referralController = {
       const linkData = await referralService.generateCustomReferralLink(user);
 
       // Check if current user was referred by someone
-      const directParentRelation = await ReferralRelationship.findOne({
-        where: { referredUserId: user.id },
-        include: [{ model: User, as: 'referrer', attributes: ['id', 'firstName', 'lastName'] }]
-      });
+      const directParentRelation = await referralQuery.findDirectParentRelationQuery(user.id);
 
       const wallet = await walletService.getWalletSummary(user.id);
       const network = await referralService.getNetworkHierarchy(user.id);

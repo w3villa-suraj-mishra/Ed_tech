@@ -1,19 +1,7 @@
-const {
-  User,
-  ReferralRelationship,
-  ReferralTree,
-  ReferralRewardRule,
-  ReferralRewardLedger,
-  Enrollment,
-  Course,
-  Wallet,
-  WalletTransaction,
-  sequelize
-} = require('../../../models');
+const { referralQuery } = require('../../../nativequery');
 const referralService = require('../services/referral.service');
 const walletService = require('../services/wallet.service');
 const { buildNetworkUserSearch } = require('../utils/networkSearch');
-const { Op } = require('sequelize');
 
 const referralAdminController = {
   /**
@@ -31,50 +19,7 @@ const referralAdminController = {
         recentReferralRows,
         earnedRows,
         earnedDetailsRows
-      ] = await Promise.all([
-        ReferralRelationship.count(),
-        ReferralTree.count(),
-        ReferralRewardRule.findAll({ where: { isActive: true }, order: [['level', 'ASC']] }),
-        ReferralRewardLedger.findAll({
-          attributes: [
-            'status',
-            [sequelize.fn('SUM', sequelize.col('amount_paise')), 'totalAmountPaise']
-          ],
-          group: ['status'],
-          raw: true
-        }),
-        ReferralRelationship.count({ distinct: true, col: 'referrerId' }),
-        ReferralRelationship.findAll({
-          include: [{ model: User, as: 'referrer', attributes: ['id', 'firstName', 'lastName', 'email'] }],
-          order: [['registeredAt', 'DESC']]
-        }),
-        ReferralRelationship.findAll({
-          include: [
-            { model: User, as: 'referrer', attributes: ['id', 'firstName', 'lastName', 'email'] },
-            { model: User, as: 'referredUser', attributes: ['id', 'firstName', 'lastName', 'email'] }
-          ],
-          order: [['registeredAt', 'DESC']],
-          limit: 10
-        }),
-        ReferralRewardLedger.findAll({
-          attributes: [
-            'userId',
-            [sequelize.fn('SUM', sequelize.col('amount_paise')), 'totalEarnedPaise']
-          ],
-          group: ['userId'],
-          raw: true
-        }),
-        ReferralRewardLedger.findAll({
-          include: [
-            {
-              model: User,
-              as: 'user',
-              attributes: ['id', 'firstName', 'lastName', 'email']
-            }
-          ],
-          order: [['createdAt', 'DESC']]
-        })
-      ]);
+      ] = await referralQuery.getReferralOverviewDataQuery();
 
       let totalAwardedPaise = 0n;
       let totalAvailablePaise = 0n;
@@ -100,14 +45,7 @@ const referralAdminController = {
         let courseName = '';
 
         if (ledgerEntry.rewardType === 'COURSE_PURCHASE' && ledgerEntry.orderId) {
-          const enrollment = await Enrollment.findOne({
-            where: { paymentReference: ledgerEntry.orderId },
-            include: [
-              { model: User, as: 'user', attributes: ['id', 'firstName', 'lastName', 'email'] },
-              { model: Course, as: 'course', attributes: ['id', 'courseName'] }
-            ],
-            order: [['createdAt', 'DESC']]
-          });
+          const enrollment = await referralQuery.findEnrollmentByPaymentReferenceQuery(ledgerEntry.orderId);
           purchaserName = enrollment?.user
             ? `${enrollment.user.firstName || ''} ${enrollment.user.lastName || ''}`.trim()
             : '';
@@ -117,9 +55,7 @@ const referralAdminController = {
         let sourceName = 'Referral reward';
         if (ledgerEntry.rewardType === 'REGISTRATION') {
           const relationship = ledgerEntry.referralId
-            ? await ReferralRelationship.findByPk(ledgerEntry.referralId, {
-                include: [{ model: User, as: 'referredUser', attributes: ['id', 'firstName', 'lastName', 'email'] }]
-              })
+            ? await referralQuery.findReferralWithReferredUserByIdQuery(ledgerEntry.referralId)
             : null;
           purchaserName = relationship?.referredUser
             ? `${relationship.referredUser.firstName || ''} ${relationship.referredUser.lastName || ''}`.trim()
@@ -247,14 +183,7 @@ const referralAdminController = {
       let targetUser = null;
 
       if (search) {
-        if (search.type === 'id') {
-          targetUser = await User.findByPk(search.where.id);
-        } else {
-          targetUser = await User.findOne({
-            where: search.where,
-            order: [['createdAt', 'DESC']]
-          });
-        }
+        targetUser = await referralQuery.findNetworkTargetUserQuery(search);
       }
 
       if (!targetUser) {
@@ -275,11 +204,7 @@ const referralAdminController = {
         depth: item.depth
       }));
 
-      const uplineRecords = await ReferralTree.findAll({
-        where: { descendantId: targetUser.id },
-        include: [{ model: User, as: 'ancestor', attributes: ['id', 'firstName', 'lastName', 'email'] }],
-        order: [['depth', 'ASC']]
-      });
+      const uplineRecords = await referralQuery.findUplineRecordsQuery(targetUser.id);
 
       const ancestors = uplineRecords.map(r => ({
         depth: r.depth,
@@ -325,29 +250,13 @@ const referralAdminController = {
       const { page = 1, limit = 20, status, rewardType, orderId, userId } = req.query;
       const offset = (Math.max(1, page) - 1) * limit;
 
-      const where = {};
-      if (status) where.status = status;
-      if (rewardType) where.rewardType = rewardType;
-      if (orderId) where.orderId = { [Op.iLike]: `%${orderId.trim()}%` };
-      if (userId) where.userId = userId;
-
-      const { count, rows } = await ReferralRewardLedger.findAndCountAll({
-        where,
-        include: [
-          {
-            model: User,
-            as: 'user',
-            attributes: ['id', 'firstName', 'lastName', 'email']
-          },
-          {
-            model: ReferralRelationship,
-            as: 'referral',
-            attributes: ['id', 'referrerId', 'referredUserId', 'referralCode']
-          }
-        ],
+      const { count, rows } = await referralQuery.findAndCountRewardsLedgerQuery({
+        status,
+        rewardType,
+        orderId,
+        userId,
         limit: Number(limit),
-        offset,
-        order: [['createdAt', 'DESC']]
+        offset
       });
 
       // Collect all unique user IDs from reward rows
@@ -355,14 +264,7 @@ const referralAdminController = {
 
       // Batch-fetch referral relationships where the user is the referred child
       // (i.e. someone referred them — this tells us their parent)
-      const childRelationships = userIds.length > 0
-        ? await ReferralRelationship.findAll({
-            where: { referredUserId: { [Op.in]: userIds } },
-            include: [
-              { model: User, as: 'referrer', attributes: ['id', 'firstName', 'lastName', 'email'] }
-            ]
-          })
-        : [];
+      const childRelationships = await referralQuery.findChildRelationshipsByUserIdsQuery(userIds);
 
       // Map: referredUserId -> { referrer (parent), referralCode }
       const parentByUserId = new Map();
@@ -371,14 +273,7 @@ const referralAdminController = {
       });
 
       // Batch-fetch direct children for each user (where the user is the referrer)
-      const parentRelationships = userIds.length > 0
-        ? await ReferralRelationship.findAll({
-            where: { referrerId: { [Op.in]: userIds } },
-            include: [
-              { model: User, as: 'referredUser', attributes: ['id', 'firstName', 'lastName', 'email'] }
-            ]
-          })
-        : [];
+      const parentRelationships = await referralQuery.findParentRelationshipsByUserIdsQuery(userIds);
 
       // Map: referrerId -> [children]
       const childrenByUserId = new Map();
@@ -394,14 +289,7 @@ const referralAdminController = {
       )];
 
       // Fetch parent-of-parent relationships (grandparent lookup for CHILD users)
-      const grandparentRelationships = parentUserIds.length > 0
-        ? await ReferralRelationship.findAll({
-            where: { referredUserId: { [Op.in]: parentUserIds } },
-            include: [
-              { model: User, as: 'referrer', attributes: ['id', 'firstName', 'lastName', 'email'] }
-            ]
-          })
-        : [];
+      const grandparentRelationships = await referralQuery.findGrandparentRelationshipsByParentIdsQuery(parentUserIds);
 
       // Map: parentUserId -> their parent (grandparent of the original user)
       const grandparentByParentId = new Map();
@@ -414,14 +302,7 @@ const referralAdminController = {
       const allChildIds = [...new Set(
         parentRelationships.map(rel => rel.referredUserId)
       )];
-      const grandchildCounts = allChildIds.length > 0
-        ? await ReferralRelationship.findAll({
-            where: { referrerId: { [Op.in]: allChildIds } },
-            attributes: ['referrerId'],
-            group: ['referrerId'],
-            raw: true
-          })
-        : [];
+      const grandchildCounts = await referralQuery.findGrandchildCountsQuery(allChildIds);
       // Set of child IDs that are themselves parents (making the original user a grandparent)
       const childIdsWithChildren = new Set(grandchildCounts.map(r => r.referrerId));
 
@@ -530,9 +411,7 @@ const referralAdminController = {
    */
   getRules: async (req, res) => {
     try {
-      const rules = await ReferralRewardRule.findAll({
-        order: [['rewardType', 'ASC'], ['level', 'ASC']]
-      });
+      const rules = await referralQuery.getAllRewardRulesQuery();
 
       return res.status(200).json({
         success: true,
@@ -561,38 +440,8 @@ const referralAdminController = {
         return res.status(400).json({ success: false, message: 'rules array is required' });
       }
 
-      await sequelize.transaction(async (t) => {
-        for (const item of rules) {
-          const updates = {};
-          if (item.rewardPercentage !== undefined) {
-            updates.rewardPercentage = Number(item.rewardPercentage);
-          }
-          if (item.fixedAmountRupees !== undefined) {
-            updates.fixedAmountPaise = BigInt(Math.round(Number(item.fixedAmountRupees) * 100));
-          }
-          if (item.maximumRewardRupees !== undefined) {
-            updates.maximumRewardPaise = item.maximumRewardRupees !== null
-              ? BigInt(Math.round(Number(item.maximumRewardRupees) * 100))
-              : null;
-          }
-          if (item.isActive !== undefined) {
-            updates.isActive = Boolean(item.isActive);
-          }
-
-          if (item.id) {
-            await ReferralRewardRule.update(updates, { where: { id: item.id }, transaction: t });
-          } else if (item.rewardType && item.level !== undefined) {
-            await ReferralRewardRule.update(updates, {
-              where: { rewardType: item.rewardType, level: item.level },
-              transaction: t
-            });
-          }
-        }
-      });
-
-      const updatedRules = await ReferralRewardRule.findAll({
-        order: [['rewardType', 'ASC'], ['level', 'ASC']]
-      });
+      await referralQuery.updateRewardRulesBatchQuery(rules);
+      const updatedRules = await referralQuery.getAllRewardRulesQuery();
 
       return res.status(200).json({
         success: true,
@@ -612,22 +461,11 @@ const referralAdminController = {
       const { page = 1, limit = 20, type, userId } = req.query;
       const offset = (Math.max(1, page) - 1) * limit;
 
-      const where = {};
-      if (type) where.transactionType = type;
-      if (userId) where.userId = userId;
-
-      const { count, rows } = await WalletTransaction.findAndCountAll({
-        where,
-        include: [
-          {
-            model: User,
-            as: 'user',
-            attributes: ['id', 'firstName', 'lastName', 'email']
-          }
-        ],
+      const { count, rows } = await referralQuery.findAndCountWalletTransactionsQuery({
+        type,
+        userId,
         limit: Number(limit),
-        offset,
-        order: [['createdAt', 'DESC']]
+        offset
       });
 
       return res.status(200).json({

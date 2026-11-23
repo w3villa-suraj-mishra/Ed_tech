@@ -13,6 +13,7 @@ const notificationQuery = require('./notification.query');
 const contactQuery = require('./contact.query');
 const articleQuery = require('./article.query');
 const siteConfigQuery = require('./siteConfig.query');
+const referralQuery = require('./referral.query');
 
 /**
  * Native Query Layer Barrel Export
@@ -34,5 +35,7 @@ module.exports = {
   notificationQuery,
   contactQuery,
   articleQuery,
-  siteConfigQuery
+  siteConfigQuery,
+  referralQuery,
+  referalQuery: referralQuery
 };
