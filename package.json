@@ -3,17 +3,19 @@
   "private": true,
   "scripts": {
     "start": "concurrently \"npm run frontend\" \"npm run backend\"",
-    "dev": "concurrently \"npm run frontend\" \"npm run backend\"",
+    "dev": "concurrently \"npm run frontend\" \"npm run backend\" && npm run sentry:sourcemaps",
     "frontend": "cd edtech_frontend && PORT=3001 CHOKIDAR_USEPOLLING=true WATCHPACK_POLLING=true npm start",
     "backend": "cd edtech_node_backend && npm run dev",
     "migrate:status": "cd edtech_node_backend && npx sequelize-cli db:migrate:status",
-    "migrate": "cd edtech_node_backend && npx sequelize-cli db:migrate"
+    "migrate": "cd edtech_node_backend && npx sequelize-cli db:migrate",
+    "sentry:sourcemaps": "sentry-cli sourcemaps inject --org w3villa-5c --project edtech ./build && sentry-cli sourcemaps upload --org w3villa-5c --project edtech ./build"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.2.2",
     "concurrently": "^9.2.4"
   },
   "dependencies": {
+    "@sentry/cli": "^2.58.6",
     "axios": "^1.15.2"
   }
 }

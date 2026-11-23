@@ -55,6 +55,7 @@ import UpgradePlanPage from "./pages/UpgradePlanPage.jsx";
 import LiveClassesPage from "./pages/LiveClassesPage.jsx";
 import LiveClassroomPage from "./pages/LiveClassroomPage.jsx";
 import NotFoundPage from "./pages/NotFoundPage";
+import ErrorButton from "./components/Common/ErrorButton.jsx";
 import { Toaster } from "react-hot-toast";
 import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
@@ -251,6 +252,7 @@ function App() {
               element={<VideoDetails />}
             />
           </Route>
+          <Route path="/sentry-test"          element={<div className="min-h-[60vh] flex flex-col items-center justify-center gap-4 p-8 text-center"><h1 className="text-xl font-bold text-white">Sentry Error Tracking Test</h1><p className="text-sm text-richblack-300">Clicking the button below logs, records metrics, and throws a test error for Sentry.</p><ErrorButton /></div>} />
           <Route path="*"                     element={<NotFoundPage />} />
         </Routes>
       </div>

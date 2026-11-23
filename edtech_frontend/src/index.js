@@ -1,5 +1,7 @@
+import './instrument';
 import React from 'react';
 import ReactDOM from 'react-dom/client';
+import * as Sentry from '@sentry/react';
 import './index.css';
 import App from './App.js';
 import reportWebVitals from './reportWebVitals';
@@ -13,7 +15,16 @@ const store = configureStore({
   reducer: rootReducer,
 });
 
-const root = ReactDOM.createRoot(document.getElementById('root'));
+const container = document.getElementById('root') || document.getElementById('app');
+const root = ReactDOM.createRoot(container, {
+  // Capture unhandled React 19 errors with Sentry
+  onUncaughtError: Sentry.reactErrorHandler((error, errorInfo) => {
+    console.warn("Uncaught error", error, errorInfo.componentStack);
+  }),
+  onCaughtError: Sentry.reactErrorHandler(),
+  onRecoverableError: Sentry.reactErrorHandler(),
+});
+
 root.render(
   <React.StrictMode>
     <Provider store={store}>
