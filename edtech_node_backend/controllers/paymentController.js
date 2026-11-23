@@ -242,14 +242,35 @@ const createPaymentOrder = async (req, res) => {
         finalItemPriceRupees = Math.max(1, Math.round(remainingNetRupees * proportion));
       }
 
+      let productImages = [];
+      if (course.thumbnail && typeof course.thumbnail === 'string') {
+        try {
+          const parsedThumb = new URL(course.thumbnail);
+          if (
+            (parsedThumb.protocol === 'http:' || parsedThumb.protocol === 'https:') &&
+            !parsedThumb.hostname.includes('localhost') &&
+            !parsedThumb.hostname.includes('127.0.0.1')
+          ) {
+            productImages = [parsedThumb.href];
+          }
+        } catch {
+          productImages = [];
+        }
+      }
+
+      const productData = {
+        name: `${course.courseName} (${targetPlan.toUpperCase()} Plan)${validatedOffer ? ` - Coupon ${validatedOffer.code}` : ''}${appliedWalletCreditsPaise > 0n ? ' (Wallet Applied)' : ''}`,
+        description: targetPlan === PLAN_TYPES.SILVER ? '1 Year Full Course Access' : 'Lifetime Full Course Access',
+      };
+
+      if (productImages.length > 0) {
+        productData.images = productImages;
+      }
+
       return {
         price_data: {
           currency: 'inr',
-          product_data: {
-            name: `${course.courseName} (${targetPlan.toUpperCase()} Plan)${validatedOffer ? ` - Coupon ${validatedOffer.code}` : ''}${appliedWalletCreditsPaise > 0n ? ' (Wallet Applied)' : ''}`,
-            description: targetPlan === PLAN_TYPES.SILVER ? '1 Year Full Course Access' : 'Lifetime Full Course Access',
-            images: (typeof course.thumbnail === 'string' && (course.thumbnail.startsWith('http://') || course.thumbnail.startsWith('https://'))) ? [course.thumbnail] : [],
-          },
+          product_data: productData,
           unit_amount: Math.round(finalItemPriceRupees * 100),
         },
         quantity: 1,
@@ -269,13 +290,26 @@ const createPaymentOrder = async (req, res) => {
     }
 
     try {
-      const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3001';
+      // Robustly sanitize frontend URL from origin, referer or environment
+      let rawFrontendUrl = req.get('origin') || req.get('referer') || process.env.FRONTEND_URL || 'http://localhost:3001';
+      rawFrontendUrl = rawFrontendUrl.trim();
+      if (!rawFrontendUrl.startsWith('http://') && !rawFrontendUrl.startsWith('https://')) {
+        rawFrontendUrl = `https://${rawFrontendUrl}`;
+      }
+      let baseOrigin = 'http://localhost:3001';
+      try {
+        const parsedUrl = new URL(rawFrontendUrl);
+        baseOrigin = `${parsedUrl.protocol}//${parsedUrl.host}`;
+      } catch {
+        baseOrigin = 'http://localhost:3001';
+      }
+
       const sessionPayload = {
         payment_method_types: ['card'],
         line_items: lineItems,
         mode: 'payment',
-        success_url: `${frontendUrl}/dashboard/enrolled-courses?session_id={CHECKOUT_SESSION_ID}&plan=${targetPlan}`,
-        cancel_url: `${frontendUrl}/dashboard/cart`,
+        success_url: `${baseOrigin}/dashboard/enrolled-courses?session_id={CHECKOUT_SESSION_ID}&plan=${targetPlan}`,
+        cancel_url: `${baseOrigin}/dashboard/cart`,
         metadata: {
           userId: String(userId),
           plan: targetPlan,
