@@ -114,7 +114,7 @@ export const useCheckout = (overrideCourses = null) => {
       }
 
       // Handle Free Plan / 100% coupon discount / 100% Wallet credit redemption direct activation
-      if (res.isFree || res.paidWithCredits || res.status === 'completed') {
+      if (res.isFree || res.paidWithCredits) {
         dispatch(resetCart());
         setStatusModal({
           isOpen: true,

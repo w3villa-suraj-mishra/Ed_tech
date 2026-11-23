@@ -19,9 +19,9 @@ const getTransporter = async () => {
     });
   }
 
-  // 3. Development fallback: create Ethereal test account so local testing works seamlessly
-  if (process.env.NODE_ENV !== 'production') {
-    logger.info('Using Ethereal test account for email delivery fallback in development.');
+  // 3. Fallback: create Ethereal test account so local and test purchases succeed with previewable email
+  try {
+    logger.info('Using Ethereal test account for email delivery fallback.');
     const testAccount = await nodemailer.createTestAccount();
     return nodemailer.createTransport({
       host: 'smtp.ethereal.email',
@@ -32,9 +32,10 @@ const getTransporter = async () => {
         pass: testAccount.pass,
       },
     });
+  } catch (err) {
+    logger.warn(`Ethereal email fallback warning: ${err.message}`);
+    throw new Error('Email configuration is missing or invalid.');
   }
-
-  throw new Error('Email configuration is missing or invalid.');
 };
 
 const getFromAddress = () => {

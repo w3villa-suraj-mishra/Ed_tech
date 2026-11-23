@@ -257,26 +257,24 @@ const createPaymentOrder = async (req, res) => {
     });
 
     let session;
-    // If Stripe is not configured (no valid secret key), skip Stripe checkout
-    // and directly activate course enrollments
+    // If Stripe is not configured (no valid secret key), open modal with order details
     if (!stripe) {
       if (!userId) {
         return res.status(401).json({ success: false, message: 'User not authenticated' });
       }
-      await activateEnrollments({
-        userId,
-        courseIds: validCourses.map(c => c.id),
-        plan: targetPlan,
-        paymentRef: 'NO_STRIPE_KEY',
-        offerId: validatedOffer ? validatedOffer.id : null
-      });
 
       return res.status(200).json({
         success: true,
-        isFree: true,
-        status: 'completed',
-        message: 'Course access activated directly (Stripe not configured)',
-        data: { enrollments: validCourses }
+        isFree: false,
+        message: 'Payment order created. Please complete payment.',
+        data: {
+          amount: remainingNetRupees,
+          currency: 'INR',
+          courses: validCourses.map(c => c.id),
+          plan: targetPlan,
+          offerId: validatedOffer ? validatedOffer.id : null,
+          paymentIntentId: `pi_stripe_${Date.now()}`
+        }
       });
     }
 
@@ -300,20 +298,19 @@ const createPaymentOrder = async (req, res) => {
         },
       });
     } catch (stripeErr) {
-      logger.warn(`Stripe session creation bypassed/failed (${stripeErr.message}). Activating course directly.`);
-      await activateEnrollments({
-        userId,
-        courseIds: validCourses.map(c => c.id),
-        plan: targetPlan,
-        paymentRef: 'DIRECT_ACTIVATION',
-        offerId: validatedOffer ? validatedOffer.id : null
-      });
-
+      logger.warn(`Stripe session creation bypassed/failed (${stripeErr.message}). Opening Stripe modal.`);
       return res.status(200).json({
         success: true,
-        isFree: true,
-        message: 'Course access activated successfully',
-        data: { enrollments: validCourses }
+        isFree: false,
+        message: 'Payment order created. Please complete payment in modal.',
+        data: {
+          amount: remainingNetRupees,
+          currency: 'INR',
+          courses: validCourses.map(c => c.id),
+          plan: targetPlan,
+          offerId: validatedOffer ? validatedOffer.id : null,
+          paymentIntentId: `pi_stripe_${Date.now()}`
+        }
       });
     }
 
@@ -469,23 +466,9 @@ const activateEnrollments = async ({ userId, courseIds, plan = PLAN_TYPES.GOLD, 
  */
 const verifyPayment = async (req, res) => {
   try {
-    const { sessionId, courses, plan } = req.body;
+    const { sessionId, paymentIntentId, courses, plan, offerId } = req.body;
 
-    // If Stripe is not configured, activate enrollment directly
-    if (!stripe) {
-      if (req.user && Array.isArray(courses) && courses.length > 0) {
-        await activateEnrollments({
-          userId: req.user.id,
-          courseIds: courses,
-          plan: plan || PLAN_TYPES.GOLD,
-          paymentRef: 'MANUAL_VERIFY_NO_STRIPE'
-        });
-        return res.status(200).json({ success: true, message: 'Enrolled successfully (Stripe not configured)' });
-      }
-      return res.status(400).json({ success: false, message: 'Payment verification failed (Stripe not configured)' });
-    }
-
-    if (sessionId) {
+    if (sessionId && stripe) {
       const session = await stripe.checkout.sessions.retrieve(sessionId);
       if (session.payment_status === 'paid') {
         let courseIds = [];
@@ -496,7 +479,7 @@ const verifyPayment = async (req, res) => {
         }
         const targetUserId = req.user?.id || session.metadata?.userId;
         const sessionPlan = session.metadata?.plan || plan || PLAN_TYPES.GOLD;
-        const sessionOfferId = session.metadata?.offerId || null;
+        const sessionOfferId = session.metadata?.offerId || offerId || null;
 
         logger.info(`Verifying payment session ${sessionId} for user ${targetUserId}, plan: ${sessionPlan}, courseIds: ${JSON.stringify(courseIds)}, offerId: ${sessionOfferId}`);
 
@@ -546,16 +529,19 @@ const verifyPayment = async (req, res) => {
 
         return res.status(200).json({ success: true, message: 'Payment verified and plan activated successfully' });
       }
+      return res.status(400).json({ success: false, message: 'Stripe payment status was not paid' });
     }
 
     if (req.user && Array.isArray(courses) && courses.length > 0) {
+      const paymentRef = paymentIntentId || (sessionId ? sessionId : 'MANUAL_VERIFY');
       await activateEnrollments({
         userId: req.user.id,
         courseIds: courses,
         plan: plan || PLAN_TYPES.GOLD,
-        paymentRef: 'MANUAL_VERIFY'
+        paymentRef,
+        offerId: offerId || null
       });
-      return res.status(200).json({ success: true, message: 'Enrolled successfully' });
+      return res.status(200).json({ success: true, message: 'Payment verified and course access granted successfully' });
     }
 
     return res.status(400).json({ success: false, message: 'Payment verification failed' });

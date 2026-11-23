@@ -157,6 +157,23 @@ const CheckoutPage = () => {
         >
           Explore Courses
         </button>
+
+        {/* STRIPE PAYMENT MODAL */}
+        <StripePaymentModal
+          isOpen={stripeModal?.isOpen}
+          onClose={() => setStripeModal({ isOpen: false, paymentData: null })}
+          paymentData={stripeModal?.paymentData}
+          onPaymentSuccess={handleStripePaymentSuccess}
+          onPaymentFailure={handleStripePaymentFailure}
+          onPaymentCancel={handleStripePaymentCancel}
+        />
+
+        {/* PAYMENT STATUS MODAL */}
+        <PaymentStatusModal
+          modalData={statusModal}
+          onClose={() => setStatusModal({ isOpen: false, status: 'idle', message: '' })}
+          onRetry={handleConfirmAndPay}
+        />
       </div>
     );
   }
