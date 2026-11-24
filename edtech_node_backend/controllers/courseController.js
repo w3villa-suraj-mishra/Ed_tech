@@ -400,7 +400,7 @@ const courseController = {
       });
 
       // Reload with associations
-      const formattedCourse = await courseService.formatCourse(course);
+      const formattedCourse = await courseService.formatCourse(course, req.user?.id);
 
       return res.status(201).json({
         success: true,
@@ -744,7 +744,7 @@ const courseController = {
         ]
       });
 
-      const formattedCourse = await courseService.formatCourse(updatedCourse);
+      const formattedCourse = await courseService.formatCourse(updatedCourse, req.user?.id);
 
       return res.status(200).json({
         success: true,

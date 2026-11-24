@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { RxDropdownMenu } from "react-icons/rx";
 import { MdEdit } from 'react-icons/md';
@@ -21,10 +21,6 @@ const NestedView = ({ handleChangeEditSectionName }) => {
   const [editSubSection, setEditSubSection] = useState(null);
   const [confirmationModal, setConfirmationModal] = useState(null);
 
-  useEffect(() => {
-    console.log("Rendering again");
-  });
-
   const handleDeleteSection = async (sectionId) => {
     const cId = course?._id || course?.id;
     const result = await deleteSection({ sectionId, courseId: cId }, token);
@@ -40,7 +36,9 @@ const NestedView = ({ handleChangeEditSectionName }) => {
     setConfirmationModal(null);
   }
 
-  const sectionsList = course?.courseContent || course?.sections || [];
+  const sectionsList = (course?.courseContent && course.courseContent.length > 0)
+    ? course.courseContent
+    : (course?.sections || []);
 
   return (
     <div className='space-y-5'>
@@ -66,13 +64,16 @@ const NestedView = ({ handleChangeEditSectionName }) => {
             <div className='flex items-center gap-4'>
 
               <button
+                type="button"
                 onClick={() => handleChangeEditSectionName(sId, section.sectionName)}
                 className='text-yellow-400 hover:scale-110 transition'
+                title="Edit Section Name"
               >
                 <MdEdit />
               </button>
 
               <button
+                type="button"
                 onClick={() => setConfirmationModal({
                   text1: "Delete this Section",
                   text2: "All lectures will be deleted",
@@ -82,6 +83,7 @@ const NestedView = ({ handleChangeEditSectionName }) => {
                   btn2Handler: () => setConfirmationModal(null),
                 })}
                 className='text-blue-400 hover:scale-110 transition'
+                title="Delete Section"
               >
                 <RiDeleteBin6Line />
               </button>
@@ -95,16 +97,26 @@ const NestedView = ({ handleChangeEditSectionName }) => {
 
             {subList?.map((data) => {
               const subId = data._id || data.id;
+              const hasVideo = Boolean(data.videoUrl || data.video_url || data.video);
               return (
               <div
                 key={subId}
-                onClick={() => setViewSubSection(data)}
+                onClick={() => setViewSubSection({ ...data, sectionId: sId })}
                 className='group flex items-center justify-between rounded-xl px-4 py-3 hover:bg-white/5 cursor-pointer transition'
               >
 
-                <div className='flex items-center gap-3'>
+                <div className='flex items-center gap-3 flex-wrap'>
                   <RxDropdownMenu className='text-richblack-400' />
-                  <p className='text-sm text-white'>{data.title}</p>
+                  <p className='text-sm text-white font-medium'>{data.title}</p>
+                  {hasVideo ? (
+                    <span className="flex items-center gap-1 text-[11px] text-emerald-400 bg-emerald-950/40 border border-emerald-500/20 px-2 py-0.5 rounded-full font-medium">
+                      ▶ {data.duration || "Video attached"}
+                    </span>
+                  ) : (
+                    <span className="text-[11px] text-richblack-400 bg-richblack-800 border border-richblack-700 px-2 py-0.5 rounded-full">
+                      No video attached
+                    </span>
+                  )}
                 </div>
 
                 <div
@@ -112,24 +124,28 @@ const NestedView = ({ handleChangeEditSectionName }) => {
                   className='flex items-center gap-3 opacity-70 group-hover:opacity-100'
                 >
                   <button
+                    type="button"
                     onClick={() => setEditSubSection({ ...data, sectionId: sId })}
-                    className='text-yellow-400 hover:scale-110 transition'
+                    className='text-yellow-400 hover:scale-110 transition p-1'
+                    title="Edit Lecture & Video"
                   >
-                    <MdEdit />
+                    <MdEdit className="text-base" />
                   </button>
 
                   <button
+                    type="button"
                     onClick={() => setConfirmationModal({
                       text1: "Delete Lecture",
-                      text2: "This lecture will be deleted",
+                      text2: "This lecture and its video will be deleted",
                       btn1Text: "Delete",
                       btn2Text: "Cancel",
                       btn1Handler: () => handleDeleteSubSection(subId, sId),
                       btn2Handler: () => setConfirmationModal(null),
                     })}
-                    className='text-blue-400 hover:scale-110 transition'
+                    className='text-blue-400 hover:scale-110 transition p-1'
+                    title="Delete Lecture"
                   >
-                    <RiDeleteBin6Line />
+                    <RiDeleteBin6Line className="text-base" />
                   </button>
                 </div>
               </div>
@@ -137,8 +153,9 @@ const NestedView = ({ handleChangeEditSectionName }) => {
 
             {/* ADD LECTURE */}
             <button
+              type="button"
               onClick={() => setAddSubSection(sId)}
-              className='flex items-center gap-2 text-yellow-400 hover:text-yellow-300 transition mt-3'
+              className='flex items-center gap-2 text-yellow-400 hover:text-yellow-300 transition mt-3 font-medium text-sm'
             >
               <AiOutlinePlus />
               Add Lecture
@@ -164,4 +181,4 @@ const NestedView = ({ handleChangeEditSectionName }) => {
   )
 }
 
-export default NestedView
+export default NestedView;

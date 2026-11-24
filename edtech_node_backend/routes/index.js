@@ -466,14 +466,14 @@ router.post(
   '/course/addSubSection',
   authenticateUser,
   isInstructor,
-  upload.single('video'),
+  upload.fields([{ name: 'video', maxCount: 1 }, { name: 'videoFile', maxCount: 1 }]),
   sectionController.addSubSection
 );
 router.post(
   '/course/updateSubSection',
   authenticateUser,
   isInstructor,
-  upload.single('videoFile'),
+  upload.fields([{ name: 'videoFile', maxCount: 1 }, { name: 'video', maxCount: 1 }]),
   sectionController.updateSubSection
 );
 router.post(

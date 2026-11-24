@@ -152,7 +152,7 @@ const CourseBuilderForm = () => {
       </div>
 
       {/* NESTED VIEW */}
-      {course?.courseContent?.length > 0 && (
+      {(course?.courseContent?.length > 0 || course?.sections?.length > 0) && (
         <div className='mt-8'>
           <NestedView handleChangeEditSectionName={handleChangeEditSectionName} />
         </div>

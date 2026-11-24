@@ -41,7 +41,7 @@ const sectionController = {
         ]
       });
 
-      const formattedCourse = await courseService.formatCourse(updatedCourse);
+      const formattedCourse = await courseService.formatCourse(updatedCourse, req.user?.id);
 
       return res.status(201).json({
         success: true,
@@ -84,7 +84,7 @@ const sectionController = {
         ]
       });
 
-      const formattedCourse = await courseService.formatCourse(course);
+      const formattedCourse = await courseService.formatCourse(course, req.user?.id);
 
       return res.status(200).json({
         success: true,
@@ -127,7 +127,7 @@ const sectionController = {
         ]
       });
 
-      const formattedCourse = await courseService.formatCourse(course);
+      const formattedCourse = await courseService.formatCourse(course, req.user?.id);
 
       return res.status(200).json({
         success: true,
@@ -160,10 +160,11 @@ const sectionController = {
       }
 
       let videoUrl = null;
+      const uploadedFile = req.file || (req.files && (req.files.videoFile?.[0] || req.files.video?.[0]));
 
       // Handle video upload
-      if (req.file) {
-        videoUrl = await uploadService.handleFileUpload(req.file, true);
+      if (uploadedFile) {
+        videoUrl = await uploadService.handleFileUpload(uploadedFile, true);
       }
 
       const subSection = await SubSection.create({
@@ -183,7 +184,7 @@ const sectionController = {
         ]
       });
 
-      const formattedCourse = await courseService.formatCourse(updatedCourse);
+      const formattedCourse = await courseService.formatCourse(updatedCourse, req.user?.id);
 
       return res.status(201).json({
         success: true,
@@ -220,10 +221,15 @@ const sectionController = {
       if (description) updateData.description = description;
       if (duration !== undefined) updateData.duration = parseInt(duration) || 0;
 
-      // Handle video upload
-      if (req.file) {
-        const videoUrl = await uploadService.handleFileUpload(req.file, true);
+      const uploadedFile = req.file || (req.files && (req.files.videoFile?.[0] || req.files.video?.[0]));
+
+      // Handle video upload or explicit deletion
+      if (uploadedFile) {
+        const videoUrl = await uploadService.handleFileUpload(uploadedFile, true);
         updateData.videoUrl = videoUrl;
+      } else if (req.body.deleteVideo === 'true' || req.body.deleteVideo === true) {
+        updateData.videoUrl = null;
+        updateData.duration = 0;
       }
 
       await subSection.update(updateData);
@@ -238,7 +244,7 @@ const sectionController = {
         ]
       });
 
-      const formattedCourse = await courseService.formatCourse(course);
+      const formattedCourse = await courseService.formatCourse(course, req.user?.id);
 
       return res.status(200).json({
         success: true,
@@ -282,7 +288,7 @@ const sectionController = {
         ]
       });
 
-      const formattedCourse = await courseService.formatCourse(course);
+      const formattedCourse = await courseService.formatCourse(course, req.user?.id);
 
       return res.status(200).json({
         success: true,

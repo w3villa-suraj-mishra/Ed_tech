@@ -26,6 +26,7 @@ const formatSubSection = (subSection) => {
   const formatted = {
     ...sub,
     _id: sub.id,
+    videoUrl: sub.videoUrl || sub.video_url || sub.video || null,
     durationSeconds,
     duration: secondsToPrettyString(durationSeconds)
   };
@@ -80,9 +81,27 @@ const formatCourse = async (course, currentUserId = null) => {
     });
   }
 
-  // Get enrollment status if user is provided
+  // Check instructor or admin privileges
+  let isInstructorOrAdmin = false;
   let userEnrollment = null;
+
   if (currentUserId) {
+    const courseInstructorId = coursePlain.instructorId || coursePlain.instructor_id || coursePlain.instructor?.id || coursePlain.instructor?._id;
+    if (courseInstructorId && String(courseInstructorId) === String(currentUserId)) {
+      isInstructorOrAdmin = true;
+    } else {
+      try {
+        const { User } = require('../models');
+        const user = await User.findByPk(currentUserId);
+        if (user && ['Instructor', 'Admin', 'Superadmin'].includes(user.accountType)) {
+          isInstructorOrAdmin = true;
+        }
+      } catch (err) {
+        // Ignore user lookup error
+      }
+    }
+
+    // Get enrollment status if user is provided
     const { Enrollment } = require('../models');
     userEnrollment = await Enrollment.findOne({
       where: { userId: currentUserId, courseId: coursePlain.id }
@@ -114,7 +133,10 @@ const formatCourse = async (course, currentUserId = null) => {
       let isUnlocked = false;
       let accessReason = '';
 
-      if (userEnrollment && userEnrollment.status === 'active') {
+      if (isInstructorOrAdmin) {
+        isUnlocked = true;
+        accessReason = 'Instructor/Admin Access';
+      } else if (userEnrollment && userEnrollment.status === 'active') {
         if (userEnrollment.plan === 'gold') {
           isUnlocked = true;
           accessReason = 'Gold Lifetime Access';
@@ -144,17 +166,20 @@ const formatCourse = async (course, currentUserId = null) => {
         isUnlocked,
         accessReason,
         // Hide videoUrl for locked videos on the backend to prevent inspection bypass
-        videoUrl: isUnlocked ? formatted.videoUrl : null
+        videoUrl: isUnlocked ? (formatted.videoUrl || formatted.video_url || formatted.video) : null
       };
     });
 
     return {
       ...section,
       subSection: subSectionList,
+      subSections: subSectionList,
       totalDurationSeconds: subSectionList.reduce((sum, item) => sum + (item.durationSeconds || 0), 0),
       totalDuration: secondsToPrettyString(subSectionList.reduce((sum, item) => sum + (item.durationSeconds || 0), 0))
     };
   });
+
+  result.sections = result.courseContent;
 
   const courseDurationSeconds = result.courseContent.reduce((sum, section) => sum + (section.totalDurationSeconds || 0), 0);
   result.totalDurationSeconds = courseDurationSeconds;
