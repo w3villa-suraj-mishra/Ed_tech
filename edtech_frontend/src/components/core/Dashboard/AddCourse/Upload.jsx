@@ -40,7 +40,8 @@ export default function Upload({
   const { getRootProps, getInputProps, isDragActive, open } = useDropzone({
     onDrop,
     noClick: Boolean(previewSource),
-    noKeyboard: false
+    noKeyboard: false,
+    maxSize: 1024 * 1024 * 1024 // 1 GB
   })
 
   const previewFile = (file) => {
@@ -155,7 +156,7 @@ export default function Upload({
               <span className="font-semibold text-blue-600 hover:underline">browse</span>
             </p>
             <ul className="flex items-center gap-2 text-[10px] sm:text-[11px] font-medium text-slate-400 uppercase tracking-wide flex-wrap justify-center">
-              <li>{!video ? "JPG, PNG or WEBP" : "MP4, WEBM"}</li>
+              <li>{!video ? "JPG, PNG or WEBP" : "MP4, WEBM (Up to 1 GB)"}</li>
               <li className="hidden sm:block">•</li>
               <li>Aspect ratio 16:9</li>
               <li className="hidden sm:block">•</li>

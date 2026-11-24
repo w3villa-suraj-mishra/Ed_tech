@@ -24,14 +24,14 @@ const handleFileUpload = async (file, isVideo = false) => {
   try {
     if (process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_API_SECRET) {
       const uploadOptions = {
-        resource_type: isVideo ? 'video' : 'image',
+        resource_type: isVideo ? 'video' : 'auto',
         folder: isVideo ? 'edtech/videos' : 'edtech/images',
-        timeout: 15000
+        timeout: 60000
       };
 
       const result = await Promise.race([
         cloudinary.uploader.upload(file.path, uploadOptions),
-        new Promise((_, reject) => setTimeout(() => reject(new Error('Cloudinary upload timed out')), 15000))
+        new Promise((_, reject) => setTimeout(() => reject(new Error('Cloudinary upload timed out')), 60000))
       ]);
 
       deleteLocalFile(file.path);

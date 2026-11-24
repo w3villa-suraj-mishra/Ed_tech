@@ -26,30 +26,15 @@ const storage = multer.diskStorage({
 });
 
 const fileFilter = (req, file, cb) => {
-  const whitelist = [
-    'image/jpeg',
-    'image/png',
-    'image/jpg',
-    'image/webp',
-    'application/pdf',
-    'application/x-pdf'
-  ];
-  if (
-    whitelist.includes(file.mimetype) ||
-    (file.mimetype && file.mimetype.startsWith('video/')) ||
-    ['.mp4', '.webm', '.mov', '.mkv', '.avi', '.m4v'].includes(path.extname(file.originalname).toLowerCase())
-  ) {
-    cb(null, true);
-  } else {
-    cb(new Error('Unsupported file type'), false);
-  }
+  // Accept all file formats (video, audio, images, documents, etc.)
+  cb(null, true);
 };
 
 const upload = multer({
   storage,
   fileFilter,
   limits: {
-    fileSize: 200 * 1024 * 1024 // 200MB max
+    fileSize: 1024 * 1024 * 1024 // 1GB max
   }
 });
 
