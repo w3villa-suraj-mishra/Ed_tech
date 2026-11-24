@@ -39,6 +39,22 @@ const SubSectionModal = ({ modalData, setModalData, add = false, view = false, e
     return titleChanged || descChanged || videoChanged || videoDeleted;
   }
 
+  const refreshCourse = async (fallbackResult) => {
+    const courseId = course?._id || course?.id;
+    let refreshedCourse = fallbackResult;
+
+    if (courseId) {
+      const fullCourse = await getFullDetailsOfCourse(courseId, token);
+      if (fullCourse && (fullCourse._id || fullCourse.id || fullCourse.courseContent)) {
+        refreshedCourse = fullCourse;
+      }
+    }
+
+    if (refreshedCourse && !Array.isArray(refreshedCourse)) {
+      dispatch(setCourse(refreshedCourse));
+    }
+  }
+
   const handleEditSubSection = async () => {
     const currentValues = getValues();
     const subId = modalData?._id || modalData?.id || modalData?.subSectionId;
@@ -110,30 +126,10 @@ const SubSectionModal = ({ modalData, setModalData, add = false, view = false, e
 
     const result = await updateSubSection(payload, token);
 
-    if (result && !Array.isArray(result) && (result._id || result.id || result.courseContent || result.sections)) {
-      dispatch(setCourse(result));
-    }
-
     await refreshCourse(result);
 
     setModalData(null);
     setLoading(false);
-  }
-
-  const refreshCourse = async (fallbackResult) => {
-    const courseId = course?._id || course?.id;
-    let refreshedCourse = fallbackResult;
-
-    if (courseId) {
-      const fullCourse = await getFullDetailsOfCourse(courseId, token);
-      if (fullCourse && (fullCourse._id || fullCourse.id || fullCourse.courseContent)) {
-        refreshedCourse = fullCourse;
-      }
-    }
-
-    if (refreshedCourse && !Array.isArray(refreshedCourse)) {
-      dispatch(setCourse(refreshedCourse));
-    }
   }
 
   const onSubmit = async (data) => {
@@ -203,9 +199,7 @@ const SubSectionModal = ({ modalData, setModalData, add = false, view = false, e
 
     const result = await createSubSection(payload, token);
 
-    if (result && !Array.isArray(result) && (result._id || result.id || result.courseContent || result.sections)) {
-      dispatch(setCourse(result));
-    }
+    await refreshCourse(result);
 
     setModalData(null);
     setLoading(false);
