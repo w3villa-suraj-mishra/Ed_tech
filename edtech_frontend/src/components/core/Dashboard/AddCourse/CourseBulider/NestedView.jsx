@@ -44,135 +44,154 @@ const NestedView = ({ handleChangeEditSectionName }) => {
 
   if (sectionsList.length === 0) {
     return (
-      <div className="rounded-2xl border border-dashed border-richblack-700 bg-richblack-900/40 p-8 text-center text-richblack-400">
-        <p className="text-sm font-medium">No sections added yet. Type a section name above and click "Create Section" to begin organizing your course.</p>
+      <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50/70 p-8 text-center text-slate-500">
+        <div className="w-12 h-12 mx-auto rounded-full bg-blue-50 text-blue-500 flex items-center justify-center text-xl mb-3">
+          📁
+        </div>
+        <p className="text-sm font-semibold text-slate-800">No sections added yet</p>
+        <p className="text-xs text-slate-400 mt-1">
+          Type a section name above and click "Create Section" to start adding lectures.
+        </p>
       </div>
     );
   }
 
   return (
-    <div className='space-y-5'>
+    <div className='space-y-4'>
 
-      {sectionsList?.map((section) => {
+      {sectionsList.map((section) => {
         const sId = section._id || section.id;
         const subList = section.subSection || section.subSections || [];
         return (
-        <details
-          key={sId}
-          open
-          className='group rounded-2xl bg-gradient-to-br from-[#0f172a] to-[#020617] p-[1px] shadow-lg'
-        >
-          <summary className='flex items-center justify-between cursor-pointer rounded-2xl bg-richblack-800 px-5 py-4'>
+          <details
+            key={sId}
+            open
+            className='group rounded-2xl border border-slate-200 bg-white shadow-xs overflow-hidden transition-all duration-200'
+          >
+            <summary className='flex items-center justify-between cursor-pointer bg-slate-50/80 hover:bg-slate-100/70 px-5 py-3.5 transition border-b border-slate-100 select-none list-none'>
 
-            {/* LEFT */}
-            <div className='flex items-center gap-3'>
-              <RxDropdownMenu className='text-richblack-300' />
-              <p className='font-semibold text-white'>{section.sectionName}</p>
-            </div>
+              {/* LEFT */}
+              <div className='flex items-center gap-3'>
+                <RxDropdownMenu className='text-slate-400 text-lg flex-shrink-0' />
+                <p className='font-semibold text-slate-800 text-sm sm:text-base'>
+                  {section.sectionName}
+                </p>
+                <span className="text-[11px] font-medium text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full border border-slate-200/60">
+                  {subList.length} {subList.length === 1 ? "lecture" : "lectures"}
+                </span>
+              </div>
 
-            {/* RIGHT */}
-            <div className='flex items-center gap-4'>
-
-              <button
-                type="button"
-                onClick={() => handleChangeEditSectionName(sId, section.sectionName)}
-                className='text-yellow-400 hover:scale-110 transition'
-                title="Edit Section Name"
-              >
-                <MdEdit />
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setConfirmationModal({
-                  text1: "Delete this Section",
-                  text2: "All lectures will be deleted",
-                  btn1Text: "Delete",
-                  btn2Text: "Cancel",
-                  btn1Handler: () => handleDeleteSection(sId),
-                  btn2Handler: () => setConfirmationModal(null),
-                })}
-                className='text-blue-400 hover:scale-110 transition'
-                title="Delete Section"
-              >
-                <RiDeleteBin6Line />
-              </button>
-
-              <BiDownArrow className='text-richblack-400' />
-            </div>
-          </summary>
-
-          {/* SUBSECTIONS */}
-          <div className='bg-richblack-900 px-6 py-4 space-y-3'>
-
-            {subList?.map((data) => {
-              const subId = data._id || data.id;
-              const hasVideo = Boolean(data.videoUrl || data.video_url || data.video);
-              return (
+              {/* RIGHT */}
               <div
-                key={subId}
-                onClick={() => setViewSubSection({ ...data, sectionId: sId })}
-                className='group flex items-center justify-between rounded-xl px-4 py-3 hover:bg-white/5 cursor-pointer transition'
+                className='flex items-center gap-1.5 sm:gap-2'
+                onClick={(e) => e.stopPropagation()}
               >
-
-                <div className='flex items-center gap-3 flex-wrap'>
-                  <RxDropdownMenu className='text-richblack-400' />
-                  <p className='text-sm text-white font-medium'>{data.title}</p>
-                  {hasVideo ? (
-                    <span className="flex items-center gap-1 text-[11px] text-emerald-400 bg-emerald-950/40 border border-emerald-500/20 px-2 py-0.5 rounded-full font-medium">
-                      ▶ {data.duration || "Video attached"}
-                    </span>
-                  ) : (
-                    <span className="text-[11px] text-richblack-400 bg-richblack-800 border border-richblack-700 px-2 py-0.5 rounded-full">
-                      No video attached
-                    </span>
-                  )}
-                </div>
-
-                <div
-                  onClick={(e) => e.stopPropagation()}
-                  className='flex items-center gap-3 opacity-70 group-hover:opacity-100'
+                <button
+                  type="button"
+                  onClick={() => handleChangeEditSectionName(sId, section.sectionName)}
+                  className='p-1.5 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-white transition cursor-pointer'
+                  title="Edit Section Name"
                 >
-                  <button
-                    type="button"
-                    onClick={() => setEditSubSection({ ...data, sectionId: sId })}
-                    className='text-yellow-400 hover:scale-110 transition p-1'
-                    title="Edit Lecture & Video"
-                  >
-                    <MdEdit className="text-base" />
-                  </button>
+                  <MdEdit className="text-base" />
+                </button>
 
-                  <button
-                    type="button"
-                    onClick={() => setConfirmationModal({
-                      text1: "Delete Lecture",
-                      text2: "This lecture and its video will be deleted",
-                      btn1Text: "Delete",
-                      btn2Text: "Cancel",
-                      btn1Handler: () => handleDeleteSubSection(subId, sId),
-                      btn2Handler: () => setConfirmationModal(null),
-                    })}
-                    className='text-blue-400 hover:scale-110 transition p-1'
-                    title="Delete Lecture"
-                  >
-                    <RiDeleteBin6Line className="text-base" />
-                  </button>
+                <button
+                  type="button"
+                  onClick={() => setConfirmationModal({
+                    text1: "Delete this Section?",
+                    text2: "All lectures and videos in this section will be permanently deleted.",
+                    btn1Text: "Delete",
+                    btn2Text: "Cancel",
+                    btn1Handler: () => handleDeleteSection(sId),
+                    btn2Handler: () => setConfirmationModal(null),
+                  })}
+                  className='p-1.5 rounded-lg text-slate-400 hover:text-red-600 hover:bg-white transition cursor-pointer'
+                  title="Delete Section"
+                >
+                  <RiDeleteBin6Line className="text-base" />
+                </button>
+
+                <div className="p-1 text-slate-400 group-open:rotate-180 transition-transform duration-200 pointer-events-none">
+                  <BiDownArrow className='text-xs' />
                 </div>
               </div>
-            )})}
+            </summary>
 
-            {/* ADD LECTURE */}
-            <button
-              type="button"
-              onClick={() => setAddSubSection(sId)}
-              className='flex items-center gap-2 text-yellow-400 hover:text-yellow-300 transition mt-3 font-medium text-sm'
-            >
-              <AiOutlinePlus />
-              Add Lecture
-            </button>
-          </div>
-        </details>
-      )})}
+            {/* SUBSECTIONS LIST */}
+            <div className='bg-white p-4 space-y-2.5'>
+
+              {subList.map((data) => {
+                const subId = data._id || data.id;
+                const hasVideo = Boolean(data.videoUrl || data.video_url || data.video);
+                return (
+                  <div
+                    key={subId}
+                    onClick={() => setViewSubSection({ ...data, sectionId: sId })}
+                    className='group/item flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50/50 hover:bg-blue-50/30 hover:border-blue-200 px-4 py-3 cursor-pointer transition shadow-none'
+                  >
+
+                    <div className='flex items-center gap-3 flex-wrap'>
+                      <RxDropdownMenu className='text-slate-400 text-base' />
+                      <p className='text-sm font-medium text-slate-800'>
+                        {data.title}
+                      </p>
+                      {hasVideo ? (
+                        <span className="flex items-center gap-1 text-[11px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full">
+                          ▶ {data.duration || "Video attached"}
+                        </span>
+                      ) : (
+                        <span className="text-[11px] font-medium text-slate-400 bg-slate-100 border border-slate-200 px-2.5 py-0.5 rounded-full">
+                          No video attached
+                        </span>
+                      )}
+                    </div>
+
+                    <div
+                      onClick={(e) => e.stopPropagation()}
+                      className='flex items-center gap-1 opacity-80 group-hover/item:opacity-100'
+                    >
+                      <button
+                        type="button"
+                        onClick={() => setEditSubSection({ ...data, sectionId: sId })}
+                        className='p-1.5 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-white transition cursor-pointer'
+                        title="Edit Lecture & Video"
+                      >
+                        <MdEdit className="text-base" />
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setConfirmationModal({
+                          text1: "Delete Lecture?",
+                          text2: "This lecture and its video will be permanently removed.",
+                          btn1Text: "Delete",
+                          btn2Text: "Cancel",
+                          btn1Handler: () => handleDeleteSubSection(subId, sId),
+                          btn2Handler: () => setConfirmationModal(null),
+                        })}
+                        className='p-1.5 rounded-lg text-slate-400 hover:text-red-600 hover:bg-white transition cursor-pointer'
+                        title="Delete Lecture"
+                      >
+                        <RiDeleteBin6Line className="text-base" />
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+
+              {/* ADD LECTURE BUTTON */}
+              <button
+                type="button"
+                onClick={() => setAddSubSection(sId)}
+                className='inline-flex items-center gap-2 text-xs sm:text-sm font-semibold text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100/70 px-4 py-2 rounded-xl transition mt-2 cursor-pointer'
+              >
+                <AiOutlinePlus className="text-base" />
+                Add Lecture
+              </button>
+            </div>
+          </details>
+        );
+      })}
 
       {/* MODALS */}
       {addSubSection ? (

@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { useParams } from 'react-router-dom'
-import Iconbtn from "../../../../../components/Common/iconbtn"
 import { MdAddCircleOutline } from "react-icons/md"
 import { BiRightArrow } from "react-icons/bi"
 import { useDispatch, useSelector } from 'react-redux';
@@ -20,10 +19,9 @@ const CourseBuilderForm = () => {
   const [loading, setLoading] = useState(false);
   const { courseId: paramCourseId } = useParams();
 
-  const cId = course?._id || course?.id || paramCourseId;
+  const targetCourseId = course?._id || course?.id || paramCourseId;
 
   useEffect(() => {
-    const targetCourseId = course?._id || course?.id || paramCourseId;
     const hasSections = (Array.isArray(course?.courseContent) && course.courseContent.length > 0) ||
                         (Array.isArray(course?.sections) && course.sections.length > 0);
 
@@ -40,12 +38,11 @@ const CourseBuilderForm = () => {
         }
       })();
     }
-  }, [paramCourseId, token, dispatch]);
+  }, [targetCourseId, course, token, dispatch]);
 
   const onSubmit = async (data) => {
     setLoading(true);
     let result;
-    const targetCourseId = course?._id || course?.id || paramCourseId;
 
     if (!targetCourseId) {
       toast.error("Course ID not found. Please complete Step 1 first.");
@@ -94,7 +91,7 @@ const CourseBuilderForm = () => {
       : (course?.sections || []);
 
     if (sections.length === 0) {
-      toast.error("Please add atleast one Section");
+      toast.error("Please add at least one section");
       return;
     }
     if (sections.some(
@@ -103,7 +100,7 @@ const CourseBuilderForm = () => {
         return subs.length === 0;
       }
     )) {
-      toast.error("Please add atleast one lecture in each section");
+      toast.error("Please add at least one lecture in each section");
       return;
     }
     dispatch(setStep(3));
@@ -120,94 +117,98 @@ const CourseBuilderForm = () => {
   }
 
   return (
-    <div className='text-white max-w-3xl mx-auto'>
-
-      {/* HEADER */}
-      <div className='mb-6'>
-        <h2 className='text-2xl font-bold bg-gradient-to-r from-yellow-400 to-orange-500 bg-clip-text text-transparent'>
-          Course Builder
-        </h2>
-        <p className='text-sm text-richblack-300'>
-          Organize your course into sections and lectures
-        </p>
-      </div>
+    <div className='max-w-4xl mx-auto space-y-6'>
 
       {/* FORM CARD */}
-      <div className='rounded-2xl bg-gradient-to-br from-[#0f172a] to-[#020617] p-[1px] shadow-xl'>
-        <form
-          onSubmit={handleSubmit(onSubmit)}
-          className='rounded-2xl bg-richblack-800 p-6 flex flex-col gap-5'
-        >
+      <div className='rounded-2xl bg-white border border-slate-200 p-6 sm:p-8 shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] space-y-6'>
 
-          {/* INPUT */}
+        {/* HEADER */}
+        <div className="border-b border-slate-100 pb-4 flex items-start gap-4">
+          <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600 text-xl font-bold">
+            📚
+          </div>
+          <div>
+            <h2 className="text-xl font-bold text-slate-900 tracking-tight">
+              Course Builder
+            </h2>
+            <p className="text-xs text-slate-500 mt-1 font-medium">
+              Organize your course into sections and lectures. Add, preview, or update video content.
+            </p>
+          </div>
+        </div>
+
+        {/* SECTION FORM */}
+        <form onSubmit={handleSubmit(onSubmit)} className='space-y-4'>
           <div className='flex flex-col gap-2'>
-            <label htmlFor='sectionName' className='text-sm text-richblack-200'>
-              Section Name <sup className='text-blue-400'>*</sup>
+            <label htmlFor='sectionName' className='text-[13px] font-semibold text-slate-700'>
+              Section Name <sup className='text-red-500'>*</sup>
             </label>
 
-            <input
-              id='sectionName'
-              placeholder='e.g. Introduction, Advanced Concepts...'
-              {...register("sectionName", { required: true })}
-              className='w-full rounded-lg bg-richblack-900 px-4 py-3 text-white outline-none border border-richblack-700 focus:border-yellow-400 transition-all duration-300'
-            />
+            <div className='flex flex-col sm:flex-row gap-3'>
+              <input
+                id='sectionName'
+                placeholder='e.g. Introduction to Course, Advanced Concepts...'
+                {...register("sectionName", { required: true })}
+                className='flex-1 rounded-xl bg-white px-4 py-3 text-[13px] text-slate-900 border border-slate-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition placeholder:text-slate-400 shadow-sm'
+              />
+
+              <div className='flex items-center gap-2'>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-[0.99] px-5 py-3 text-[13px] font-semibold text-white shadow-sm transition disabled:opacity-50 whitespace-nowrap cursor-pointer"
+                >
+                  <MdAddCircleOutline className="text-lg" />
+                  {editSectionName ? "Update Section" : "Create Section"}
+                </button>
+
+                {editSectionName && (
+                  <button
+                    type='button'
+                    onClick={cancelEdit}
+                    className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-[13px] font-semibold text-slate-600 hover:bg-slate-50 transition shadow-sm whitespace-nowrap cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                )}
+              </div>
+            </div>
 
             {errors.sectionName && (
-              <span className='text-sm text-blue-400'>
+              <span className='text-[11px] font-semibold text-red-500'>
                 Section Name is required
               </span>
             )}
           </div>
-
-          {/* BUTTONS */}
-          <div className='flex items-center gap-4 mt-4'>
-
-            <Iconbtn
-              type="Submit"
-              text={editSectionName ? "Update Section" : "Create Section"}
-              outline={false}
-              customClasses={"bg-gradient-to-r from-yellow-400 to-orange-500 text-black hover:scale-[1.02] transition-all duration-300"}
-            >
-              <MdAddCircleOutline size={20} />
-            </Iconbtn>
-
-            {editSectionName && (
-              <button
-                type='button'
-                onClick={cancelEdit}
-                className='text-sm text-richblack-300 underline hover:text-white transition'
-              >
-                Cancel Edit
-              </button>
-            )}
-          </div>
         </form>
+
+        {/* NESTED VIEW */}
+        <div className='mt-6 pt-6 border-t border-slate-100'>
+          <NestedView handleChangeEditSectionName={handleChangeEditSectionName} />
+        </div>
+
+        {/* FOOTER NAV */}
+        <div className='flex items-center justify-end gap-3 pt-6 border-t border-slate-100'>
+          <button
+            type="button"
+            onClick={goBack}
+            className='rounded-xl border border-slate-200 bg-white px-6 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition shadow-sm cursor-pointer'
+          >
+            Back
+          </button>
+
+          <button
+            type="button"
+            onClick={goToNext}
+            className='inline-flex items-center gap-2 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-[0.99] px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition cursor-pointer'
+          >
+            Next
+            <BiRightArrow className="text-xs" />
+          </button>
+        </div>
+
       </div>
 
-      {/* NESTED VIEW */}
-      <div className='mt-8'>
-        <NestedView handleChangeEditSectionName={handleChangeEditSectionName} />
-      </div>
-
-      {/* FOOTER NAV */}
-      <div className='flex justify-end gap-4 mt-10'>
-
-        <button
-          onClick={goBack}
-          className='rounded-lg border border-richblack-600 px-5 py-2 text-richblack-200 hover:bg-richblack-700 transition-all duration-300'
-        >
-          Back
-        </button>
-
-        <Iconbtn
-          text="Next"
-          onclick={goToNext}
-          customClasses={"bg-gradient-to-r from-yellow-400 to-orange-500 text-black hover:scale-[1.05] transition-all duration-300"}
-        >
-          <BiRightArrow />
-        </Iconbtn>
-
-      </div>
     </div>
   )
 }
