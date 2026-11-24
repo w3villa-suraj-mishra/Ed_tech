@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux';
 import { useForm } from 'react-hook-form';
 import toast from 'react-hot-toast';
-import { createSubSection, updateSubSection, getCloudinarySignature, uploadDirectToCloudinary } from '../../../../../services/operations/courseDetailsAPI';
+import { createSubSection, updateSubSection, getCloudinarySignature, uploadDirectToCloudinary, getFullDetailsOfCourse } from '../../../../../services/operations/courseDetailsAPI';
 import { setCourse } from '../../../../../services/slices/courseSlice';
 import { RxCross1 } from 'react-icons/rx';
 import Upload from '../Upload';
@@ -15,6 +15,7 @@ const SubSectionModal = ({ modalData, setModalData, add = false, view = false, e
   const [loading, setLoading] = useState(false);
   const [videoRemoved, setVideoRemoved] = useState(false);
   const { token } = useSelector((state) => state.auth);
+  const { course } = useSelector((state) => state.course);
 
   const initialVideoUrl = modalData?.videoUrl || modalData?.video_url || modalData?.video || "";
 
@@ -113,8 +114,26 @@ const SubSectionModal = ({ modalData, setModalData, add = false, view = false, e
       dispatch(setCourse(result));
     }
 
+    await refreshCourse(result);
+
     setModalData(null);
     setLoading(false);
+  }
+
+  const refreshCourse = async (fallbackResult) => {
+    const courseId = course?._id || course?.id;
+    let refreshedCourse = fallbackResult;
+
+    if (courseId) {
+      const fullCourse = await getFullDetailsOfCourse(courseId, token);
+      if (fullCourse && (fullCourse._id || fullCourse.id || fullCourse.courseContent)) {
+        refreshedCourse = fullCourse;
+      }
+    }
+
+    if (refreshedCourse && !Array.isArray(refreshedCourse)) {
+      dispatch(setCourse(refreshedCourse));
+    }
   }
 
   const onSubmit = async (data) => {
