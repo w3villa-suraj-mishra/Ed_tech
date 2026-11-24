@@ -124,6 +124,13 @@ router.get('/auth/debug', (req, res) => {
   });
 });
 
+// Builds the OAuth state. JSON (not "mode_role") so referral codes containing "_" survive.
+function buildOAuthState(req, mode, role) {
+  const ref = String(req.query.ref || '').trim().toUpperCase();
+  const safeRef = /^[A-Z0-9_-]{3,40}$/.test(ref) ? ref : undefined;
+  return JSON.stringify({ mode, role, ...(safeRef ? { ref: safeRef } : {}) });
+}
+
 router.get('/auth/github', (req, res, next) => {
   const mode = req.query.mode || 'signup';
   const role = req.query.role || 'Student';
@@ -148,7 +155,7 @@ router.get('/auth/github', (req, res, next) => {
   return passport.authenticate('github', {
     scope: ['user:email'],
     session: false,
-    state: `${mode}_${role}`
+    state: buildOAuthState(req, mode, role)
   })(req, res, next);
 });
 
@@ -176,7 +183,7 @@ router.get('/auth/google_oauth2', (req, res, next) => {
   return passport.authenticate(strategyName, {
     scope: ['email', 'profile'],
     session: false,
-    state: `${mode}_${role}`
+    state: buildOAuthState(req, mode, role)
   })(req, res, next);
 });
 

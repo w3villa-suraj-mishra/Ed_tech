@@ -137,9 +137,13 @@ const sessionsController = {
             await referralService.getOrCreateReferralCode(user);
             await walletService.getOrCreateWallet(user.id);
 
+            const rawRef = String(paramsData.ref || '').trim().toUpperCase();
+            const oauthRefCode = /^[A-Z0-9_-]{3,40}$/.test(rawRef) ? rawRef : null;
+
             const attrRes = await attributionService.attributeOnRegistration({
               email: user.email,
-              userId: user.id
+              userId: user.id,
+              incomingReferralCode: oauthRefCode
             });
             if (attrRes && attrRes.attributed) {
               await rewardService.processRegistrationReward(user.id);

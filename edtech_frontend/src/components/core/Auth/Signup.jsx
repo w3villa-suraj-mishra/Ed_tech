@@ -452,7 +452,7 @@ function Signup() {
                 type="button"
                 onClick={() => {
                   const backendHost = process.env.REACT_APP_BASE_URL || BASE_URL || 'https://ed-tech-backend-2kha.vercel.app';
-                  window.location.href = `${backendHost}/auth/google_oauth2?mode=signup&role=${accountType}`;
+                  window.location.href = `${backendHost}/auth/google_oauth2?mode=signup&role=${accountType}${referralCode ? `&ref=${encodeURIComponent(referralCode)}` : ''}`;
                 }}
                 className="w-full flex items-center justify-center gap-x-2.5 rounded-xl border border-gray-200/90 bg-white py-2 px-4 text-xs sm:text-sm font-semibold text-gray-700 shadow-2xs hover:bg-gray-50 transition-all duration-200 hover:scale-[1.005] active:scale-[0.995] cursor-pointer"
               >
@@ -464,7 +464,7 @@ function Signup() {
                 type="button"
                 onClick={() => {
                   const backendHost = process.env.REACT_APP_BASE_URL || BASE_URL || 'https://ed-tech-backend-2kha.vercel.app';
-                  window.location.href = `${backendHost}/auth/github?mode=signup&role=${accountType}`;
+                  window.location.href = `${backendHost}/auth/github?mode=signup&role=${accountType}${referralCode ? `&ref=${encodeURIComponent(referralCode)}` : ''}`;
                 }}
                 className="w-full flex items-center justify-center gap-x-2.5 rounded-xl border border-gray-200/90 bg-white py-2 px-4 text-xs sm:text-sm font-semibold text-gray-700 shadow-2xs hover:bg-gray-50 transition-all duration-200 hover:scale-[1.005] active:scale-[0.995] cursor-pointer"
               >

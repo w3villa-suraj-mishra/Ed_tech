@@ -27,9 +27,11 @@ const sectionController = {
         });
       }
 
+      const sectionCount = await Section.count({ where: { courseId } });
       const section = await Section.create({
         sectionName,
-        courseId
+        courseId,
+        position: sectionCount
       });
 
       const updatedCourse = await Course.findByPk(courseId, {
@@ -168,12 +170,14 @@ const sectionController = {
         videoUrl = await uploadService.handleFileUpload(uploadedFile, true);
       }
 
+      const subSectionCount = await SubSection.count({ where: { sectionId } });
       const subSection = await SubSection.create({
         title,
         description,
         duration: parseInt(duration) || 0,
         videoUrl,
-        sectionId
+        sectionId,
+        position: subSectionCount
       });
 
       const updatedCourse = await Course.findByPk(section.courseId, {

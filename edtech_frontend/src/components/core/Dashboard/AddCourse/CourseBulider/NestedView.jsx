@@ -219,6 +219,26 @@ const NestedView = ({ handleChangeEditSectionName }) => {
                       >
                         <RiDeleteBin6Line className="text-base" />
                       </button>
+
+                      <button
+                        type="button"
+                        disabled={subIndex === 0}
+                        onClick={() => moveSubSection(sId, subList, subIndex, -1)}
+                        className="p-1.5 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-white transition cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
+                        title="Move Lecture Up"
+                      >
+                        <FiChevronUp className="text-base" />
+                      </button>
+
+                      <button
+                        type="button"
+                        disabled={subIndex === subList.length - 1}
+                        onClick={() => moveSubSection(sId, subList, subIndex, 1)}
+                        className="p-1.5 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-white transition cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
+                        title="Move Lecture Down"
+                      >
+                        <FiChevronDown className="text-base" />
+                      </button>
                     </div>
                   </div>
                 );
