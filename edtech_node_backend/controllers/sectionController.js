@@ -206,21 +206,28 @@ const sectionController = {
    */
   updateSubSection: async (req, res) => {
     try {
-      const { subSectionId, title, description, duration } = req.body;
+      const subSectionId = req.body.subSectionId || req.body.sub_section_id || req.body.id;
+      const title = req.body.title;
+      const description = req.body.description;
+      const duration = req.body.duration ?? req.body.timeDuration;
+
+      if (!subSectionId) {
+        return res.status(400).json({ success: false, message: 'SubSection ID is required' });
+      }
 
       const subSection = await SubSection.findByPk(subSectionId);
 
       if (!subSection) {
-        return res.status(404).json({
-          success: false,
-          message: 'SubSection not found'
-        });
+        return res.status(404).json({ success: false, message: 'SubSection not found' });
       }
 
       const updateData = {};
-      if (title) updateData.title = title;
-      if (description) updateData.description = description;
-      if (duration !== undefined) updateData.duration = parseInt(duration) || 0;
+      if (title !== undefined) updateData.title = title;
+      if (description !== undefined) updateData.description = description;
+      if (duration !== undefined) {
+        updateData.duration = parseInt(duration, 10) || 0;
+        updateData.timeDuration = String(parseInt(duration, 10) || 0);
+      }
 
       const uploadedFile = req.file || (req.files && (req.files.videoFile?.[0] || req.files.video?.[0]));
 
@@ -228,11 +235,12 @@ const sectionController = {
       if (uploadedFile) {
         const videoUrl = await uploadService.handleFileUpload(uploadedFile, true);
         updateData.videoUrl = videoUrl;
-      } else if (req.body.videoUrl) {
-        updateData.videoUrl = req.body.videoUrl;
+      } else if (req.body.videoUrl || req.body.video_url) {
+        updateData.videoUrl = req.body.videoUrl || req.body.video_url;
       } else if (req.body.deleteVideo === 'true' || req.body.deleteVideo === true) {
         updateData.videoUrl = null;
         updateData.duration = 0;
+        updateData.timeDuration = '0';
       }
 
       await subSection.update(updateData);

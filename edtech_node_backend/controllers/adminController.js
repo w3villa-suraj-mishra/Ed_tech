@@ -720,14 +720,26 @@ const updateSubSection = async (req, res) => {
   try {
     const sub = await sectionQuery.findSubSectionByIdQuery(req.params.id);
     if (!sub) return res.status(404).json({ success: false, message: 'SubSection not found.' });
-    const { title, description, timeDuration } = req.body;
+    const { title, description, timeDuration, videoUrl, deleteVideo } = req.body;
     const updates = {};
-    if (title) updates.title = title;
+    if (title !== undefined) updates.title = title;
     if (description !== undefined) updates.description = description;
-    if (timeDuration) updates.timeDuration = timeDuration;
-    if (req.file) updates.videoUrl = await uploadService.handleFileUpload(req.file, true);
+    if (timeDuration !== undefined) {
+      updates.timeDuration = timeDuration;
+      updates.duration = parseInt(timeDuration, 10) || 0;
+    }
+    if (deleteVideo === 'true' || deleteVideo === true) {
+      updates.videoUrl = null;
+      updates.duration = 0;
+      updates.timeDuration = '0';
+    } else if (req.file) {
+      updates.videoUrl = await uploadService.handleFileUpload(req.file, true);
+    } else if (videoUrl) {
+      updates.videoUrl = videoUrl;
+    }
     await sectionQuery.updateSubSectionQuery(sub.id, updates);
-    return res.json({ success: true, message: 'SubSection updated.', data: sub });
+    const updatedSub = await sectionQuery.findSubSectionByIdQuery(sub.id);
+    return res.json({ success: true, message: 'SubSection updated.', data: updatedSub });
   } catch (e) {
     logger.error('ADMIN UPDATE SUBSECTION:', e.message);
     return res.status(500).json({ success: false, message: e.message });
