@@ -56,29 +56,44 @@ class AccessControlService {
       return { allowed: false, reason: 'Authentication required for video 3+', plan: 'none', isFreeVideo: false };
     }
 
+    // Check if user is course instructor or admin
+    try {
+      const { User, Course } = require('../models');
+      const [user, course] = await Promise.all([
+        User.findByPk(userId),
+        Course.findByPk(courseId)
+      ]);
+      if (user && (['Instructor', 'Admin', 'Superadmin'].includes(user.accountType) || (course && String(course.instructorId) === String(userId)))) {
+        return { allowed: true, reason: 'Instructor/Admin Access', plan: 'admin', isFreeVideo: true };
+      }
+    } catch (err) {
+      // Continue to enrollment check if user/course lookup fails
+    }
+
     const enrollment = await this.getUserCourseEnrollment(userId, courseId);
     const plan = enrollment ? enrollment.plan : 'none';
 
-    // 1. Gold Plan
-    if (enrollment && enrollment.plan === PLAN_TYPES.GOLD && enrollment.status === 'active') {
-      return { allowed: true, reason: 'Gold plan active', plan: 'gold', isFreeVideo };
-    }
-
-    // 2. Silver Plan (check expiration)
-    if (enrollment && enrollment.plan === PLAN_TYPES.SILVER && enrollment.status === 'active') {
-      if (!enrollment.expiresAt || new Date(enrollment.expiresAt) > new Date()) {
-        return { allowed: true, reason: 'Silver plan active', plan: 'silver', isFreeVideo };
+    // Active enrollment checks
+    if (enrollment && enrollment.status === 'active') {
+      const normPlan = (enrollment.plan || '').toLowerCase();
+      if (['gold', 'pro'].includes(normPlan)) {
+        return { allowed: true, reason: `${enrollment.plan} plan active`, plan: normPlan, isFreeVideo };
+      }
+      if (['silver', 'plus', 'basic'].includes(normPlan)) {
+        if (!enrollment.expiresAt || new Date(enrollment.expiresAt) > new Date()) {
+          return { allowed: true, reason: `${enrollment.plan} plan active`, plan: normPlan, isFreeVideo };
+        }
       }
     }
 
-    // 3. Free Plan or Unenrolled user
+    // Free Plan or Unenrolled user (first 2 videos)
     if (isFreeVideo) {
       return { allowed: true, reason: 'Free video (positions 1-2)', plan: enrollment ? enrollment.plan : 'free', isFreeVideo: true };
     }
 
     return {
       allowed: false,
-      reason: 'Upgrade to Silver (1 Year) or Gold (Lifetime) to unlock remaining lectures',
+      reason: 'Upgrade your subscription or course plan to unlock remaining lectures',
       plan,
       isFreeVideo: false
     };
