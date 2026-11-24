@@ -92,6 +92,11 @@ const SubSectionModal = ({ modalData, setModalData, add = false, view = false, e
         formData.append("description", currentValues.lectureDesc);
 
       if (currentValues.lectureVideo instanceof File) {
+        if (currentValues.lectureVideo.size > 4.5 * 1024 * 1024 && !directVideoUrl) {
+          toast.error("Video exceeds Vercel 4.5MB serverless limit. Please deploy the updated backend with Cloudinary direct upload.");
+          setLoading(false);
+          return;
+        }
         formData.append("videoFile", currentValues.lectureVideo);
         if (videoDuration) {
           formData.append("duration", videoDuration);
@@ -164,6 +169,11 @@ const SubSectionModal = ({ modalData, setModalData, add = false, view = false, e
       formData.append("title", data.lectureTitle);
       formData.append("description", data.lectureDesc);
       if (data.lectureVideo instanceof File) {
+        if (data.lectureVideo.size > 4.5 * 1024 * 1024 && !directVideoUrl) {
+          toast.error("Video exceeds Vercel 4.5MB serverless limit. Please deploy the updated backend with Cloudinary direct upload.");
+          setLoading(false);
+          return;
+        }
         formData.append("videoFile", data.lectureVideo);
       }
       if (videoDuration) {

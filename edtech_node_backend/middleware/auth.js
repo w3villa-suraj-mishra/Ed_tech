@@ -49,8 +49,8 @@ const setCurrentUserIfAuthenticated = async (req, res, next) => {
 };
 
 const isInstructor = (req, res, next) => {
-  if (!req.user || req.user.accountType !== 'Instructor') {
-    return res.status(403).json({ success: false, message: 'This is a protected route for Instructors' });
+  if (!req.user || (req.user.accountType !== 'Instructor' && req.user.accountType !== 'Admin' && req.user.accountType !== 'Superadmin')) {
+    return res.status(403).json({ success: false, message: 'This is a protected route for Instructors and Admins' });
   }
   next();
 };
