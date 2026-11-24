@@ -46,7 +46,8 @@ const sectionController = {
       return res.status(201).json({
         success: true,
         message: 'Section created successfully',
-        updatedCourse: formattedCourse
+        updatedCourse: formattedCourse,
+        data: formattedCourse
       });
     } catch (error) {
       logger.error('ADD SECTION FAILED:', error.message);

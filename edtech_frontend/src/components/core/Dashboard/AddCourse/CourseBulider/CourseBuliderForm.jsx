@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
+import { useParams } from 'react-router-dom'
 import Iconbtn from "../../../../../components/Common/iconbtn"
 import { MdAddCircleOutline } from "react-icons/md"
 import { BiRightArrow } from "react-icons/bi"
 import { useDispatch, useSelector } from 'react-redux';
 import { setCourse, setEditCourse, setStep } from '../../../../../services/slices/courseSlice';
 import { toast } from 'react-hot-toast';
-import { createSection, updateSection } from '../../../../../services/operations/courseDetailsAPI';
+import { createSection, updateSection, getFullDetailsOfCourse } from '../../../../../services/operations/courseDetailsAPI';
 import NestedView from './NestedView';
 
 const CourseBuilderForm = () => {
@@ -17,33 +18,58 @@ const CourseBuilderForm = () => {
   const dispatch = useDispatch();
   const { token } = useSelector((state) => state.auth);
   const [loading, setLoading] = useState(false);
+  const { courseId: paramCourseId } = useParams();
+
+  const cId = course?._id || course?.id || paramCourseId;
 
   useEffect(() => {
-    console.log("UPDATED");
-  }, [course])
+    const targetCourseId = course?._id || course?.id || paramCourseId;
+    const hasSections = (Array.isArray(course?.courseContent) && course.courseContent.length > 0) ||
+                        (Array.isArray(course?.sections) && course.sections.length > 0);
+
+    if (targetCourseId && !hasSections && token) {
+      (async () => {
+        try {
+          const res = await getFullDetailsOfCourse(targetCourseId, token);
+          const fullCourse = res?.courseDetails || res?.data?.courseDetails || res?.data || res;
+          if (fullCourse && (fullCourse._id || fullCourse.id || fullCourse.courseName)) {
+            dispatch(setCourse(fullCourse));
+          }
+        } catch (err) {
+          console.error("Could not fetch full course details in CourseBuilderForm:", err);
+        }
+      })();
+    }
+  }, [paramCourseId, token, dispatch]);
 
   const onSubmit = async (data) => {
     setLoading(true);
     let result;
-    const cId = course?._id || course?.id;
+    const targetCourseId = course?._id || course?.id || paramCourseId;
+
+    if (!targetCourseId) {
+      toast.error("Course ID not found. Please complete Step 1 first.");
+      setLoading(false);
+      return;
+    }
 
     if (editSectionName) {
       result = await updateSection(
         {
           sectionName: data.sectionName,
           sectionId: editSectionName,
-          courseId: cId,
+          courseId: targetCourseId,
         }, token
       )
     }
     else {
       result = await createSection({
         sectionName: data.sectionName,
-        courseId: cId,
+        courseId: targetCourseId,
       }, token)
     }
 
-    if (result) {
+    if (result && !Array.isArray(result) && (result._id || result.id || result.courseContent || result.sections)) {
       dispatch(setCourse(result));
       setEditSectionName(null);
       setValue("sectionName", "");
@@ -63,16 +89,23 @@ const CourseBuilderForm = () => {
   }
 
   const goToNext = () => {
-    if (course?.courseContent?.length === 0) {
+    const sections = (course?.courseContent && course.courseContent.length > 0)
+      ? course.courseContent
+      : (course?.sections || []);
+
+    if (sections.length === 0) {
       toast.error("Please add atleast one Section");
       return;
     }
-    if (course.courseContent?.some(
-  (section) => !section.subSection || section.subSection.length === 0
-)) {
-  toast.error("Please add atleast one lecture in each section");
-  return;
-}
+    if (sections.some(
+      (section) => {
+        const subs = section.subSection || section.subSections || [];
+        return subs.length === 0;
+      }
+    )) {
+      toast.error("Please add atleast one lecture in each section");
+      return;
+    }
     dispatch(setStep(3));
   }
 
@@ -152,11 +185,9 @@ const CourseBuilderForm = () => {
       </div>
 
       {/* NESTED VIEW */}
-      {(course?.courseContent?.length > 0 || course?.sections?.length > 0) && (
-        <div className='mt-8'>
-          <NestedView handleChangeEditSectionName={handleChangeEditSectionName} />
-        </div>
-      )}
+      <div className='mt-8'>
+        <NestedView handleChangeEditSectionName={handleChangeEditSectionName} />
+      </div>
 
       {/* FOOTER NAV */}
       <div className='flex justify-end gap-4 mt-10'>
@@ -181,4 +212,4 @@ const CourseBuilderForm = () => {
   )
 }
 
-export default CourseBuilderForm
+export default CourseBuilderForm;

@@ -140,7 +140,7 @@ export const addCourseDetails = async (data, token) => {
       throw new Error("Could Not Add Course Details")
     }
     toast.success("Course Details Added Successfully")
-    result = Array.isArray(response?.data?.data) ? response.data.data : []
+    result = response?.data?.data || response?.data?.course || response?.data
   } catch (error) {
     console.log("CREATE COURSE API ERROR............", error)
     const errorMessage = error.response?.data?.message || error.message
@@ -164,7 +164,7 @@ export const editCourseDetails = async (data, token) => {
       throw new Error("Could Not Update Course Details")
     }
     toast.success("Course Details Updated Successfully")
-    result = Array.isArray(response?.data?.data) ? response.data.data : []
+    result = response?.data?.data || response?.data?.updatedCourse || response?.data?.course || response?.data
   } catch (error) {
     console.log("EDIT COURSE API ERROR............", error)
     const errorMessage = error.response?.data?.message || error.message

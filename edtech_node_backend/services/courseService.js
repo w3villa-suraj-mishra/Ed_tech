@@ -120,12 +120,16 @@ const formatCourse = async (course, currentUserId = null) => {
 
   let globalVideoCounter = 0;
 
-  result.courseContent = (coursePlain.sections || []).map((sectionRaw) => {
+  const rawSections = coursePlain.sections || coursePlain.Sections || coursePlain.courseContent || coursePlain.course_content || [];
+
+  result.courseContent = rawSections.map((sectionRaw) => {
     const section = normalizeObject(sectionRaw);
     section._id = section.id;
     section.sectionName = section.sectionName || section.section_name;
 
-    const subSectionList = (sectionRaw.subSections || sectionRaw.sub_sections || []).map((subRaw) => {
+    const rawSubSections = sectionRaw.subSections || sectionRaw.sub_sections || sectionRaw.subSection || sectionRaw.SubSections || [];
+
+    const subSectionList = rawSubSections.map((subRaw) => {
       globalVideoCounter++;
       const formatted = formatSubSection(subRaw);
       const isFreeVideo = globalVideoCounter <= 2;

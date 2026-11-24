@@ -36,9 +36,19 @@ const NestedView = ({ handleChangeEditSectionName }) => {
     setConfirmationModal(null);
   }
 
-  const sectionsList = (course?.courseContent && course.courseContent.length > 0)
+  const sectionsList = (Array.isArray(course?.courseContent) && course.courseContent.length > 0)
     ? course.courseContent
-    : (course?.sections || []);
+    : (Array.isArray(course?.sections) && course.sections.length > 0)
+    ? course.sections
+    : [];
+
+  if (sectionsList.length === 0) {
+    return (
+      <div className="rounded-2xl border border-dashed border-richblack-700 bg-richblack-900/40 p-8 text-center text-richblack-400">
+        <p className="text-sm font-medium">No sections added yet. Type a section name above and click "Create Section" to begin organizing your course.</p>
+      </div>
+    );
+  }
 
   return (
     <div className='space-y-5'>

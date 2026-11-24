@@ -133,10 +133,10 @@ export default function CourseInformationForm() {
           setLoading(true)
           const result = await editCourseDetails(formData, token)
           setLoading(false)
-          if (result) {
-            dispatch(setStep(2))
+          if (result && !Array.isArray(result) && (result._id || result.id || result.courseName)) {
             dispatch(setCourse(result))
           }
+          dispatch(setStep(2))
         } else {
           dispatch(setStep(2))
         }
@@ -160,10 +160,10 @@ export default function CourseInformationForm() {
       formData.append("thumbnailImage", data.courseImage)
       setLoading(true)
       const result = await addCourseDetails(formData, token)
-      if (result) {
-        dispatch(setStep(2))
+      if (result && !Array.isArray(result) && (result._id || result.id || result.courseName)) {
         dispatch(setCourse(result))
       }
+      dispatch(setStep(2))
       setLoading(false)
     }
   
