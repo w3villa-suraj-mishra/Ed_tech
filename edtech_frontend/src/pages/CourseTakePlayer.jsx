@@ -27,6 +27,7 @@ import {
 import { FaComments } from "react-icons/fa6";
 import CoursePracticeTab from "../components/core/ViewCourse/CoursePracticeTab";
 import StudentAssignmentsPanel from "../components/core/Assignments/StudentAssignmentsPanel";
+import { resolveMediaUrl } from "../utils/resolveMediaUrl";
 
 const { COURSE_DETAILS_API } = courseEndpoints;
 
@@ -610,7 +611,7 @@ const CourseTakePlayer = () => {
               <div className="w-full bg-black rounded-xl overflow-hidden shadow-lg border border-slate-200 flex items-center justify-center">
                 <video
                   key={currentLecture._id}
-                  src={currentLecture.videoUrl}
+                  src={resolveMediaUrl(currentLecture.videoUrl)}
                   controls
                   autoPlay
                   className="w-full max-h-[calc(100vh-12rem)] object-contain rounded-xl"

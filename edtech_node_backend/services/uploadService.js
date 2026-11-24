@@ -23,25 +23,23 @@ const handleFileUpload = async (file, isVideo = false) => {
 
   try {
     if (process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_API_SECRET) {
-      const uploadOptions = {
-        resource_type: isVideo ? 'video' : 'auto',
-        folder: isVideo ? 'edtech/videos' : 'edtech/images',
-        timeout: 60000
-      };
-
-      const result = await Promise.race([
-        cloudinary.uploader.upload(file.path, uploadOptions),
-        new Promise((_, reject) => setTimeout(() => reject(new Error('Cloudinary upload timed out')), 60000))
-      ]);
+      const folder = isVideo ? 'edtech/videos' : 'edtech/images';
+      const result = isVideo
+        ? await cloudinary.uploader.upload_large(file.path, {
+            resource_type: 'video',
+            folder,
+            chunk_size: 20 * 1024 * 1024
+          })
+        : await cloudinary.uploader.upload(file.path, { resource_type: 'auto', folder });
 
       deleteLocalFile(file.path);
       return result.secure_url;
     }
   } catch (error) {
-    logger.warn('Cloudinary upload skipped or timed out, serving file locally:', error.message);
+    logger.error('CLOUDINARY UPLOAD FAILED, FALLING BACK TO LOCAL:', error.message || JSON.stringify(error));
   }
 
-  // Fallback to serving the locally stored file directly from /uploads
+  // Fallback: serve the locally stored file from /uploads
   return localUrl;
 };
 
