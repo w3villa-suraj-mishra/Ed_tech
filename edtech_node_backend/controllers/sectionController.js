@@ -417,7 +417,66 @@ const sectionController = {
         message: error.message
       });
     }
-  }
+  },
+
+  /**
+   * Reorder sections
+   */
+  reorderSections: async (req, res) => {
+    try {
+      const { courseId, sectionIds } = req.body;
+      if (!courseId || !Array.isArray(sectionIds)) {
+        return res.status(400).json({ success: false, message: 'Course ID and section order are required' });
+      }
+
+      for (let position = 0; position < sectionIds.length; position++) {
+        await Section.update(
+          { position },
+          { where: { id: Number(sectionIds[position]), courseId: Number(courseId) } }
+        );
+      }
+
+      const course = await Course.findByPk(courseId, {
+        include: [{ association: 'sections', include: [{ association: 'subSections' }] }]
+      });
+      const formattedCourse = await courseService.formatCourse(course, req.user?.id);
+      return res.status(200).json({ success: true, message: 'Sections reordered', data: formattedCourse });
+    } catch (error) {
+      logger.error('REORDER SECTIONS FAILED:', error.message);
+      return res.status(500).json({ success: false, message: error.message });
+    }
+  },
+
+  /**
+   * Reorder subsections
+   */
+  reorderSubSections: async (req, res) => {
+    try {
+      const { sectionId, subSectionIds } = req.body;
+      if (!sectionId || !Array.isArray(subSectionIds)) {
+        return res.status(400).json({ success: false, message: 'Section ID and lecture order are required' });
+      }
+
+      const section = await Section.findByPk(sectionId);
+      if (!section) return res.status(404).json({ success: false, message: 'Section not found' });
+
+      for (let position = 0; position < subSectionIds.length; position++) {
+        await SubSection.update(
+          { position },
+          { where: { id: Number(subSectionIds[position]), sectionId: Number(sectionId) } }
+        );
+      }
+
+      const course = await Course.findByPk(section.courseId, {
+        include: [{ association: 'sections', include: [{ association: 'subSections' }] }]
+      });
+      const formattedCourse = await courseService.formatCourse(course, req.user?.id);
+      return res.status(200).json({ success: true, message: 'Lectures reordered', data: formattedCourse });
+    } catch (error) {
+      logger.error('REORDER SUBSECTIONS FAILED:', error.message);
+      return res.status(500).json({ success: false, message: error.message });
+    }
+  },
 };
 
 module.exports = sectionController;

@@ -81,7 +81,12 @@ const SubSectionModal = ({ modalData, setModalData, add = false, view = false, e
         }
       } catch (err) {
         toast.dismiss("videoUploadToast");
-        console.warn("Direct Cloudinary upload failed, falling back to server:", err);
+        console.error("Direct Cloudinary upload failed:", err);
+      }
+      if (!directVideoUrl) {
+        toast.error("Video upload failed. Please try again.");
+        setLoading(false);
+        return;
       }
     }
 
@@ -165,7 +170,12 @@ const SubSectionModal = ({ modalData, setModalData, add = false, view = false, e
         }
       } catch (err) {
         toast.dismiss("videoUploadToast");
-        console.warn("Direct Cloudinary upload failed, falling back to server:", err);
+        console.error("Direct Cloudinary upload failed:", err);
+      }
+      if (!directVideoUrl) {
+        toast.error("Video upload failed. Please try again.");
+        setLoading(false);
+        return;
       }
     }
 

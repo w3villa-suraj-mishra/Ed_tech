@@ -20,6 +20,8 @@ const {
   UPDATE_LECTURE_DURATION_API,
   DELETE_SECTION_API,
   DELETE_SUBSECTION_API,
+  REORDER_SECTIONS_API,
+  REORDER_SUBSECTIONS_API,
   GET_ALL_INSTRUCTOR_COURSES_API,
   DELETE_COURSE_API,
   GET_FULL_COURSE_DETAILS_AUTHENTICATED,
@@ -672,5 +674,33 @@ export const getHomePageStats = async () => {
     console.log("GET HOMEPAGE STATS API ERROR............", error)
   }
   return null
+}
+
+export const reorderSections = async (data, token) => {
+  try {
+    const response = await apiConnector("POST", REORDER_SECTIONS_API, data, {
+      Authorization: `Bearer ${token}`,
+    })
+    if (!response?.data?.success) throw new Error(response?.data?.message || "Could Not Reorder Sections")
+    return response?.data?.data
+  } catch (error) {
+    const msg = error.response?.data?.message || error.message;
+    toast.error(msg)
+    return null
+  }
+}
+
+export const reorderSubSections = async (data, token) => {
+  try {
+    const response = await apiConnector("POST", REORDER_SUBSECTIONS_API, data, {
+      Authorization: `Bearer ${token}`,
+    })
+    if (!response?.data?.success) throw new Error(response?.data?.message || "Could Not Reorder Lectures")
+    return response?.data?.data
+  } catch (error) {
+    const msg = error.response?.data?.message || error.message;
+    toast.error(msg)
+    return null
+  }
 }
 

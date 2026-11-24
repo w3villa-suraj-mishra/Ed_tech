@@ -39,6 +39,11 @@ const SubSection = sequelize.define('SubSection', {
     type: DataTypes.STRING,
     field: 'time_duration',
     allowNull: true
+  },
+  position: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    defaultValue: 0
   }
 }, {
   tableName: 'sub_sections',

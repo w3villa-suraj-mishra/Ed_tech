@@ -458,6 +458,12 @@ router.post(
   isInstructor,
   sectionController.deleteSection
 );
+router.post(
+  '/course/reorderSections',
+  authenticateUser,
+  isInstructor,
+  sectionController.reorderSections
+);
 
 // ==========================================
 // SUBSECTION ROUTES
@@ -492,6 +498,12 @@ router.post(
   authenticateUser,
   isInstructor,
   sectionController.deleteSubSection
+);
+router.post(
+  '/course/reorderSubSections',
+  authenticateUser,
+  isInstructor,
+  sectionController.reorderSubSections
 );
 
 // ==========================================

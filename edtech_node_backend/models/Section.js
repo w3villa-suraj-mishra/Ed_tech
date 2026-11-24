@@ -21,6 +21,11 @@ const Section = sequelize.define('Section', {
     type: DataTypes.STRING,
     allowNull: false,
     field: 'section_name'
+  },
+  position: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    defaultValue: 0
   }
 }, {
   tableName: 'sections',

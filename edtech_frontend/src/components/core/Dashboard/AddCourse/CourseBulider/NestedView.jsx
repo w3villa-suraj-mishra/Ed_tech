@@ -5,10 +5,11 @@ import { MdEdit } from 'react-icons/md';
 import { RiDeleteBin6Line } from "react-icons/ri"
 import { BiDownArrow } from 'react-icons/bi';
 import { AiOutlinePlus } from "react-icons/ai"
+import { FiChevronUp, FiChevronDown } from "react-icons/fi"
 import SubSectionModal from './SubSectionModal';
 import ConfirmationModal from "../../../../Common/ConfirmationModal"
 import { setCourse } from '../../../../../services/slices/courseSlice';
-import { deleteSection, deleteSubSection } from '../../../../../services/operations/courseDetailsAPI';
+import { deleteSection, deleteSubSection, reorderSections, reorderSubSections } from '../../../../../services/operations/courseDetailsAPI';
 
 const NestedView = ({ handleChangeEditSectionName }) => {
 
@@ -36,6 +37,30 @@ const NestedView = ({ handleChangeEditSectionName }) => {
     setConfirmationModal(null);
   }
 
+  const moveSection = async (sectionIndex, direction) => {
+    const targetIndex = sectionIndex + direction;
+    if (targetIndex < 0 || targetIndex >= sectionsList.length) return;
+
+    const reordered = [...sectionsList];
+    [reordered[sectionIndex], reordered[targetIndex]] = [reordered[targetIndex], reordered[sectionIndex]];
+    const sectionIds = reordered.map((section) => section._id || section.id);
+
+    const result = await reorderSections({ courseId: course?._id || course?.id, sectionIds }, token);
+    if (result) dispatch(setCourse(result));
+  }
+
+  const moveSubSection = async (sectionId, subSections, subIndex, direction) => {
+    const targetIndex = subIndex + direction;
+    if (targetIndex < 0 || targetIndex >= subSections.length) return;
+
+    const reordered = [...subSections];
+    [reordered[subIndex], reordered[targetIndex]] = [reordered[targetIndex], reordered[subIndex]];
+    const subSectionIds = reordered.map((sub) => sub._id || sub.id);
+
+    const result = await reorderSubSections({ sectionId, subSectionIds }, token);
+    if (result) dispatch(setCourse(result));
+  }
+
   const sectionsList = (Array.isArray(course?.courseContent) && course.courseContent.length > 0)
     ? course.courseContent
     : (Array.isArray(course?.sections) && course.sections.length > 0)
@@ -59,7 +84,7 @@ const NestedView = ({ handleChangeEditSectionName }) => {
   return (
     <div className='space-y-4'>
 
-      {sectionsList.map((section) => {
+      {sectionsList.map((section, sectionIndex) => {
         const sId = section._id || section.id;
         const subList = section.subSection || section.subSections || [];
         return (
@@ -111,6 +136,26 @@ const NestedView = ({ handleChangeEditSectionName }) => {
                   <RiDeleteBin6Line className="text-base" />
                 </button>
 
+                <button
+                  type="button"
+                  disabled={sectionIndex === 0}
+                  onClick={() => moveSection(sectionIndex, -1)}
+                  className="p-1.5 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-white transition cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
+                  title="Move Section Up"
+                >
+                  <FiChevronUp className="text-base" />
+                </button>
+
+                <button
+                  type="button"
+                  disabled={sectionIndex === sectionsList.length - 1}
+                  onClick={() => moveSection(sectionIndex, 1)}
+                  className="p-1.5 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-white transition cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
+                  title="Move Section Down"
+                >
+                  <FiChevronDown className="text-base" />
+                </button>
+
                 <div className="p-1 text-slate-400 group-open:rotate-180 transition-transform duration-200 pointer-events-none">
                   <BiDownArrow className='text-xs' />
                 </div>
@@ -120,7 +165,7 @@ const NestedView = ({ handleChangeEditSectionName }) => {
             {/* SUBSECTIONS LIST */}
             <div className='bg-white p-4 space-y-2.5'>
 
-              {subList.map((data) => {
+              {subList.map((data, subIndex) => {
                 const subId = data._id || data.id;
                 const hasVideo = Boolean(data.videoUrl || data.video_url || data.video);
                 return (

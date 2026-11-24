@@ -4,6 +4,7 @@ const cloudinary = require('../config/cloudinary');
 const logger = require('../utils/logger');
 
 const MAX_SIMPLE_UPLOAD_BYTES = 90 * 1024 * 1024;
+const isServerless = Boolean(process.env.VERCEL) || process.env.NODE_ENV === 'production';
 
 const deleteLocalFile = (filePath) => {
   try {
@@ -22,9 +23,14 @@ const handleFileUpload = async (file, isVideo = false) => {
 
   const filename = path.basename(file.path);
   const localUrl = `/uploads/${filename}`;
+  const hasCloudinary = Boolean(
+    process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_API_SECRET
+  );
 
-  try {
-    if (process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_API_SECRET) {
+  if (!hasCloudinary) {
+    logger.error('CLOUDINARY ENV VARS MISSING');
+  } else {
+    try {
       const folder = isVideo ? 'edtech/videos' : 'edtech/images';
       const size = file.size || fs.statSync(file.path).size;
 
@@ -46,12 +52,18 @@ const handleFileUpload = async (file, isVideo = false) => {
 
       deleteLocalFile(file.path);
       return url.replace(/^http:\/\//, 'https://');
+    } catch (error) {
+      logger.error('CLOUDINARY UPLOAD FAILED:', error.message || JSON.stringify(error));
     }
-  } catch (error) {
-    logger.error('CLOUDINARY UPLOAD FAILED, FALLING BACK TO LOCAL:', error.message || JSON.stringify(error));
   }
 
-  // Fallback: serve the locally stored file from /uploads
+  // Production/serverless has no persistent disk, so a local path would be dead. Fail loudly instead.
+  if (isServerless) {
+    deleteLocalFile(file.path);
+    throw new Error('File upload failed: cloud storage is not configured or unavailable. Check CLOUDINARY_* variables.');
+  }
+
+  // Local development only: serve from /uploads
   return localUrl;
 };
 

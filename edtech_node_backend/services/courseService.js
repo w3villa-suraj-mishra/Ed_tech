@@ -136,14 +136,28 @@ const formatCourse = async (course, currentUserId = null) => {
 
   let globalVideoCounter = 0;
 
-  const rawSections = coursePlain.sections || coursePlain.Sections || coursePlain.courseContent || coursePlain.course_content || [];
+  const rawSections = (coursePlain.sections || coursePlain.Sections || coursePlain.courseContent || coursePlain.course_content || [])
+    .slice()
+    .sort((a, b) => {
+      const aPos = Number(a.position ?? 0);
+      const bPos = Number(b.position ?? 0);
+      if (aPos !== bPos) return aPos - bPos;
+      return new Date(a.createdAt || 0).getTime() - new Date(b.createdAt || 0).getTime();
+    });
 
   result.courseContent = rawSections.map((sectionRaw) => {
     const section = normalizeObject(sectionRaw);
     section._id = section.id;
     section.sectionName = section.sectionName || section.section_name;
 
-    const rawSubSections = sectionRaw.subSections || sectionRaw.sub_sections || sectionRaw.subSection || sectionRaw.SubSections || [];
+    const rawSubSections = (sectionRaw.subSections || sectionRaw.sub_sections || sectionRaw.subSection || sectionRaw.SubSections || [])
+      .slice()
+      .sort((a, b) => {
+        const aPos = Number(a.position ?? 0);
+        const bPos = Number(b.position ?? 0);
+        if (aPos !== bPos) return aPos - bPos;
+        return new Date(a.createdAt || 0).getTime() - new Date(b.createdAt || 0).getTime();
+      });
 
     const subSectionList = rawSubSections.map((subRaw) => {
       globalVideoCounter++;
