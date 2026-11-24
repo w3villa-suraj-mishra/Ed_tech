@@ -54,7 +54,6 @@ const SubSectionModal = ({ modalData, setModalData, add = false, view = false, e
 
     if (currentValues.lectureVideo instanceof File) {
       formData.append("videoFile", currentValues.lectureVideo);
-      formData.append("video", currentValues.lectureVideo);
       if (currentValues.lectureDuration) {
         formData.append("duration", currentValues.lectureDuration);
       }
@@ -90,7 +89,6 @@ const SubSectionModal = ({ modalData, setModalData, add = false, view = false, e
     formData.append("title", data.lectureTitle);
     formData.append("description", data.lectureDesc);
     if (data.lectureVideo instanceof File) {
-      formData.append("video", data.lectureVideo);
       formData.append("videoFile", data.lectureVideo);
     }
     if (data.lectureDuration) {
@@ -116,7 +114,7 @@ const SubSectionModal = ({ modalData, setModalData, add = false, view = false, e
         {/* HEADER */}
         <div className="flex justify-between items-center mb-5 pb-3 border-b border-slate-100">
           <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-base">
+            <div className="w-9 h-9 rounded-xl bg-slate-100 text-blue-600 flex items-center justify-center font-bold text-base">
               {view ? "👁️" : edit ? "✏️" : "➕"}
             </div>
             <div>

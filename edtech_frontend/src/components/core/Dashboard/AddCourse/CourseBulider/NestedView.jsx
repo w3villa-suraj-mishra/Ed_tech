@@ -45,7 +45,7 @@ const NestedView = ({ handleChangeEditSectionName }) => {
   if (sectionsList.length === 0) {
     return (
       <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50/70 p-8 text-center text-slate-500">
-        <div className="w-12 h-12 mx-auto rounded-full bg-blue-50 text-blue-500 flex items-center justify-center text-xl mb-3">
+        <div className="w-12 h-12 mx-auto rounded-full bg-slate-100 text-blue-600 flex items-center justify-center text-xl mb-3">
           📁
         </div>
         <p className="text-sm font-semibold text-slate-800">No sections added yet</p>
@@ -183,9 +183,9 @@ const NestedView = ({ handleChangeEditSectionName }) => {
               <button
                 type="button"
                 onClick={() => setAddSubSection(sId)}
-                className='inline-flex items-center gap-2 text-xs sm:text-sm font-semibold text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100/70 px-4 py-2 rounded-xl transition mt-2 cursor-pointer'
+                className='inline-flex items-center gap-1.5 text-xs sm:text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 active:scale-95 px-4 py-2 rounded-xl transition shadow-xs mt-2 cursor-pointer'
               >
-                <AiOutlinePlus className="text-base" />
+                <AiOutlinePlus className="text-base text-white font-bold" />
                 Add Lecture
               </button>
             </div>

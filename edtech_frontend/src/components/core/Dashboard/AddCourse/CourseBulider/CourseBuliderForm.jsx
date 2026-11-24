@@ -124,7 +124,7 @@ const CourseBuilderForm = () => {
 
         {/* HEADER */}
         <div className="border-b border-slate-100 pb-4 flex items-start gap-4">
-          <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600 text-xl font-bold">
+          <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-blue-600 text-xl font-bold">
             📚
           </div>
           <div>

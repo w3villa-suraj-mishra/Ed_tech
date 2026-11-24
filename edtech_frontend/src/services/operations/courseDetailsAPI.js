@@ -207,10 +207,10 @@ export const createSubSection = async (data, token) => {
     })
     console.log("CREATE SUB-SECTION API RESPONSE............", response)
     if (!response?.data?.success) {
-      throw new Error("Could Not Add Lecture")
+      throw new Error(response?.data?.message || "Could Not Add Lecture")
     }
     toast.success("Lecture Added")
-    result = response?.data?.data
+    result = response?.data?.updatedCourse || response?.data?.data
   } catch (error) {
     console.log("CREATE SUB-SECTION API ERROR............", error)
     const msg = error.response?.data?.message || error.message;
@@ -230,10 +230,10 @@ export const updateSection = async (data, token) => {
     })
     console.log("UPDATE SECTION API RESPONSE............", response)
     if (!response?.data?.success) {
-      throw new Error("Could Not Update Section")
+      throw new Error(response?.data?.message || "Could Not Update Section")
     }
     toast.success("Course Section Updated")
-    result = response?.data?.data
+    result = response?.data?.updatedCourse || response?.data?.data
   } catch (error) {
     console.log("UPDATE SECTION API ERROR............", error)
     const msg = error.response?.data?.message || error.message;
@@ -253,10 +253,10 @@ export const updateSubSection = async (data, token) => {
     })
     console.log("UPDATE SUB-SECTION API RESPONSE............", response)
     if (!response?.data?.success) {
-      throw new Error("Could Not Update Lecture")
+      throw new Error(response?.data?.message || "Could Not Update Lecture")
     }
     toast.success("Lecture Updated")
-    result = response?.data?.data
+    result = response?.data?.updatedCourse || response?.data?.data
   } catch (error) {
     console.log("UPDATE SUB-SECTION API ERROR............", error)
     const msg = error.response?.data?.message || error.message;

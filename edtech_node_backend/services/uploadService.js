@@ -18,26 +18,31 @@ const handleFileUpload = async (file, isVideo = false) => {
     return null;
   }
 
-  try {
-    const uploadOptions = {
-      resource_type: isVideo ? 'video' : 'image',
-      folder: isVideo ? 'edtech/videos' : 'edtech/images'
-    };
+  const filename = path.basename(file.path);
+  const localUrl = `/uploads/${filename}`;
 
-    const result = await cloudinary.uploader.upload(file.path, uploadOptions);
-    deleteLocalFile(file.path);
-    return result.secure_url;
-  } catch (error) {
-    deleteLocalFile(file.path);
-    logger.error('FILE UPLOAD TO CLOUDINARY FAILED:', error.message);
-    
-    // Fallback: If Cloudinary credentials are missing or invalid, generate a working fallback placeholder image/video URL
-    if (isVideo) {
-      return 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4';
-    } else {
-      return 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&auto=format&fit=crop&q=80';
+  try {
+    if (process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_API_SECRET) {
+      const uploadOptions = {
+        resource_type: isVideo ? 'video' : 'image',
+        folder: isVideo ? 'edtech/videos' : 'edtech/images',
+        timeout: 15000
+      };
+
+      const result = await Promise.race([
+        cloudinary.uploader.upload(file.path, uploadOptions),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('Cloudinary upload timed out')), 15000))
+      ]);
+
+      deleteLocalFile(file.path);
+      return result.secure_url;
     }
+  } catch (error) {
+    logger.warn('Cloudinary upload skipped or timed out, serving file locally:', error.message);
   }
+
+  // Fallback to serving the locally stored file directly from /uploads
+  return localUrl;
 };
 
 module.exports = {

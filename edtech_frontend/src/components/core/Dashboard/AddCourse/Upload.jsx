@@ -110,13 +110,13 @@ export default function Upload({
             )}
 
             {selectedFile ? (
-              <div className="mt-3 flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-950/40 px-3 py-1 text-xs font-medium text-emerald-400">
-                <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse"></span>
+              <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-emerald-300 bg-emerald-50 px-3.5 py-1 text-xs font-bold text-emerald-800 shadow-xs">
+                <span className="h-2 w-2 rounded-full bg-emerald-600 animate-pulse"></span>
                 New file selected: {selectedFile.name}
               </div>
             ) : editData ? (
-              <div className="mt-3 flex items-center gap-2 rounded-full border border-blue-500/30 bg-blue-950/40 px-3 py-1 text-xs font-medium text-blue-400">
-                <span className="h-2 w-2 rounded-full bg-blue-400"></span>
+              <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-slate-300 bg-slate-100 px-3.5 py-1 text-xs font-bold text-slate-800 shadow-xs">
+                <span className="h-2 w-2 rounded-full bg-blue-600"></span>
                 Current Video Attached
               </div>
             ) : null}
@@ -126,9 +126,9 @@ export default function Upload({
                 <button
                   type="button"
                   onClick={handleDeleteExistingVideo}
-                  className="flex items-center gap-1.5 rounded-lg border border-red-500/40 bg-red-950/30 px-3 py-1.5 text-xs font-semibold text-red-400 transition hover:bg-red-900/50 hover:text-red-300"
+                  className="inline-flex items-center gap-1.5 rounded-xl border border-red-300 bg-red-50 hover:bg-red-100 text-red-700 font-bold px-4 py-2 text-xs transition shadow-xs cursor-pointer"
                 >
-                  <FiTrash2 className="text-sm" />
+                  <FiTrash2 className="text-sm text-red-600" />
                   Delete Video & Upload New
                 </button>
                 <button
@@ -137,9 +137,9 @@ export default function Upload({
                     e.stopPropagation()
                     open()
                   }}
-                  className="flex items-center gap-1.5 rounded-lg border border-blue-500/40 bg-blue-950/30 px-3 py-1.5 text-xs font-semibold text-blue-400 transition hover:bg-blue-900/50 hover:text-blue-300"
+                  className="inline-flex items-center gap-1.5 rounded-xl border border-blue-300 bg-blue-50 hover:bg-blue-100 text-blue-900 font-bold px-4 py-2 text-xs transition shadow-xs cursor-pointer"
                 >
-                  <FiRefreshCw className="text-sm" />
+                  <FiRefreshCw className="text-sm text-blue-700" />
                   Change Video
                 </button>
               </div>
@@ -147,7 +147,7 @@ export default function Upload({
           </div>
         ) : (
           <div className="flex w-full flex-col items-center p-6 text-center">
-            <div className="grid aspect-square w-14 place-items-center rounded-full bg-blue-50 text-blue-500 mb-4">
+            <div className="grid aspect-square w-14 place-items-center rounded-full bg-slate-100 text-blue-600 mb-4">
               <FiUploadCloud className="text-2xl" />
             </div>
             <p className="max-w-[220px] text-sm text-slate-600 mb-4">
