@@ -1,4 +1,5 @@
 import { toast } from "react-hot-toast"
+import axios from "axios"
 
 import { updateCompletedLectures } from "../../services/slices/viewCourseSlice"
 // import { setLoading } from "../../slices/profileSlice";
@@ -15,6 +16,7 @@ const {
   CREATE_SUBSECTION_API,
   UPDATE_SECTION_API,
   UPDATE_SUBSECTION_API,
+  GET_CLOUDINARY_SIGNATURE_API,
   UPDATE_LECTURE_DURATION_API,
   DELETE_SECTION_API,
   DELETE_SUBSECTION_API,
@@ -264,6 +266,53 @@ export const updateSubSection = async (data, token) => {
   }
   toast.dismiss(toastId)
   return result
+}
+
+// Fetch Cloudinary upload signature for direct browser-to-Cloudinary upload (bypasses Vercel 4.5MB limit)
+export const getCloudinarySignature = async (token, folder = "edtech/videos") => {
+  try {
+    const response = await apiConnector(
+      "GET",
+      `${GET_CLOUDINARY_SIGNATURE_API}?folder=${folder}`,
+      null,
+      {
+        Authorization: `Bearer ${token}`,
+      }
+    );
+    if (response?.data?.success && response?.data?.data?.signature) {
+      return response.data.data;
+    }
+  } catch (error) {
+    console.warn("Could not fetch Cloudinary signature:", error);
+  }
+  return null;
+}
+
+// Upload file directly to Cloudinary CDN
+export const uploadDirectToCloudinary = async (file, signatureData, onProgress) => {
+  const { signature, timestamp, apiKey, cloudName, folder } = signatureData;
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("api_key", apiKey);
+  formData.append("timestamp", timestamp);
+  formData.append("signature", signature);
+  formData.append("folder", folder);
+
+  const isVideo = file.type?.startsWith("video/") || /\.(mp4|webm|mov|mkv|avi|m4v)$/i.test(file.name);
+  const resourceType = isVideo ? "video" : "image";
+  const uploadUrl = `https://api.cloudinary.com/v1_1/${cloudName}/${resourceType}/upload`;
+
+  const response = await axios.post(uploadUrl, formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+    onUploadProgress: (progressEvent) => {
+      if (onProgress && progressEvent.total) {
+        const percent = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+        onProgress(percent);
+      }
+    },
+  });
+
+  return response.data;
 }
 
 // delete a section

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux';
 import { useForm } from 'react-hook-form';
 import toast from 'react-hot-toast';
-import { createSubSection, updateSubSection } from '../../../../../services/operations/courseDetailsAPI';
+import { createSubSection, updateSubSection, getCloudinarySignature, uploadDirectToCloudinary } from '../../../../../services/operations/courseDetailsAPI';
 import { setCourse } from '../../../../../services/slices/courseSlice';
 import { RxCross1 } from 'react-icons/rx';
 import Upload from '../Upload';
@@ -40,29 +40,69 @@ const SubSectionModal = ({ modalData, setModalData, add = false, view = false, e
 
   const handleEditSubSection = async () => {
     const currentValues = getValues();
-    const formData = new FormData();
-
-    const subId = modalData?._id || modalData?.id;
-    formData.append("sectionId", modalData.sectionId);
-    formData.append("subSectionId", subId);
-
-    if (currentValues.lectureTitle !== modalData.title)
-      formData.append("title", currentValues.lectureTitle);
-
-    if (currentValues.lectureDesc !== modalData.description)
-      formData.append("description", currentValues.lectureDesc);
-
-    if (currentValues.lectureVideo instanceof File) {
-      formData.append("videoFile", currentValues.lectureVideo);
-      if (currentValues.lectureDuration) {
-        formData.append("duration", currentValues.lectureDuration);
-      }
-    } else if (videoRemoved) {
-      formData.append("deleteVideo", "true");
-    }
+    const subId = modalData?._id || modalData?.id || modalData?.subSectionId;
+    const sId = modalData?.sectionId || modalData?.section_id;
 
     setLoading(true);
-    const result = await updateSubSection(formData, token);
+
+    let directVideoUrl = null;
+    let videoDuration = currentValues.lectureDuration;
+
+    if (currentValues.lectureVideo instanceof File) {
+      try {
+        const sig = await getCloudinarySignature(token, "edtech/videos");
+        if (sig && sig.signature && sig.cloudName) {
+          toast.loading("Uploading video directly to Cloudinary...", { id: "videoUploadToast" });
+          const cloudRes = await uploadDirectToCloudinary(currentValues.lectureVideo, sig);
+          toast.dismiss("videoUploadToast");
+          if (cloudRes && cloudRes.secure_url) {
+            directVideoUrl = cloudRes.secure_url;
+            if (cloudRes.duration) {
+              videoDuration = Math.round(cloudRes.duration);
+            }
+          }
+        }
+      } catch (err) {
+        toast.dismiss("videoUploadToast");
+        console.warn("Direct Cloudinary upload failed, falling back to server:", err);
+      }
+    }
+
+    let payload;
+    if (directVideoUrl) {
+      payload = {
+        sectionId: sId,
+        subSectionId: subId,
+        videoUrl: directVideoUrl,
+        duration: videoDuration || 0
+      };
+      if (currentValues.lectureTitle !== modalData.title)
+        payload.title = currentValues.lectureTitle;
+      if (currentValues.lectureDesc !== modalData.description)
+        payload.description = currentValues.lectureDesc;
+    } else {
+      const formData = new FormData();
+      formData.append("sectionId", sId);
+      formData.append("subSectionId", subId);
+
+      if (currentValues.lectureTitle !== modalData.title)
+        formData.append("title", currentValues.lectureTitle);
+
+      if (currentValues.lectureDesc !== modalData.description)
+        formData.append("description", currentValues.lectureDesc);
+
+      if (currentValues.lectureVideo instanceof File) {
+        formData.append("videoFile", currentValues.lectureVideo);
+        if (videoDuration) {
+          formData.append("duration", videoDuration);
+        }
+      } else if (videoRemoved) {
+        formData.append("deleteVideo", "true");
+      }
+      payload = formData;
+    }
+
+    const result = await updateSubSection(payload, token);
 
     if (result && !Array.isArray(result) && (result._id || result.id || result.courseContent || result.sections)) {
       dispatch(setCourse(result));
@@ -84,19 +124,55 @@ const SubSectionModal = ({ modalData, setModalData, add = false, view = false, e
       return;
     }
 
-    const formData = new FormData();
-    formData.append("sectionId", modalData);
-    formData.append("title", data.lectureTitle);
-    formData.append("description", data.lectureDesc);
+    setLoading(true);
+
+    let directVideoUrl = null;
+    let videoDuration = data.lectureDuration;
+
     if (data.lectureVideo instanceof File) {
-      formData.append("videoFile", data.lectureVideo);
-    }
-    if (data.lectureDuration) {
-      formData.append("duration", data.lectureDuration);
+      try {
+        const sig = await getCloudinarySignature(token, "edtech/videos");
+        if (sig && sig.signature && sig.cloudName) {
+          toast.loading("Uploading video directly to Cloudinary...", { id: "videoUploadToast" });
+          const cloudRes = await uploadDirectToCloudinary(data.lectureVideo, sig);
+          toast.dismiss("videoUploadToast");
+          if (cloudRes && cloudRes.secure_url) {
+            directVideoUrl = cloudRes.secure_url;
+            if (cloudRes.duration) {
+              videoDuration = Math.round(cloudRes.duration);
+            }
+          }
+        }
+      } catch (err) {
+        toast.dismiss("videoUploadToast");
+        console.warn("Direct Cloudinary upload failed, falling back to server:", err);
+      }
     }
 
-    setLoading(true);
-    const result = await createSubSection(formData, token);
+    let payload;
+    if (directVideoUrl) {
+      payload = {
+        sectionId: modalData,
+        title: data.lectureTitle,
+        description: data.lectureDesc,
+        videoUrl: directVideoUrl,
+        duration: videoDuration || 0
+      };
+    } else {
+      const formData = new FormData();
+      formData.append("sectionId", modalData);
+      formData.append("title", data.lectureTitle);
+      formData.append("description", data.lectureDesc);
+      if (data.lectureVideo instanceof File) {
+        formData.append("videoFile", data.lectureVideo);
+      }
+      if (videoDuration) {
+        formData.append("duration", videoDuration);
+      }
+      payload = formData;
+    }
+
+    const result = await createSubSection(payload, token);
 
     if (result && !Array.isArray(result) && (result._id || result.id || result.courseContent || result.sections)) {
       dispatch(setCourse(result));

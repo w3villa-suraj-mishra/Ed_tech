@@ -481,6 +481,12 @@ router.post(
   authenticateUser,
   courseController.updateLectureDuration
 );
+router.get(
+  '/course/cloudinarySignature',
+  authenticateUser,
+  isInstructor,
+  courseController.getCloudinarySignature
+);
 router.post(
   '/course/deleteSubSection',
   authenticateUser,

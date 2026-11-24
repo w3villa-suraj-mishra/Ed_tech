@@ -1196,6 +1196,36 @@ const courseController = {
       logger.error('UPDATE LECTURE DURATION FAILED:', error.message);
       return res.status(500).json({ success: false, message: error.message });
     }
+  },
+
+  /**
+   * Generate Cloudinary signature for direct client-side upload.
+   * This bypasses Vercel 4.5MB serverless payload limits.
+   */
+  getCloudinarySignature: async (req, res) => {
+    try {
+      const cloudinary = require('../config/cloudinary');
+      const timestamp = Math.round(new Date().getTime() / 1000);
+      const folder = req.query.folder || 'edtech/videos';
+      const signature = cloudinary.utils.api_sign_request(
+        { folder, timestamp },
+        process.env.CLOUDINARY_API_SECRET
+      );
+
+      return res.status(200).json({
+        success: true,
+        data: {
+          signature,
+          timestamp,
+          apiKey: process.env.CLOUDINARY_API_KEY,
+          cloudName: process.env.CLOUDINARY_CLOUD_NAME,
+          folder
+        }
+      });
+    } catch (error) {
+      logger.error('GET CLOUDINARY SIGNATURE FAILED:', error.message);
+      return res.status(500).json({ success: false, message: error.message });
+    }
   }
 };
 

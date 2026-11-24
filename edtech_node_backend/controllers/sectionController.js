@@ -149,7 +149,7 @@ const sectionController = {
    */
   addSubSection: async (req, res) => {
     try {
-      const { sectionId, title, description, duration } = req.body;
+      const { sectionId, title, description, duration, videoUrl: directVideoUrl } = req.body;
 
       const section = await Section.findByPk(sectionId);
 
@@ -160,7 +160,7 @@ const sectionController = {
         });
       }
 
-      let videoUrl = null;
+      let videoUrl = directVideoUrl || null;
       const uploadedFile = req.file || (req.files && (req.files.videoFile?.[0] || req.files.video?.[0]));
 
       // Handle video upload
@@ -228,6 +228,8 @@ const sectionController = {
       if (uploadedFile) {
         const videoUrl = await uploadService.handleFileUpload(uploadedFile, true);
         updateData.videoUrl = videoUrl;
+      } else if (req.body.videoUrl) {
+        updateData.videoUrl = req.body.videoUrl;
       } else if (req.body.deleteVideo === 'true' || req.body.deleteVideo === true) {
         updateData.videoUrl = null;
         updateData.duration = 0;
