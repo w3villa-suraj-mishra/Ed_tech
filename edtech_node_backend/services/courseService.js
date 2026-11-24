@@ -20,13 +20,29 @@ const normalizeObject = (obj) => {
   return normalized;
 };
 
+const resolveBackendUrl = (url) => {
+  if (!url || typeof url !== 'string') return null;
+  const trimmed = url.trim();
+  if (trimmed.startsWith('http://res.cloudinary.com')) {
+    return trimmed.replace('http://', 'https://');
+  }
+  if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+    return trimmed;
+  }
+  const base = process.env.BACKEND_URL || process.env.BASE_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:5000');
+  const cleanBase = base.replace(/\/+$/, '');
+  const cleanPath = trimmed.startsWith('/') ? trimmed : `/${trimmed}`;
+  return `${cleanBase}${cleanPath}`;
+};
+
 const formatSubSection = (subSection) => {
   const sub = normalizeObject(subSection);
   const durationSeconds = parseInt(sub.duration, 10) || helpers.parseTimeDuration(sub.timeDuration) || 0;
+  const rawVideo = sub.videoUrl || sub.video_url || sub.video || null;
   const formatted = {
     ...sub,
     _id: sub.id,
-    videoUrl: sub.videoUrl || sub.video_url || sub.video || null,
+    videoUrl: resolveBackendUrl(rawVideo),
     durationSeconds,
     duration: secondsToPrettyString(durationSeconds)
   };
@@ -141,21 +157,24 @@ const formatCourse = async (course, currentUserId = null) => {
         isUnlocked = true;
         accessReason = 'Instructor/Admin Access';
       } else if (userEnrollment && userEnrollment.status === 'active') {
-        if (userEnrollment.plan === 'gold') {
+        const plan = (userEnrollment.plan || '').toLowerCase();
+        if (['gold', 'pro'].includes(plan)) {
           isUnlocked = true;
-          accessReason = 'Gold Lifetime Access';
-        } else if (userEnrollment.plan === 'silver') {
+          accessReason = 'Gold/Pro Lifetime Access';
+        } else if (['silver', 'plus', 'basic'].includes(plan)) {
           if (!userEnrollment.expiresAt || new Date(userEnrollment.expiresAt) > new Date()) {
             isUnlocked = true;
-            accessReason = 'Silver 1-Year Access';
+            accessReason = `${userEnrollment.plan} Active Access`;
           } else {
             isUnlocked = isFreeVideo;
-            accessReason = isFreeVideo ? 'Free Preview' : 'Silver Expired';
+            accessReason = isFreeVideo ? 'Free Preview' : `${userEnrollment.plan} Expired`;
           }
-        } else {
-          // Free Plan
+        } else if (plan === 'free') {
           isUnlocked = isFreeVideo;
-          accessReason = isFreeVideo ? 'Free Access (First 2 Videos)' : 'Requires Silver or Gold Upgrade';
+          accessReason = isFreeVideo ? 'Free Access (First 2 Videos)' : 'Requires Upgrade';
+        } else {
+          isUnlocked = true;
+          accessReason = 'Active Enrolled Access';
         }
       } else {
         // Unenrolled User

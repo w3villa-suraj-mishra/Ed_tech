@@ -13,17 +13,28 @@ export default function Upload({
   editData = null,
   onDeleteExisting = null,
 }) {
+  const resolveMediaUrl = (url) => {
+    if (!url || typeof url !== 'string') return ""
+    if (url.startsWith('blob:') || url.startsWith('data:')) return url
+    if (url.startsWith('http://res.cloudinary.com')) return url.replace('http://', 'https://')
+    if (url.startsWith('http://') || url.startsWith('https://')) return url
+    const base = process.env.REACT_APP_BASE_URL || 'http://localhost:5000'
+    const cleanBase = base.replace(/\/+$/, '')
+    const cleanPath = url.startsWith('/') ? url : `/${url}`
+    return `${cleanBase}${cleanPath}`
+  }
+
   const [selectedFile, setSelectedFile] = useState(null)
   const [previewSource, setPreviewSource] = useState(
-    viewData ? viewData : editData ? editData : ""
+    viewData ? resolveMediaUrl(viewData) : editData ? resolveMediaUrl(editData) : ""
   )
 
   useEffect(() => {
     if (viewData) {
-      setPreviewSource(viewData)
+      setPreviewSource(resolveMediaUrl(viewData))
       setSelectedFile(null)
     } else if (editData) {
-      setPreviewSource(editData)
+      setPreviewSource(resolveMediaUrl(editData))
       setSelectedFile(null)
     }
   }, [viewData, editData])

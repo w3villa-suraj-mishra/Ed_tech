@@ -33,6 +33,17 @@ const VideoDetails = () => {
   const [videoLoading, setVideoLoading] = useState(true);
   const videoRef = useRef(null);
 
+  const resolveMediaUrl = (url) => {
+    if (!url || typeof url !== 'string') return "";
+    if (url.startsWith('blob:') || url.startsWith('data:')) return url;
+    if (url.startsWith('http://res.cloudinary.com')) return url.replace('http://', 'https://');
+    if (url.startsWith('http://') || url.startsWith('https://')) return url;
+    const base = process.env.REACT_APP_BASE_URL || 'http://localhost:5000';
+    const cleanBase = base.replace(/\/+$/, '');
+    const cleanPath = url.startsWith('/') ? url : `/${url}`;
+    return `${cleanBase}${cleanPath}`;
+  };
+
 
   // -- Find video data from Redux --
   useEffect(() => {
@@ -197,7 +208,7 @@ const VideoDetails = () => {
           <video
             ref={videoRef}
             key={videoData.videoUrl} // Use URL as key to force re-render on change
-            src={videoData.videoUrl}
+            src={resolveMediaUrl(videoData.videoUrl)}
             controls
             autoPlay
             onEnded={handleVideoEnd}
