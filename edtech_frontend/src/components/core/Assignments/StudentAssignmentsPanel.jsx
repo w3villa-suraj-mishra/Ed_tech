@@ -11,7 +11,6 @@ import {
   FiFileText,
   FiImage,
   FiPaperclip,
-  FiRefreshCw,
   FiUpload,
   FiX,
 } from "react-icons/fi";
@@ -230,8 +229,8 @@ const StudentAssignmentsPanel = ({ courseId, onClose }) => {
               Submit your work as images or PDF files and track instructor feedback.
             </p>
           </div>
-          <div className="flex items-center gap-2">
-            {onClose && (
+          {onClose && (
+            <div className="flex items-center gap-2">
               <button
                 type="button"
                 onClick={onClose}
@@ -239,15 +238,8 @@ const StudentAssignmentsPanel = ({ courseId, onClose }) => {
               >
                 <FiArrowLeft size={14} /> Back to lesson
               </button>
-            )}
-            <button
-              type="button"
-              onClick={loadAssignments}
-              className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-600 transition hover:border-indigo-200 hover:text-indigo-600"
-            >
-              <FiRefreshCw size={14} /> Refresh
-            </button>
-          </div>
+            </div>
+          )}
         </div>
 
         {error ? (

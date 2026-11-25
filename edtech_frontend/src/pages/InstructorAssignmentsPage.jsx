@@ -6,6 +6,7 @@ import {
   FiAward,
   FiCalendar,
   FiCheckCircle,
+  FiChevronDown,
   FiClock,
   FiEdit3,
   FiEye,
@@ -480,13 +481,13 @@ const InstructorAssignmentsPage = () => {
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <button
+            {/* <button
               type="button"
               onClick={loadAssignments}
               className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-600 transition hover:border-indigo-200 hover:text-indigo-600"
             >
               <FiRefreshCw size={14} /> Refresh
-            </button>
+            </button> */}
             <button
               type="button"
               onClick={openCreateForm}
@@ -513,26 +514,29 @@ const InstructorAssignmentsPage = () => {
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-slate-200 bg-white p-4">
-          <label className="text-xs font-extrabold uppercase tracking-wide text-slate-500">Course</label>
-          <select
-            value={selectedCourseId}
-            onChange={(event) => setSelectedCourseId(event.target.value)}
-            disabled={loadingCourses}
-            className="min-w-[240px] flex-1 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-700 outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
-          >
-            {loadingCourses ? (
-              <option value="">Loading courses...</option>
-            ) : courses.length === 0 ? (
-              <option value="">{courseLoadError ? "Could not load courses" : "No courses available"}</option>
-            ) : (
-              courses.map((course) => (
-                <option key={course._id || course.id} value={course._id || course.id}>
-                  {course.courseName}
-                </option>
-              ))
-            )}
-          </select>
+        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 rounded-2xl border border-slate-200 bg-white p-3.5 sm:p-4 shadow-xs min-w-0">
+          <label className="text-[11px] font-extrabold uppercase tracking-wider text-slate-400 shrink-0">Course</label>
+          <div className="relative flex-1 min-w-0 max-w-full sm:max-w-md">
+            <select
+              value={selectedCourseId}
+              onChange={(event) => setSelectedCourseId(event.target.value)}
+              disabled={loadingCourses}
+              className="w-full appearance-none rounded-xl border border-slate-200 bg-slate-50 pl-3.5 pr-9 py-2 text-xs font-semibold text-slate-700 outline-none focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-100 transition-all cursor-pointer truncate shadow-2xs disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+              {loadingCourses ? (
+                <option value="">Loading courses...</option>
+              ) : courses.length === 0 ? (
+                <option value="">{courseLoadError ? "Could not load courses" : "No courses available"}</option>
+              ) : (
+                courses.map((course) => (
+                  <option key={course._id || course.id} value={course._id || course.id}>
+                    {course.courseName}
+                  </option>
+                ))
+              )}
+            </select>
+            <FiChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs pointer-events-none" />
+          </div>
         </div>
         {hasMoreCourses && (
           <div className="flex justify-end">

@@ -708,37 +708,10 @@ body {
   .dashboard-layout { padding: 10px 8px 24px; width: 100%; max-width: 100vw; overflow-x: hidden; }
   .dashboard-frame { display: flex; min-height: 0; flex-direction: column; gap: 10px; width: 100%; max-width: 100%; min-width: 0; }
   .dashboard-main { min-width: 0; width: 100%; max-width: 100%; }
-  .dashboard-sidebar {
-    position: relative;
-    top: auto;
-    width: 100%;
-    min-height: 0;
-    max-height: none;
-    padding: 10px;
-    overflow: visible;
-    border-radius: 17px;
+  .dashboard-sidebar,
+  .dashboard-sidebar-loading {
+    display: none !important;
   }
-  .dashboard-brand { min-height: 34px; margin: 0 3px 9px; }
-  .dashboard-brand-mark { width: 33px; height: 33px; border-radius: 10px; font-size: 16px; }
-  .dashboard-brand-copy strong { font-size: 13px; }
-  .dashboard-brand-copy small { font-size: 7px; }
-  .dashboard-user-card { min-height: 48px; margin: 0 0 10px; padding: 6px 8px; border-radius: 12px; }
-  .dashboard-user-avatar { width: 32px; height: 32px; flex-basis: 32px; border-radius: 10px; }
-  .dashboard-user-copy strong { font-size: 10px; }
-  .dashboard-user-copy small { font-size: 9px; }
-  .dashboard-nav-label { display: none; }
-  .dashboard-nav-list { display: flex; gap: 5px; overflow-x: auto; padding: 1px 1px 5px; scrollbar-width: none; }
-  .dashboard-nav-list::-webkit-scrollbar { display: none; }
-  .dashboard-nav-link { flex: 0 0 auto; min-height: 35px; gap: 6px; margin: 0; padding: 0 9px; border: 1px solid #edf1f6; border-radius: 10px; background: #fff; font-size: 10px; }
-  .dashboard-nav-link:hover { transform: none; }
-  .dashboard-nav-link.active { border-color: color-mix(in srgb, var(--workspace-accent) 23%, white); }
-  .dashboard-nav-link.active::before { display: none; }
-  .dashboard-nav-icon { width: 19px; height: 19px; flex-basis: 19px; background: transparent !important; font-size: 13px; }
-  .dashboard-nav-label-secondary { display: none; }
-  .dashboard-nav-list + .dashboard-nav-list { margin-top: 3px; }
-  .dashboard-sidebar-footer { display: flex; align-items: center; gap: 7px; margin-top: 7px; }
-  .dashboard-plan-card { display: none; }
-  .dashboard-logout { width: auto; min-height: 32px; margin: 0; padding: 0 8px; font-size: 10px; }
   .dashboard-topbar { min-height: 39px; margin: 0 1px 9px; }
   .dashboard-role-pill { min-height: 29px; padding: 0 8px; font-size: 9px; }
   .dashboard-topbar-avatar { width: 30px; height: 30px; border-radius: 10px; }

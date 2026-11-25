@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { useSelector } from "react-redux";
-import { FiAlertCircle, FiFileText, FiRefreshCw } from "react-icons/fi";
+import { FiAlertCircle, FiFileText, FiRefreshCw, FiChevronDown } from "react-icons/fi";
 import StudentAssignmentsPanel from "../components/core/Assignments/StudentAssignmentsPanel";
 import { getStudentAssignmentCoursesAPI } from "../services/operations/assignmentAPI";
 
@@ -50,14 +50,14 @@ const StudentAssignmentsPage = () => {
           <h1 className="text-2xl font-extrabold text-slate-900">Assignments</h1>
           <p className="mt-1 text-sm text-slate-500">View course assignments, submit your work, and check instructor feedback.</p>
         </div>
-        <button
+        {/* <button
           type="button"
           onClick={loadCourses}
           disabled={loading}
           className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-600 hover:border-indigo-200 hover:text-indigo-600 disabled:opacity-60"
         >
           <FiRefreshCw size={14} /> Refresh
-        </button>
+        </button> */}
       </div>
 
       {error ? (
@@ -77,18 +77,21 @@ const StudentAssignmentsPage = () => {
         </div>
       ) : (
         <>
-          <label className="flex flex-wrap items-center gap-3 rounded-xl border border-slate-200 bg-white p-4">
-            <span className="text-xs font-extrabold uppercase tracking-wide text-slate-500">Course</span>
-            <select
-              value={selectedCourseId}
-              onChange={(event) => setSelectedCourseId(event.target.value)}
-              className="min-w-[240px] flex-1 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-700 outline-none focus:border-indigo-400"
-            >
-              {courses.map((course) => (
-                <option key={course.id} value={course.id}>{course.courseName}</option>
-              ))}
-            </select>
-          </label>
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 rounded-2xl border border-slate-200 bg-white p-3.5 sm:p-4 shadow-xs min-w-0">
+            <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-400 shrink-0">Course</span>
+            <div className="relative flex-1 min-w-0 max-w-full sm:max-w-md">
+              <select
+                value={selectedCourseId}
+                onChange={(event) => setSelectedCourseId(event.target.value)}
+                className="w-full appearance-none rounded-xl border border-slate-200 bg-slate-50 pl-3.5 pr-9 py-2 text-xs font-semibold text-slate-700 outline-none focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-100 transition-all cursor-pointer truncate shadow-2xs"
+              >
+                {courses.map((course) => (
+                  <option key={course.id} value={course.id}>{course.courseName}</option>
+                ))}
+              </select>
+              <FiChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs pointer-events-none" />
+            </div>
+          </div>
           {selectedCourseId && <StudentAssignmentsPanel key={selectedCourseId} courseId={selectedCourseId} />}
         </>
       )}
