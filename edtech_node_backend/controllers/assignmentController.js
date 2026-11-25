@@ -368,6 +368,62 @@ const getStudentAssignmentCourses = async (req, res) => {
   }
 };
 
+const getAssignmentDetails = async (req, res) => {
+  try {
+    const assignment = await Assignment.findByPk(req.params.assignmentId, {
+      include: [...ASSIGNMENT_INCLUDE, { model: Course, as: 'course' }]
+    });
+
+    if (!assignment) {
+      return res.status(404).json({ success: false, message: 'Assignment not found' });
+    }
+
+    const isOwner = String(assignment.course?.instructorId) === String(req.user.id);
+    const canManage = isOwner || isAdminUser(req.user);
+
+    if (!canManage) {
+      if (!['published', 'closed'].includes(assignment.status)) {
+        return res.status(404).json({ success: false, message: 'Assignment not found' });
+      }
+
+      const enrollment = await findActiveEnrollment(req.user.id, assignment.courseId);
+      if (!enrollment) {
+        return res.status(403).json({
+          success: false,
+          message: 'Assignments are available only to enrolled students',
+          notEnrolled: true
+        });
+      }
+    }
+
+    const submissionWhere = canManage ? { assignmentId: assignment.id } : { assignmentId: assignment.id, userId: req.user.id };
+
+    const submissionInclude = canManage
+      ? [...SUBMISSION_FILE_INCLUDE, ...STUDENT_INCLUDE, ...VERIFIER_INCLUDE]
+      : [...STUDENT_INCLUDE, ...VERIFIER_INCLUDE];
+
+    const submissions = await AssignmentSubmission.findAll({
+      where: submissionWhere,
+      include: submissionInclude,
+      order: [['submittedAt', 'DESC']]
+    });
+
+    const formattedAssignment = formatAssignmentRecord(assignment);
+    delete formattedAssignment.course;
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        ...formattedAssignment,
+        submissions: canManage ? submissions.map(formatSubmissionRecord) : [],
+        mySubmission: canManage ? null : (submissions[0] ? formatSubmissionRecord(submissions[0]) : null)
+      }
+    });
+  } catch (error) {
+    return handleControllerError(res, error, 'GET ASSIGNMENT DETAILS FAILED');
+  }
+};
+
 const getCourseAssignments = async (req, res) => {
   try {
     const courseId = parseInteger(req.params.courseId);
@@ -431,7 +487,7 @@ const getCourseAssignments = async (req, res) => {
     return res.status(200).json({ success: true, data });
   } catch (error) {
     return handleControllerError(res, error, 'GET COURSE ASSIGNMENTS FAILED');
-}
+};
 
     return res.status(200).json({ success: true, data });
   try {
