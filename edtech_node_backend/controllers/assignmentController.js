@@ -392,17 +392,25 @@ const getCourseAssignments = async (req, res) => {
 
     const where = canManage ? { courseId } : { courseId, status: { [require('sequelize').Op.in]: ['published', 'closed'] } };
 
+    const submissionInclude = canManage
+      ? {
+          model: AssignmentSubmission,
+          as: 'submissions',
+          required: false,
+          include: SUBMISSION_FILE_INCLUDE
+        }
+      : {
+          model: AssignmentSubmission,
+          as: 'submissions',
+          required: false,
+          attributes: ['id', 'userId', 'status']
+        };
+
     const assignments = await Assignment.findAll({
       where,
       include: [
         ...ASSIGNMENT_INCLUDE,
-        {
-          model: AssignmentSubmission,
-          as: 'submissions',
-          required: false,
-          where: { userId: req.user.id },
-          include: SUBMISSION_FILE_INCLUDE
-        }
+        submissionInclude
       ],
       order: [['createdAt', 'DESC']]
     });
@@ -414,17 +422,18 @@ const getCourseAssignments = async (req, res) => {
       const mySubmission = submissions[0] || null;
       return {
         ...formatted,
-        mySubmission: mySubmission ? formatSubmissionRecord(mySubmission) : null
+        submissionCount: submissions.length,
+        gradedCount: submissions.filter((submission) => submission.status === 'verified').length,
+        pendingCount: submissions.filter((submission) => ['submitted', 'under_review'].includes(submission.status)).length
       };
     });
 
     return res.status(200).json({ success: true, data });
   } catch (error) {
     return handleControllerError(res, error, 'GET COURSE ASSIGNMENTS FAILED');
-  }
-};
+}
 
-const getAssignmentDetails = async (req, res) => {
+    return res.status(200).json({ success: true, data });
   try {
     const assignment = await Assignment.findByPk(req.params.assignmentId, {
       include: [...ASSIGNMENT_INCLUDE, { model: Course, as: 'course' }]
@@ -453,9 +462,14 @@ const getAssignmentDetails = async (req, res) => {
     }
 
     const submissionWhere = canManage ? { assignmentId: assignment.id } : { assignmentId: assignment.id, userId: req.user.id };
+
+    const submissionInclude = canManage
+      ? [...SUBMISSION_FILE_INCLUDE, ...STUDENT_INCLUDE, ...VERIFIER_INCLUDE]
+      : [...STUDENT_INCLUDE, ...VERIFIER_INCLUDE];
+
     const submissions = await AssignmentSubmission.findAll({
       where: submissionWhere,
-      include: [...SUBMISSION_FILE_INCLUDE, ...STUDENT_INCLUDE, ...VERIFIER_INCLUDE],
+      include: submissionInclude,
       order: [['submittedAt', 'DESC']]
     });
 

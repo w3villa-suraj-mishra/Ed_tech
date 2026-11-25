@@ -423,18 +423,22 @@ const courseController = {
     try {
       const courseId = req.body.courseId || req.query.courseId;
 
+      const includeSections = req.user?.id ? {
+        association: 'sections',
+        include: [{ association: 'subSections' }]
+      } : false;
+
+      const includeCourseProgresses = req.user?.id ? {
+        association: 'courseProgresses',
+        where: { userId: req.user.id },
+        required: false,
+        include: [{ association: 'courseProgressVideos' }]
+      } : false;
+
       const course = await Course.findByPk(courseId, {
         include: [
-          {
-            association: 'sections',
-            include: [{ association: 'subSections' }]
-          },
-          {
-            association: 'courseProgresses',
-            where: req.user?.id ? { userId: req.user.id } : undefined,
-            required: false,
-            include: [{ association: 'courseProgressVideos' }]
-          }
+          includeSections,
+          includeCourseProgresses
         ]
       });
 
@@ -467,18 +471,22 @@ const courseController = {
     try {
       const courseId = req.body.courseId || req.query.courseId;
 
+      const includeSections = req.user?.id ? {
+        association: 'sections',
+        include: [{ association: 'subSections' }]
+      } : false;
+
+      const includeCourseProgresses = req.user?.id ? {
+        association: 'courseProgresses',
+        where: { userId: req.user.id },
+        required: false,
+        include: [{ association: 'courseProgressVideos' }]
+      } : false;
+
       const course = await Course.findByPk(courseId, {
         include: [
-          {
-            association: 'sections',
-            include: [{ association: 'subSections' }]
-          },
-          {
-            association: 'courseProgresses',
-            where: req.user?.id ? { userId: req.user.id } : undefined,
-            required: false,
-            include: [{ association: 'courseProgressVideos' }]
-          }
+          includeSections,
+          includeCourseProgresses
         ]
       });
 
@@ -623,12 +631,10 @@ const courseController = {
           'discountType', 'discountValue', 'offerStartAt', 'offerEndAt', 'status', 'categoryId', 'instructorId', 'createdAt'
         ],
         include: [
-          { model: User, as: 'instructor', attributes: ['id', 'firstName', 'lastName', 'image'], required: false },
-          { model: Category, attributes: ['id', 'name'], required: false },
-          { model: Section, as: 'sections', attributes: ['id', 'sectionName'], required: false }
+          { model: User, as: 'instructor', attributes: ['id', 'firstName', 'lastName'], required: false },
+          { model: Category, attributes: ['id', 'name'], required: false }
         ],
         order,
-        distinct: true,
         ...(limit ? { limit, offset: (page - 1) * limit } : {})
       });
 
