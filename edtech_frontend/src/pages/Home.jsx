@@ -240,7 +240,7 @@ const Home = () => {
           projectsCount: statsData.projectsCount,
           certificationsCount: statsData.certificationsCount,
           hoursLearned: statsData.hoursLearned,
-          averageRating: statsData.averageRating
+          averageRating: statsData.averageRating || statsData.rating || "0.0"
         });
       }
     });
@@ -484,7 +484,7 @@ const Home = () => {
                   </div>
                   <div className="flex flex-col">
                     <span className="text-base sm:text-lg font-black text-gray-900 leading-tight group-hover:text-amber-500 transition-colors">
-                      {stats.averageRating !== null && stats.averageRating !== undefined ? stats.averageRating : "0.0"}
+                      {stats.averageRating !== null && stats.averageRating !== undefined ? stats.averageRating : (stats.rating || "0.0")}
                     </span>
                     <span className="text-[11px] text-gray-500 font-medium">Average Rating</span>
                   </div>

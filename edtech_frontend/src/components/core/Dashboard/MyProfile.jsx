@@ -78,13 +78,15 @@ const MyProfile = () => {
 
     let courseWatchedSeconds = 0;
     const courseContent = course.courseContent || course.courseDetails?.courseContent;
-    if (courseContent && Array.isArray(courseContent) && Array.isArray(completedList) && completedList.length > 0) {
+    const completedSet = new Set((Array.isArray(completedList) ? completedList : []).map(String));
+    if (courseContent && Array.isArray(courseContent) && completedSet.size > 0) {
       courseContent.forEach((sec) => {
         if (sec.subSection && Array.isArray(sec.subSection)) {
           sec.subSection.forEach((sub) => {
-            const subId = sub._id || sub.id;
-            if (completedList.includes(subId)) {
-              courseWatchedSeconds += (parseFloat(sub.timeDuration) || sub.durationSeconds || 900);
+            const subId = String(sub._id || sub.id);
+            if (completedSet.has(subId)) {
+              const dur = parseFloat(sub.timeDuration || sub.durationSeconds || sub.duration || 900);
+              courseWatchedSeconds += (!isNaN(dur) && dur > 0 ? dur : 900);
             }
           });
         }

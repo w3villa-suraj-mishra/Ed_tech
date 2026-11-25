@@ -157,13 +157,15 @@ const CoursesPage = ({ defaultTab = "your-courses" }) => {
 
     // Accumulate actual watched duration in seconds if course subSections are present
     let courseWatchedSeconds = 0;
-    if (course.courseContent && Array.isArray(course.courseContent) && Array.isArray(completedList) && completedList.length > 0) {
+    const completedSet = new Set((Array.isArray(completedList) ? completedList : []).map(String));
+    if (course.courseContent && Array.isArray(course.courseContent) && completedSet.size > 0) {
       course.courseContent.forEach((sec) => {
         if (sec.subSection && Array.isArray(sec.subSection)) {
           sec.subSection.forEach((sub) => {
-            const subId = sub._id || sub.id;
-            if (completedList.includes(subId)) {
-              courseWatchedSeconds += (sub.durationSeconds || 900);
+            const subId = String(sub._id || sub.id);
+            if (completedSet.has(subId)) {
+              const dur = parseFloat(sub.durationSeconds || sub.timeDuration || sub.duration || 900);
+              courseWatchedSeconds += (!isNaN(dur) && dur > 0 ? dur : 900);
             }
           });
         }

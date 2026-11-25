@@ -27,19 +27,38 @@ const getHomePageStatsQuery = async () => {
     coursesCount,
     projectsCount,
     certificationsCount,
-    totalDurationSec,
-    avgRating
+    allReviews,
+    completedVideos
   ] = await Promise.all([
-    User.count({ where: { accountType: 'Student' } }),
-    Course.count({ where: { status: 'Published' } }),
-    SubSection.count(),
-    CourseCertificate.count(),
-    SubSection.sum('timeDuration').catch(() => 0),
-    RatingAndReview.aggregate('rating', 'AVG').catch(() => 0)
+    User.count({ where: { accountType: 'Student' } }).catch(() => 0),
+    Course.count({ where: { status: 'Published' } }).catch(() => 0),
+    SubSection.count().catch(() => 0),
+    CourseCertificate.count().catch(() => 0),
+    RatingAndReview.findAll({ attributes: ['rating'], raw: true }).catch(() => []),
+    CourseProgressVideo ? CourseProgressVideo.findAll({
+      include: [{ model: SubSection, attributes: ['duration', 'timeDuration', 'durationSeconds'] }]
+    }).catch(() => []) : []
   ]);
 
-  const hoursLearned = Math.round(Number(totalDurationSec || 0) / 3600);
-  const rating = parseFloat(Number(avgRating || 0).toFixed(1));
+  let totalRating = 0;
+  if (allReviews && allReviews.length > 0) {
+    allReviews.forEach(r => totalRating += (parseFloat(r.rating) || 0));
+  }
+  const averageRating = allReviews && allReviews.length > 0 ? (totalRating / allReviews.length).toFixed(1) : "0.0";
+
+  let totalLearnedSeconds = 0;
+  if (completedVideos && completedVideos.length > 0) {
+    completedVideos.forEach(cv => {
+      const sub = cv.SubSection || cv.subSection;
+      if (sub) {
+        const dur = parseFloat(sub.durationSeconds || sub.timeDuration || sub.duration || 900);
+        totalLearnedSeconds += !isNaN(dur) && dur > 0 ? dur : 900;
+      } else {
+        totalLearnedSeconds += 900;
+      }
+    });
+  }
+  const hoursLearned = totalLearnedSeconds > 0 ? Math.max(1, Math.round(totalLearnedSeconds / 3600)) : 0;
 
   return {
     learnersCount: Number(learnersCount || 0),
@@ -47,7 +66,8 @@ const getHomePageStatsQuery = async () => {
     projectsCount: Number(projectsCount || 0),
     certificationsCount: Number(certificationsCount || 0),
     hoursLearned,
-    rating
+    rating: parseFloat(averageRating),
+    averageRating
   };
 };
 

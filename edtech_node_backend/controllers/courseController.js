@@ -23,32 +23,58 @@ const courseController = {
    */
   getHomePageStats: async (req, res) => {
     try {
-      const [learnersCount, coursesCount, projectsCount, certificationsCount, totalDuration, averageRatingResult] = await Promise.all([
-        User.count({ where: { accountType: 'Student' } }),
-        Course.count({ where: { status: 'Published' } }),
-        SubSection.count(),
-        CourseCertificate.count(),
-        SubSection.sum('duration'),
+      const { User, Course, SubSection, CourseCertificate, RatingAndReview, CourseProgressVideo } = require('../models');
+
+      const [learnersCount, coursesCount, projectsCount, certificationsCount, allReviews, completedVideos] = await Promise.all([
+        User.count({ where: { accountType: 'Student' } }).catch(() => 0),
+        Course.count({ where: { status: 'Published' } }).catch(() => 0),
+        SubSection.count().catch(() => 0),
+        CourseCertificate.count().catch(() => 0),
         RatingAndReview.findAll({
-        attributes: [[RatingAndReview.sequelize.fn('AVG', RatingAndReview.sequelize.col('rating')), 'avgRating']],
-        raw: true
-        })
+          attributes: ['rating'],
+          raw: true
+        }).catch(() => []),
+        CourseProgressVideo.findAll({
+          include: [{
+            model: SubSection,
+            attributes: ['duration', 'timeDuration', 'durationSeconds']
+          }]
+        }).catch(() => [])
       ]);
 
-      const hoursLearned = totalDuration ? Math.round(totalDuration / 3600) : 0;
-      const averageRating = (averageRatingResult && averageRatingResult[0] && averageRatingResult[0].avgRating)
-        ? Number(averageRatingResult[0].avgRating).toFixed(1)
-        : 0;
+      // Calculate accurate Average Rating across all reviews submitted by users
+      let averageRating = "0.0";
+      if (allReviews && allReviews.length > 0) {
+        const totalRating = allReviews.reduce((sum, r) => sum + (parseFloat(r.rating) || 0), 0);
+        averageRating = (totalRating / allReviews.length).toFixed(1);
+      }
+
+      // Calculate accurate Hours Learned across all completed videos in enrolled/purchased courses
+      let totalLearnedSeconds = 0;
+      if (completedVideos && completedVideos.length > 0) {
+        completedVideos.forEach((cv) => {
+          const sub = cv.SubSection || cv.subSection;
+          if (sub) {
+            const dur = parseFloat(sub.durationSeconds || sub.timeDuration || sub.duration || 900);
+            totalLearnedSeconds += !isNaN(dur) && dur > 0 ? dur : 900;
+          } else {
+            totalLearnedSeconds += 900;
+          }
+        });
+      }
+
+      const hoursLearned = totalLearnedSeconds > 0 ? Math.max(1, Math.round(totalLearnedSeconds / 3600)) : 0;
 
       return res.status(200).json({
         success: true,
         data: {
-          learnersCount,
-          coursesCount,
-          projectsCount,
-          certificationsCount,
+          learnersCount: learnersCount || 0,
+          coursesCount: coursesCount || 0,
+          projectsCount: projectsCount || 0,
+          certificationsCount: certificationsCount || 0,
           hoursLearned,
-          averageRating
+          averageRating,
+          rating: averageRating
         }
       });
     } catch (error) {
@@ -1086,41 +1112,6 @@ const courseController = {
     }
   },
 
-  /**
-   * Get homepage statistics dynamically
-   */
-  getHomePageStats: async (req, res) => {
-    try {
-      const { User, Course, SubSection } = require('../models');
-
-      const [learnersCount, coursesCount, projectsCount] = await Promise.all([
-        User.count({ where: { accountType: 'Student' } }).catch(() => 50000),
-        Course.count({ where: { status: 'Published' } }).catch(() => 200),
-        SubSection.count().catch(() => 1500)
-      ]);
-
-      return res.status(200).json({
-        success: true,
-        data: {
-          learnersCount: learnersCount || 50000,
-          coursesCount: coursesCount || 200,
-          projectsCount: projectsCount || 1500,
-          certificationsCount: 50
-        }
-      });
-    } catch (error) {
-      logger.error('GET HOMEPAGE STATS FAILED:', error.message);
-      return res.status(200).json({
-        success: true,
-        data: {
-          learnersCount: 50000,
-          coursesCount: 200,
-          projectsCount: 1500,
-          certificationsCount: 50
-        }
-      });
-    }
-  },
 
   /**
    * Get ratings and reviews for a course (or all reviews if courseId is omitted).
