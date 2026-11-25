@@ -229,21 +229,23 @@ const CoursesPage = ({ defaultTab = "your-courses" }) => {
   );
 
   return (
-    <div className="w-full space-y-6 text-gray-800 pb-10 font-sans">
+    <div className="w-full max-w-full min-w-0 overflow-x-hidden space-y-4 sm:space-y-6 text-gray-800 pb-10 font-sans">
       
       {/* 1. HEADER SECTION */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-extrabold text-[#0F172A] tracking-tight">{isBuyCoursesPage || activeSubTab === "buy" ? "Buy Courses" : "Your Courses"}</h1>
-          <p className="text-xs text-gray-500 mt-1 font-normal">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 min-w-0 max-w-full">
+        <div className="min-w-0">
+          <h1 className="text-xl sm:text-2xl font-extrabold text-[#0F172A] tracking-tight truncate">
+            {isBuyCoursesPage || activeSubTab === "buy" ? "Buy Courses" : "Your Courses"}
+          </h1>
+          <p className="text-xs text-gray-500 mt-0.5 sm:mt-1 font-normal line-clamp-1">
             {isBuyCoursesPage || activeSubTab === "buy" ? "Explore courses and find your next skill to master" : "Continue learning and achieve your goals"}
           </p>
         </div>
 
         {/* Header Controls: View Toggle + Sort Dropdown */}
-        <div className="flex items-center gap-3 self-start sm:self-auto">
+        <div className="flex items-center justify-between sm:justify-end gap-2.5 w-full sm:w-auto min-w-0">
           {/* Grid / List View Toggle */}
-          <div className="bg-white border border-gray-200/80 rounded-xl p-1 flex items-center gap-1 shadow-2xs">
+          <div className="bg-white border border-gray-200/80 rounded-xl p-1 flex items-center gap-1 shadow-2xs shrink-0">
             <button
               onClick={() => setViewMode("grid")}
               className={`p-1.5 rounded-lg text-xs transition-all cursor-pointer ${
@@ -269,11 +271,11 @@ const CoursesPage = ({ defaultTab = "your-courses" }) => {
           </div>
 
           {/* Sort Dropdown */}
-          <div className="relative">
+          <div className="relative flex-1 sm:flex-initial min-w-0 max-w-[200px] sm:max-w-none">
             <select
               value={sortOption}
               onChange={(e) => setSortOption(e.target.value)}
-              className="appearance-none bg-white border border-gray-200/80 text-xs font-semibold text-gray-700 rounded-xl pl-3.5 pr-8 py-2 outline-none hover:border-gray-300 focus:border-[#3BA7F2] transition-colors shadow-2xs cursor-pointer"
+              className="w-full sm:w-auto appearance-none bg-white border border-gray-200/80 text-xs font-semibold text-gray-700 rounded-xl pl-3 pr-7 py-2 outline-none hover:border-gray-300 focus:border-[#3BA7F2] transition-colors shadow-2xs cursor-pointer truncate"
             >
               <option value="recently-accessed">Recently Accessed</option>
               <option value="name-asc">Title: A to Z</option>
@@ -285,129 +287,131 @@ const CoursesPage = ({ defaultTab = "your-courses" }) => {
       </div>
 
       {/* 2. DYNAMIC STATISTICS CARDS ROW (4 Stats Matching Reference) */}
-      {!isBuyCoursesPage && <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-        
-        {/* Enrolled Courses */}
-        <div className="bg-white border border-gray-200/80 rounded-2xl p-4 flex flex-col justify-between shadow-xs hover:border-indigo-200 hover:shadow-sm transition-all">
-          <div className="flex items-center justify-between">
-            <div className="w-8 h-8 rounded-xl bg-[#E0F2FE] text-[#0284C7] flex items-center justify-center text-sm">
-              <FiBookOpen />
+      {!isBuyCoursesPage && (
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4 min-w-0 max-w-full">
+          {/* Enrolled Courses */}
+          <div className="bg-white border border-gray-200/80 rounded-2xl p-3 sm:p-4 flex flex-col justify-between shadow-xs hover:border-indigo-200 hover:shadow-sm transition-all min-w-0 overflow-hidden">
+            <div className="flex items-center justify-between gap-1">
+              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-[#E0F2FE] text-[#0284C7] flex items-center justify-center text-xs sm:text-sm shrink-0">
+                <FiBookOpen />
+              </div>
+              <span className="text-[9px] sm:text-[10px] text-[#16A34A] font-bold bg-[#DCFCE7] px-2 py-0.5 rounded-full shrink-0">
+                Live
+              </span>
             </div>
-            <span className="text-[10px] text-[#16A34A] font-bold bg-[#DCFCE7] px-2 py-0.5 rounded-full">
-              Live
-            </span>
+            <div className="mt-2 sm:mt-2.5 min-w-0">
+              <span className="text-xl sm:text-2xl font-extrabold text-[#0F172A] block leading-tight">{totalEnrolled}</span>
+              <span className="text-[11px] sm:text-xs text-gray-500 font-medium block mt-0.5 truncate">Enrolled Courses</span>
+            </div>
+            <div className="mt-1.5 sm:mt-2 text-[9px] sm:text-[10px] text-[#16A34A] font-semibold flex items-center gap-1 truncate">
+              <span className="truncate">↑ {totalEnrolled > 0 ? "100%" : "0%"} vs last month</span>
+            </div>
           </div>
-          <div className="mt-2.5">
-            <span className="text-2xl font-extrabold text-[#0F172A] block leading-tight">{totalEnrolled}</span>
-            <span className="text-xs text-gray-500 font-medium block mt-0.5">Enrolled Courses</span>
+
+          {/* Hours Learned */}
+          <div className="bg-white border border-gray-200/80 rounded-2xl p-3 sm:p-4 flex flex-col justify-between shadow-xs hover:border-indigo-200 hover:shadow-sm transition-all min-w-0 overflow-hidden">
+            <div className="flex items-center justify-between gap-1">
+              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-[#13AA92]/10 text-[#9333EA] flex items-center justify-center text-xs sm:text-sm shrink-0">
+                <FiClock />
+              </div>
+              <span className="text-[9px] sm:text-[10px] text-[#13AA92] font-bold bg-[#13AA92]/10 px-2 py-0.5 rounded-full shrink-0">
+                Est.
+              </span>
+            </div>
+            <div className="mt-2 sm:mt-2.5 min-w-0">
+              <span className="text-xl sm:text-2xl font-extrabold text-[#0F172A] block leading-tight">{totalHoursLearned}</span>
+              <span className="text-[11px] sm:text-xs text-gray-500 font-medium block mt-0.5 truncate">Hours Learned</span>
+            </div>
+            <div className="mt-1.5 sm:mt-2 text-[9px] sm:text-[10px] text-[#16A34A] font-semibold flex items-center gap-1 truncate">
+              <span className="truncate">↑ {totalCompletedLessons > 0 ? "35%" : "0%"} vs last month</span>
+            </div>
           </div>
-          <div className="mt-2 text-[10px] text-[#16A34A] font-semibold flex items-center gap-1">
-            <span>↑ {totalEnrolled > 0 ? "100%" : "0%"} vs last month</span>
+
+          {/* Lessons Completed */}
+          <div className="bg-white border border-gray-200/80 rounded-2xl p-3 sm:p-4 flex flex-col justify-between shadow-xs hover:border-indigo-200 hover:shadow-sm transition-all min-w-0 overflow-hidden">
+            <div className="flex items-center justify-between gap-1">
+              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-[#DCFCE7] text-[#16A34A] flex items-center justify-center text-xs sm:text-sm shrink-0">
+                <FiCheckCircle />
+              </div>
+              <span className="text-[9px] sm:text-[10px] text-[#16A34A] font-bold bg-[#DCFCE7] px-2 py-0.5 rounded-full shrink-0">
+                Total
+              </span>
+            </div>
+            <div className="mt-2 sm:mt-2.5 min-w-0">
+              <span className="text-xl sm:text-2xl font-extrabold text-[#0F172A] block leading-tight">{totalCompletedLessons}</span>
+              <span className="text-[11px] sm:text-xs text-gray-500 font-medium block mt-0.5 truncate">Lessons Completed</span>
+            </div>
+            <div className="mt-1.5 sm:mt-2 text-[9px] sm:text-[10px] text-[#16A34A] font-semibold flex items-center gap-1 truncate">
+              <span className="truncate">↑ {totalCompletedLessons > 0 ? "40%" : "0%"} vs last month</span>
+            </div>
+          </div>
+
+          {/* Day Streak */}
+          <div className="bg-white border border-gray-200/80 rounded-2xl p-3 sm:p-4 flex flex-col justify-between shadow-xs hover:border-indigo-200 hover:shadow-sm transition-all min-w-0 overflow-hidden">
+            <div className="flex items-center justify-between gap-1">
+              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-[#FEF3C7] text-[#D97706] flex items-center justify-center text-xs sm:text-sm shrink-0">
+                <FaFire />
+              </div>
+              <span className="text-[9px] sm:text-[10px] text-[#D97706] font-bold bg-[#FEF3C7] px-2 py-0.5 rounded-full shrink-0">
+                Active
+              </span>
+            </div>
+            <div className="mt-2 sm:mt-2.5 min-w-0">
+              <span className="text-xl sm:text-2xl font-extrabold text-[#0F172A] block leading-tight">{activeStreakDays}</span>
+              <span className="text-[11px] sm:text-xs text-gray-500 font-medium block mt-0.5 truncate">Day Streak</span>
+            </div>
+            <div className="mt-1.5 sm:mt-2 text-[9px] sm:text-[10px] text-[#D97706] font-semibold flex items-center gap-1 truncate">
+              <span className="truncate">Keep it up! 🔥</span>
+            </div>
           </div>
         </div>
-
-        {/* Hours Learned */}
-        <div className="bg-white border border-gray-200/80 rounded-2xl p-4 flex flex-col justify-between shadow-xs hover:border-indigo-200 hover:shadow-sm transition-all">
-          <div className="flex items-center justify-between">
-            <div className="w-8 h-8 rounded-xl bg-[#13AA92]/10 text-[#9333EA] flex items-center justify-center text-sm">
-              <FiClock />
-            </div>
-            <span className="text-[10px] text-[#13AA92] font-bold bg-[#13AA92]/10 px-2 py-0.5 rounded-full">
-              Est.
-            </span>
-          </div>
-          <div className="mt-2.5">
-            <span className="text-2xl font-extrabold text-[#0F172A] block leading-tight">{totalHoursLearned}</span>
-            <span className="text-xs text-gray-500 font-medium block mt-0.5">Hours Learned</span>
-          </div>
-          <div className="mt-2 text-[10px] text-[#16A34A] font-semibold flex items-center gap-1">
-            <span>↑ {totalCompletedLessons > 0 ? "35%" : "0%"} vs last month</span>
-          </div>
-        </div>
-
-        {/* Lessons Completed */}
-        <div className="bg-white border border-gray-200/80 rounded-2xl p-4 flex flex-col justify-between shadow-xs hover:border-indigo-200 hover:shadow-sm transition-all">
-          <div className="flex items-center justify-between">
-            <div className="w-8 h-8 rounded-xl bg-[#DCFCE7] text-[#16A34A] flex items-center justify-center text-sm">
-              <FiCheckCircle />
-            </div>
-            <span className="text-[10px] text-[#16A34A] font-bold bg-[#DCFCE7] px-2 py-0.5 rounded-full">
-              Total
-            </span>
-          </div>
-          <div className="mt-2.5">
-            <span className="text-2xl font-extrabold text-[#0F172A] block leading-tight">{totalCompletedLessons}</span>
-            <span className="text-xs text-gray-500 font-medium block mt-0.5">Lessons Completed</span>
-          </div>
-          <div className="mt-2 text-[10px] text-[#16A34A] font-semibold flex items-center gap-1">
-            <span>↑ {totalCompletedLessons > 0 ? "40%" : "0%"} vs last month</span>
-          </div>
-        </div>
-
-        {/* Day Streak */}
-        <div className="bg-white border border-gray-200/80 rounded-2xl p-4 flex flex-col justify-between shadow-xs hover:border-indigo-200 hover:shadow-sm transition-all">
-          <div className="flex items-center justify-between">
-            <div className="w-8 h-8 rounded-xl bg-[#FEF3C7] text-[#D97706] flex items-center justify-center text-sm">
-              <FaFire />
-            </div>
-            <span className="text-[10px] text-[#D97706] font-bold bg-[#FEF3C7] px-2 py-0.5 rounded-full">
-              Active
-            </span>
-          </div>
-          <div className="mt-2.5">
-            <span className="text-2xl font-extrabold text-[#0F172A] block leading-tight">{activeStreakDays}</span>
-            <span className="text-xs text-gray-500 font-medium block mt-0.5">Day Streak</span>
-          </div>
-          <div className="mt-2 text-[10px] text-[#D97706] font-semibold flex items-center gap-1">
-            <span>Keep it up! 🔥</span>
-          </div>
-        </div>
-
-      </div>}
+      )}
 
       {/* 3. TABS & SEARCH BAR ROW */}
-      {!isBuyCoursesPage && <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 pt-1 border-b border-gray-200/80">
-        {/* Navigation Tabs */}
-        <div className="flex items-center gap-6 overflow-x-auto scrollbar-none">
-          {[
-            { id: "all", label: "All Courses" },
-            { id: "in-progress", label: `In Progress (${inProgressCoursesList.length})` },
-            { id: "completed", label: `Completed (${completedCoursesList.length})` },
-            { id: "buy", label: "Explore / Buy Courses" }
-          ].map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveSubTab(tab.id)}
-              className={`text-xs sm:text-sm font-bold transition-all relative pb-3 whitespace-nowrap cursor-pointer ${
-                activeSubTab === tab.id
-                  ? "text-[#3BA7F2] border-b-2 border-[#3BA7F2] -mb-[1px]"
-                  : "text-gray-500 hover:text-gray-800 -mb-[1px]"
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
+      {!isBuyCoursesPage && (
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-4 pt-1 border-b border-gray-200/80 min-w-0 max-w-full">
+          {/* Navigation Tabs */}
+          <div className="flex items-center gap-3 sm:gap-6 overflow-x-auto min-w-0 max-w-full scrollbar-none pb-1 -mb-[1px]">
+            {[
+              { id: "all", label: "All Courses" },
+              { id: "in-progress", label: `In Progress (${inProgressCoursesList.length})` },
+              { id: "completed", label: `Completed (${completedCoursesList.length})` },
+              { id: "buy", label: "Explore / Buy Courses" }
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveSubTab(tab.id)}
+                className={`text-xs sm:text-sm font-bold transition-all relative pb-2 sm:pb-3 whitespace-nowrap shrink-0 cursor-pointer ${
+                  activeSubTab === tab.id
+                    ? "text-[#3BA7F2] border-b-2 border-[#3BA7F2]"
+                    : "text-gray-500 hover:text-gray-800"
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
 
-        {/* Live Filter Search Input */}
-        <div className="relative shrink-0 pb-2 sm:pb-0 -mb-1">
-          <FiSearch className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-sm" />
-          <input
-            type="text"
-            placeholder="Search your courses..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full sm:w-64 bg-white border border-gray-200/90 rounded-xl pl-9 pr-4 py-2 text-xs text-gray-800 placeholder-gray-400 focus:outline-none focus:border-[#3BA7F2] focus:ring-1 focus:ring-[#3BA7F2] transition-all shadow-2xs"
-          />
+          {/* Live Filter Search Input */}
+          <div className="relative w-full sm:w-auto shrink-0 pb-2 sm:pb-0">
+            <FiSearch className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-sm" />
+            <input
+              type="text"
+              placeholder="Search your courses..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full sm:w-64 bg-white border border-gray-200/90 rounded-xl pl-9 pr-4 py-2 text-xs text-gray-800 placeholder-gray-400 focus:outline-none focus:border-[#3BA7F2] focus:ring-1 focus:ring-[#3BA7F2] transition-all shadow-2xs"
+            />
+          </div>
         </div>
-      </div>}
+      )}
 
       {/* 4. COURSE LISTING OR CLEAN EMPTY STATE */}
       {loading ? (
         <div className="py-20 text-center text-xs text-gray-400">Loading courses...</div>
       ) : displayedCourses.length > 0 ? (
-        <div className="space-y-6">
-          <div className={viewMode === "grid" ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5" : "space-y-4"}>
+        <div className="space-y-6 min-w-0 max-w-full">
+          <div className={viewMode === "grid" ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 min-w-0 max-w-full" : "space-y-3 sm:space-y-4 min-w-0 max-w-full"}>
             {paginatedCourses.map((course) => {
               const courseId = course._id || course.id;
               

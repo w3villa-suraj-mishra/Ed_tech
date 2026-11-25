@@ -252,6 +252,8 @@ body {
   background:
     radial-gradient(ellipse at 84% 0%, rgba(59, 167, 242, .08), transparent 34%),
     linear-gradient(180deg, #f6f8fc 0%, #f2f5fa 100%);
+  overflow-x: hidden;
+  max-width: 100vw;
 }
 
 .dashboard-layout-instructor {
@@ -268,6 +270,8 @@ body {
   grid-template-columns: 252px minmax(0, 1fr);
   align-items: start;
   gap: 22px;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .dashboard-sidebar {
@@ -701,8 +705,9 @@ body {
 }
 
 @media (max-width: 767px) {
-  .dashboard-layout { padding: 10px 10px 24px; }
-  .dashboard-frame { display: flex; min-height: 0; flex-direction: column; gap: 10px; }
+  .dashboard-layout { padding: 10px 8px 24px; width: 100%; max-width: 100vw; overflow-x: hidden; }
+  .dashboard-frame { display: flex; min-height: 0; flex-direction: column; gap: 10px; width: 100%; max-width: 100%; min-width: 0; }
+  .dashboard-main { min-width: 0; width: 100%; max-width: 100%; }
   .dashboard-sidebar {
     position: relative;
     top: auto;
@@ -737,13 +742,13 @@ body {
   .dashboard-topbar { min-height: 39px; margin: 0 1px 9px; }
   .dashboard-role-pill { min-height: 29px; padding: 0 8px; font-size: 9px; }
   .dashboard-topbar-avatar { width: 30px; height: 30px; border-radius: 10px; }
-  .dashboard-content { padding: 15px; border-radius: 17px; }
+  .dashboard-content { padding: 12px 10px; border-radius: 17px; min-width: 0; max-width: 100%; overflow-x: hidden; }
 }
 
 @media (max-width: 420px) {
   .dashboard-role-pill { max-width: 36px; overflow: hidden; gap: 12px; white-space: nowrap; color: transparent; }
   .dashboard-role-pill svg { flex: 0 0 auto; }
-  .dashboard-content { padding: 12px; }
+  .dashboard-content { padding: 10px 8px; }
 }
 
 /* Sidebar links also appear in the account drawer on mobile. */

@@ -99,10 +99,10 @@ const CourseCard = ({
     return (
       <div
         onClick={handlePreview}
-        className="bg-white border border-gray-200/80 hover:border-[#3BA7F2]/50 rounded-2xl p-4 sm:p-5 transition-all duration-300 shadow-xs hover:shadow-sm flex flex-col md:flex-row items-stretch md:items-center justify-between gap-5 relative group cursor-pointer"
+        className="bg-white border border-gray-200/80 hover:border-[#3BA7F2]/50 rounded-2xl p-3.5 sm:p-5 transition-all duration-300 shadow-xs hover:shadow-sm flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 sm:gap-5 relative group cursor-pointer w-full min-w-0 max-w-full overflow-hidden"
       >
         {/* Thumbnail & Info Left */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 min-w-0 flex-1">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 min-w-0 flex-1 w-full">
           <div className="relative aspect-video w-full sm:w-44 rounded-xl overflow-hidden bg-gray-100 border border-gray-200 shrink-0">
             <img
               src={course.thumbnail || course.courseThumbnail || course.image}
@@ -111,10 +111,10 @@ const CourseCard = ({
             />
           </div>
 
-          <div className="space-y-1.5 min-w-0 flex-1">
+          <div className="space-y-1.5 min-w-0 flex-1 w-full">
             <div className="flex items-center gap-2 flex-wrap">
               {isEnrolled && currentPlan && (
-                <span className={`inline-block text-[10px] font-extrabold uppercase px-2.5 py-0.5 rounded-full border ${
+                <span className={`inline-block text-[10px] font-extrabold uppercase px-2.5 py-0.5 rounded-full border max-w-full truncate ${
                   currentPlan === 'pro' || currentPlan === 'gold' ? 'bg-[#FEF3C7] text-[#D97706] border-[#FDE68A]' :
                   currentPlan === 'plus' || currentPlan === 'silver' ? 'bg-[#E0F2FE] text-[#0284C7] border-[#BAE6FD]' :
                   currentPlan === 'expired' ? 'bg-red-50 text-red-600 border-red-200' :
@@ -137,18 +137,18 @@ const CourseCard = ({
               {course.courseName || course.title}
             </h3>
 
-            <p className="text-xs text-gray-500 line-clamp-2 leading-relaxed font-normal">
+            <p className="text-xs text-gray-500 line-clamp-2 leading-relaxed font-normal break-words">
               {course.courseDescription || course.description}
             </p>
 
-            <div className="flex items-center gap-4 text-[11px] text-gray-400 flex-wrap pt-0.5 font-medium">
-              <span className="flex items-center gap-1">
+            <div className="flex items-center gap-3 sm:gap-4 text-[11px] text-gray-400 flex-wrap pt-0.5 font-medium">
+              <span className="flex items-center gap-1 shrink-0">
                 <FiClock /> <span>{durationText}</span>
               </span>
-              <span className="flex items-center gap-1">
+              <span className="flex items-center gap-1 shrink-0">
                 <FiBookOpen /> <span>{sectionsCount} Sections</span>
               </span>
-              <div className="flex items-center gap-1 text-amber-400">
+              <div className="flex items-center gap-1 text-amber-400 shrink-0">
                 <div className="flex items-center gap-0.5">
                   {Array.from({ length: 5 }).map((_, i) => (
                     <FiStar
@@ -166,9 +166,9 @@ const CourseCard = ({
         </div>
 
         {/* Right Column: Progress / Price & Actions */}
-        <div className="flex flex-col sm:flex-row md:flex-col items-start sm:items-center md:items-end justify-between md:justify-center gap-3 shrink-0 border-t md:border-t-0 border-gray-100 pt-3 md:pt-0">
+        <div className="flex flex-col sm:flex-row md:flex-col items-stretch sm:items-center md:items-end justify-between md:justify-center gap-3 shrink-0 border-t md:border-t-0 border-gray-100 pt-3 md:pt-0 w-full md:w-auto min-w-0">
           {isEnrolled ? (
-            <div className="w-full sm:w-44 md:text-right space-y-1">
+            <div className="w-full sm:w-44 md:text-right space-y-1 min-w-0">
               <div className="flex items-center justify-between md:justify-end gap-2 text-xs font-bold text-[#3BA7F2]">
                 <span>{progressPct}% Complete</span>
               </div>
@@ -195,32 +195,32 @@ const CourseCard = ({
             </div>
           )}
 
-          <div className="flex items-center gap-2 w-full sm:w-auto">
+          <div className="flex items-center gap-2 w-full sm:w-auto min-w-0">
             <button
               onClick={handlePreview}
-              className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold rounded-xl transition border border-gray-200/80 cursor-pointer"
+              className="flex-1 sm:flex-none px-3.5 sm:px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold rounded-xl transition border border-gray-200/80 cursor-pointer text-center truncate"
             >
               Preview
             </button>
             {isEnrolled ? (
               <button
                 onClick={handleStartLearning}
-                className="px-4 py-2 rounded-xl bg-[#3BA7F2] hover:bg-[#2895E0] text-white text-xs font-bold transition-all flex items-center justify-center gap-1.5 shadow-sm shadow-indigo-500/20 cursor-pointer"
+                className="flex-1 sm:flex-none px-3.5 sm:px-4 py-2 rounded-xl bg-[#3BA7F2] hover:bg-[#2895E0] text-white text-xs font-bold transition-all flex items-center justify-center gap-1.5 shadow-sm shadow-indigo-500/20 cursor-pointer text-center truncate"
               >
-                <span>{progressPct > 0 ? "Continue Learning" : "Start Learning"}</span>
-                <FiPlay className="text-[10px]" />
+                <span className="truncate">{progressPct > 0 ? "Continue" : "Start Learning"}</span>
+                <FiPlay className="text-[10px] shrink-0" />
               </button>
             ) : propIsLoading ? (
-              <button disabled className="px-4 py-2 bg-[#3BA7F2]/50 text-white text-xs font-bold rounded-xl cursor-not-allowed">
+              <button disabled className="flex-1 sm:flex-none px-4 py-2 bg-[#3BA7F2]/50 text-white text-xs font-bold rounded-xl cursor-not-allowed">
                 Adding...
               </button>
             ) : isInCart ? (
-              <button onClick={handleCartAction} className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition flex items-center gap-1 cursor-pointer">
-                <FiCheck className="text-xs" />
-                <span>Added to Cart</span>
+              <button onClick={handleCartAction} className="flex-1 sm:flex-none px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition flex items-center justify-center gap-1 cursor-pointer">
+                <FiCheck className="text-xs shrink-0" />
+                <span className="truncate">Added to Cart</span>
               </button>
             ) : (
-              <button onClick={handleCartAction} className="px-4 py-2 bg-[#3BA7F2] hover:bg-[#2895E0] text-white text-xs font-bold rounded-xl transition shadow-2xs cursor-pointer">
+              <button onClick={handleCartAction} className="flex-1 sm:flex-none px-4 py-2 bg-[#3BA7F2] hover:bg-[#2895E0] text-white text-xs font-bold rounded-xl transition shadow-2xs cursor-pointer text-center">
                 Add to Cart
               </button>
             )}
@@ -234,9 +234,9 @@ const CourseCard = ({
   return (
     <div
       onClick={handlePreview}
-      className="bg-white border border-gray-200/90 rounded-2xl overflow-hidden hover:border-[#3BA7F2]/50 transition-all duration-300 hover:-translate-y-0.5 shadow-xs hover:shadow-md flex flex-col justify-between cursor-pointer group h-full"
+      className="bg-white border border-gray-200/90 rounded-2xl overflow-hidden hover:border-[#3BA7F2]/50 transition-all duration-300 hover:-translate-y-0.5 shadow-xs hover:shadow-md flex flex-col justify-between cursor-pointer group h-full w-full min-w-0 max-w-full"
     >
-      <div>
+      <div className="w-full min-w-0">
         {/* COURSE THUMBNAIL */}
         <div className="relative aspect-[16/9] w-full overflow-hidden bg-gray-100 border-b border-gray-100">
           <img
@@ -247,8 +247,8 @@ const CourseCard = ({
 
           {/* Real-time plan or offer badge */}
           {isEnrolled && currentPlan ? (
-            <div className="absolute top-2.5 left-2.5">
-              <span className={`text-[10px] font-extrabold uppercase px-2.5 py-1 rounded-lg shadow-md border ${
+            <div className="absolute top-2.5 left-2.5 max-w-[85%]">
+              <span className={`text-[9px] sm:text-[10px] font-extrabold uppercase px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-lg shadow-md border block truncate ${
                 currentPlan === 'pro' || currentPlan === 'gold' ? 'bg-[#FEF3C7] text-[#D97706] border-[#FDE68A]' :
                 currentPlan === 'plus' || currentPlan === 'silver' ? 'bg-[#E0F2FE] text-[#0284C7] border-[#BAE6FD]' :
                 currentPlan === 'expired' ? 'bg-red-50 text-red-600 border-red-200' :
@@ -261,39 +261,39 @@ const CourseCard = ({
               </span>
             </div>
           ) : (course.pricing?.isOfferActive || discountPct > 0) ? (
-            <div className="absolute top-2.5 left-2.5 bg-gradient-to-r from-amber-500 to-rose-500 text-white text-[10px] font-extrabold uppercase px-2.5 py-1 rounded-lg shadow-md flex items-center gap-1 border border-white/20 animate-pulse">
-              <span>⚡ OFFER: {discountPct > 0 ? `${discountPct}% OFF` : 'LUCKY20'}</span>
+            <div className="absolute top-2.5 left-2.5 max-w-[85%] bg-gradient-to-r from-amber-500 to-rose-500 text-white text-[9px] sm:text-[10px] font-extrabold uppercase px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-lg shadow-md flex items-center gap-1 border border-white/20 animate-pulse truncate">
+              <span className="truncate">⚡ OFFER: {discountPct > 0 ? `${discountPct}% OFF` : 'LUCKY20'}</span>
             </div>
           ) : null}
         </div>
 
         {/* CARD BODY CONTENT */}
-        <div className="p-3.5 sm:p-4 space-y-2">
+        <div className="p-3 sm:p-4 space-y-2 min-w-0">
           {/* Title */}
-          <h3 className="font-bold text-sm sm:text-base text-[#0F172A] line-clamp-2 group-hover:text-[#3BA7F2] transition-colors leading-snug">
+          <h3 className="font-bold text-sm sm:text-base text-[#0F172A] line-clamp-2 group-hover:text-[#3BA7F2] transition-colors leading-snug break-words">
             {course.courseName || course.title}
           </h3>
 
           {/* Description */}
-          <p className="text-xs text-gray-500 line-clamp-2 leading-relaxed font-normal">
+          <p className="text-xs text-gray-500 line-clamp-2 leading-relaxed font-normal break-words">
             {course.courseDescription || course.description}
           </p>
 
           {/* Metadata Row: Duration & Sections */}
-          <div className="flex items-center gap-3 text-[11px] text-gray-500 font-medium pt-0.5">
-            <div className="flex items-center gap-1">
+          <div className="flex items-center gap-3 text-[11px] text-gray-500 font-medium pt-0.5 flex-wrap">
+            <div className="flex items-center gap-1 shrink-0">
               <FiClock className="text-gray-400 text-xs" />
               <span>{durationText}</span>
             </div>
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-1 shrink-0">
               <FiLayers className="text-gray-400 text-xs" />
               <span>{sectionsCount} Sections</span>
             </div>
           </div>
 
           {/* Rating Row */}
-          <div className="flex items-center gap-1.5 text-[11px] text-gray-400">
-            <div className="flex items-center gap-0.5 text-amber-400">
+          <div className="flex items-center gap-1.5 text-[11px] text-gray-400 flex-wrap">
+            <div className="flex items-center gap-0.5 text-amber-400 shrink-0">
               {Array.from({ length: 5 }).map((_, i) => (
                 <FiStar
                   key={i}
@@ -310,10 +310,10 @@ const CourseCard = ({
       </div>
 
       {/* CARD FOOTER: PRICING / PROGRESS & BUTTONS */}
-      <div className="p-3.5 sm:p-4 pt-0 space-y-3">
+      <div className="p-3 sm:p-4 pt-0 space-y-3 min-w-0">
         {/* Pricing or Progress */}
         {isEnrolled ? (
-          <div className="space-y-1.5 border-t border-gray-100 pt-2.5 mt-0.5">
+          <div className="space-y-1.5 border-t border-gray-100 pt-2.5 mt-0.5 min-w-0">
             <div className="flex items-center justify-between text-xs font-bold text-[#3BA7F2]">
               <span>{progressPct}% Complete</span>
               <span className="text-[10px] text-gray-400 font-medium">{completedCount} / {totalLecturesCount} lessons</span>
@@ -326,7 +326,7 @@ const CourseCard = ({
             </div>
           </div>
         ) : (
-          <div className="flex items-center justify-between border-t border-gray-100 pt-2.5 mt-0.5">
+          <div className="flex items-center justify-between border-t border-gray-100 pt-2.5 mt-0.5 min-w-0 flex-wrap gap-1">
             <div className="flex items-center gap-2">
               {origPrice && origPrice > currentPrice && (
                 <span className="text-xs text-gray-400 line-through font-medium">
@@ -338,7 +338,7 @@ const CourseCard = ({
               </span>
             </div>
             {discountPct > 0 && (
-              <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+              <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 shrink-0">
                 {discountPct}% OFF
               </span>
             )}
@@ -346,10 +346,10 @@ const CourseCard = ({
         )}
 
         {/* Action Buttons Row */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 w-full min-w-0">
           <button
             onClick={handlePreview}
-            className="flex-1 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold rounded-xl transition border border-gray-200/80 text-center cursor-pointer"
+            className="flex-1 min-w-0 py-2 px-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold rounded-xl transition border border-gray-200/80 text-center cursor-pointer truncate"
           >
             Preview
           </button>
@@ -357,37 +357,37 @@ const CourseCard = ({
           {isEnrolled ? (
             <button
               onClick={handleStartLearning}
-              className="flex-1 py-2 bg-[#3BA7F2] hover:bg-[#2895E0] text-white text-xs font-bold rounded-xl transition shadow-2xs flex items-center justify-center gap-1 cursor-pointer"
+              className="flex-1 min-w-0 py-2 px-2 bg-[#3BA7F2] hover:bg-[#2895E0] text-white text-xs font-bold rounded-xl transition shadow-2xs flex items-center justify-center gap-1 cursor-pointer truncate"
             >
-              <span>{progressPct > 0 ? "Continue Learning" : "Start Learning"}</span>
-              <FiPlay className="text-[10px]" />
+              <span className="truncate">{progressPct > 0 ? "Continue" : "Start Learning"}</span>
+              <FiPlay className="text-[10px] shrink-0" />
             </button>
           ) : propIsLoading ? (
             <button
               disabled
-              className="flex-1 py-2 bg-[#3BA7F2]/50 text-white text-xs font-bold rounded-xl cursor-not-allowed text-center"
+              className="flex-1 min-w-0 py-2 px-2 bg-[#3BA7F2]/50 text-white text-xs font-bold rounded-xl cursor-not-allowed text-center truncate"
             >
               Adding...
             </button>
           ) : isUnavailable ? (
             <button
               disabled
-              className="flex-1 py-2 bg-gray-100 text-gray-400 text-xs font-bold rounded-xl cursor-not-allowed text-center border border-gray-200"
+              className="flex-1 min-w-0 py-2 px-2 bg-gray-100 text-gray-400 text-xs font-bold rounded-xl cursor-not-allowed text-center border border-gray-200 truncate"
             >
               Not Available
             </button>
           ) : isInCart ? (
             <button
               onClick={handleCartAction}
-              className="flex-1 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition shadow-2xs flex items-center justify-center gap-1 cursor-pointer"
+              className="flex-1 min-w-0 py-2 px-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition shadow-2xs flex items-center justify-center gap-1 cursor-pointer truncate"
             >
-              <FiCheck className="text-xs" />
-              <span>Added to Cart</span>
+              <FiCheck className="text-xs shrink-0" />
+              <span className="truncate">In Cart</span>
             </button>
           ) : (
             <button
               onClick={handleCartAction}
-              className="flex-1 py-2 bg-[#3BA7F2] hover:bg-[#2895E0] text-white text-xs font-bold rounded-xl transition shadow-2xs cursor-pointer"
+              className="flex-1 min-w-0 py-2 px-2 bg-[#3BA7F2] hover:bg-[#2895E0] text-white text-xs font-bold rounded-xl transition shadow-2xs cursor-pointer truncate"
             >
               Add to Cart
             </button>
