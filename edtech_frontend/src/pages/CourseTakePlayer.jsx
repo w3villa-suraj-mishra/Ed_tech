@@ -39,7 +39,7 @@ const CourseTakePlayer = () => {
   const { user } = useSelector((state) => state.profile);
 
   const [loading, setLoading] = useState(true);
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeSectionId, setActiveSectionId] = useState("");
   const [currentLecture, setCurrentLecture] = useState(null);
   const [currentSectionIndex, setCurrentSectionIndex] = useState(0);
@@ -116,12 +116,68 @@ const CourseTakePlayer = () => {
           );
 
           if (courseData.courseContent && courseData.courseContent.length > 0) {
-            const firstSec = courseData.courseContent[0];
-            setActiveSectionId(firstSec._id);
-            if (firstSec.subSection && firstSec.subSection.length > 0) {
-              setCurrentLecture(firstSec.subSection[0]);
-              setCurrentSectionIndex(0);
-              setCurrentLectureIndex(0);
+            // Restore last watched lecture from localStorage, or first uncompleted lecture
+            const savedLectureId = (() => {
+              try {
+                return localStorage.getItem(`lastWatched_${courseId}`);
+              } catch (e) {
+                return null;
+              }
+            })();
+            const completedSet = new Set((courseData.completedVideos || []).map(String));
+
+            let targetSec = null;
+            let targetSecIdx = 0;
+            let targetLec = null;
+            let targetLecIdx = 0;
+            let foundSaved = false;
+
+            if (savedLectureId) {
+              courseData.courseContent.forEach((sec, sIdx) => {
+                sec.subSection?.forEach((lec, lIdx) => {
+                  if (String(lec._id) === String(savedLectureId)) {
+                    targetSec = sec;
+                    targetSecIdx = sIdx;
+                    targetLec = lec;
+                    targetLecIdx = lIdx;
+                    foundSaved = true;
+                  }
+                });
+              });
+            }
+
+            if (!foundSaved && completedSet.size > 0) {
+              for (let sIdx = 0; sIdx < courseData.courseContent.length; sIdx++) {
+                const sec = courseData.courseContent[sIdx];
+                const uncompletedIdx = sec.subSection?.findIndex(
+                  (lec) => !completedSet.has(String(lec._id))
+                );
+                if (uncompletedIdx !== undefined && uncompletedIdx !== -1) {
+                  targetSec = sec;
+                  targetSecIdx = sIdx;
+                  targetLec = sec.subSection[uncompletedIdx];
+                  targetLecIdx = uncompletedIdx;
+                  foundSaved = true;
+                  break;
+                }
+              }
+            }
+
+            if (!foundSaved) {
+              const firstSec = courseData.courseContent[0];
+              if (firstSec.subSection && firstSec.subSection.length > 0) {
+                targetSec = firstSec;
+                targetSecIdx = 0;
+                targetLec = firstSec.subSection[0];
+                targetLecIdx = 0;
+              }
+            }
+
+            if (targetSec && targetLec) {
+              setActiveSectionId(targetSec._id);
+              setCurrentLecture(targetLec);
+              setCurrentSectionIndex(targetSecIdx);
+              setCurrentLectureIndex(targetLecIdx);
             }
           }
         }
@@ -145,6 +201,11 @@ const CourseTakePlayer = () => {
     setCurrentLecture(lecture);
     setShowPractice(false);
     setShowAssignments(false);
+    try {
+      if (courseId && lecture?._id) {
+        localStorage.setItem(`lastWatched_${courseId}`, String(lecture._id));
+      }
+    } catch (e) {}
   };
 
   const isCompleted = (lecId) => completedLectures.includes(String(lecId));
@@ -342,29 +403,15 @@ const CourseTakePlayer = () => {
         </div>
 
         <div className="flex items-center gap-3">
-          {(user?.accountType || user?.account_type || "Student").toLowerCase() === "student" && (
-            <button
-              type="button"
-              onClick={() => {
-                setShowAssignments((visible) => !visible);
-                setShowPractice(false);
-              }}
-              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold transition shadow-sm ${showAssignments ? "bg-indigo-100 text-indigo-700" : "bg-white border border-slate-200 text-indigo-600 hover:bg-indigo-50"}`}
-            >
-              <FiAward size={14} /> Assignments
-            </button>
-          )}
           <button
             onClick={() => {
-              setShowAssignments(false);
-              navigate(`/s/courses/${courseId}/take/pratice-test`);
+              const discussEl = document.getElementById("course-discussions-section");
+              if (discussEl) {
+                discussEl.scrollIntoView({ behavior: "smooth" });
+              }
             }}
-            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold bg-blue-600 hover:bg-blue-800 text-white transition shadow-sm"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-indigo-600 hover:bg-indigo-50 transition"
           >
-            <span>🎯 Practice / Tests</span>
-          </button>
-
-          <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-indigo-600 hover:bg-indigo-50 transition">
             <FaComments size={14} />
             <span>Discuss ({comments.length})</span>
           </button>
@@ -391,25 +438,35 @@ const CourseTakePlayer = () => {
       </header>
 
       {/* MAIN CONTAINER */}
-      <div className="flex-1 flex overflow-hidden">
+      <div className="flex-1 flex overflow-hidden relative">
         {/* LEFT CURRICULUM SIDEBAR */}
         {sidebarOpen && (
-          <aside className="w-80 border-r border-slate-200 bg-white flex flex-col shrink-0 select-none overflow-y-auto h-full">
+          <aside className="w-80 max-w-[85vw] border-r border-slate-200 bg-white flex flex-col shrink-0 select-none overflow-y-auto h-full z-30 absolute md:relative top-0 bottom-0 left-0 shadow-xl md:shadow-none">
             <div className="p-5 border-b border-slate-200 space-y-2">
               <div className="flex items-center justify-between">
                 <p className="text-xs font-bold text-slate-700">
                   {progressPercentage}% completed
                 </p>
-                {progressPercentage < 100 && (
+                <div className="flex items-center gap-2">
+                  {progressPercentage < 100 && (
+                    <button
+                      type="button"
+                      onClick={handleCompleteAll}
+                      className="text-[11px] font-bold text-indigo-600 hover:text-indigo-800 transition cursor-pointer"
+                      title="Mark all course lectures as completed"
+                    >
+                      ✓ Complete All
+                    </button>
+                  )}
                   <button
                     type="button"
-                    onClick={handleCompleteAll}
-                    className="text-[11px] font-bold text-indigo-600 hover:text-indigo-800 transition cursor-pointer"
-                    title="Mark all course lectures as completed"
+                    onClick={() => setSidebarOpen(false)}
+                    className="p-1 rounded text-slate-400 hover:text-slate-700 md:hidden"
+                    title="Close Sidebar"
                   >
-                    ✓ Complete All
+                    ✕
                   </button>
-                )}
+                </div>
               </div>
               <div className="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
                 <div
@@ -423,12 +480,54 @@ const CourseTakePlayer = () => {
             </div>
 
             <div className="px-5 py-3 border-b border-slate-200">
-              <button className="flex items-center justify-between w-full text-xs font-bold text-indigo-700 hover:underline">
+              <button
+                type="button"
+                onClick={() => {
+                  const discussEl = document.getElementById("course-discussions-section");
+                  if (discussEl) {
+                    discussEl.scrollIntoView({ behavior: "smooth" });
+                  }
+                }}
+                className="flex items-center justify-between w-full text-xs font-bold text-indigo-700 hover:underline"
+              >
                 <span className="flex items-center gap-2">
                   <FaComments size={15} /> Course Discussions
                 </span>
                 <FiExternalLink size={14} />
               </button>
+            </div>
+
+            {/* ASSIGNMENTS & PRACTICE TESTS - AT THE STARTING BEFORE COURSE SECTIONS */}
+            <div className="p-3 border-b border-slate-200 bg-slate-50/70">
+              <div className="grid grid-cols-2 gap-2">
+                {(user?.accountType || user?.account_type || "Student").toLowerCase() === "student" && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowAssignments((visible) => !visible);
+                      setShowPractice(false);
+                    }}
+                    className={`flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl text-xs font-bold transition shadow-sm border ${
+                      showAssignments
+                        ? "bg-indigo-600 text-white border-indigo-600 shadow-indigo-100"
+                        : "bg-white border-slate-200 text-indigo-600 hover:bg-indigo-50 hover:border-indigo-300"
+                    }`}
+                  >
+                    <FiAward size={15} className={showAssignments ? "text-white" : "text-indigo-600"} />
+                    <span>Assignments</span>
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowAssignments(false);
+                    navigate(`/s/courses/${courseId}/take/pratice-test`);
+                  }}
+                  className={`flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white transition shadow-sm border border-blue-600 ${(user?.accountType || user?.account_type || "Student").toLowerCase() !== "student" ? "col-span-2" : ""}`}
+                >
+                  <span>🎯 Practice / Tests</span>
+                </button>
+              </div>
             </div>
 
             <div className="flex-1 overflow-y-auto">
@@ -616,6 +715,32 @@ const CourseTakePlayer = () => {
                   autoPlay
                   className="w-full max-h-[calc(100vh-12rem)] object-contain rounded-xl"
                   onEnded={handleCompleteAndContinue}
+                  onTimeUpdate={(e) => {
+                    try {
+                      if (courseId && currentLecture?._id && e.target.currentTime > 0) {
+                        localStorage.setItem(
+                          `lastWatchedTime_${courseId}_${currentLecture._id}`,
+                          String(e.target.currentTime)
+                        );
+                      }
+                    } catch (err) {}
+                  }}
+                  onLoadedMetadata={(e) => {
+                    try {
+                      if (courseId && currentLecture?._id) {
+                        const savedTime = localStorage.getItem(
+                          `lastWatchedTime_${courseId}_${currentLecture._id}`
+                        );
+                        if (
+                          savedTime &&
+                          Number(savedTime) > 0 &&
+                          Number(savedTime) < e.target.duration - 3
+                        ) {
+                          e.target.currentTime = Number(savedTime);
+                        }
+                      }
+                    } catch (err) {}
+                  }}
                 />
               </div>
             </div>
@@ -641,7 +766,7 @@ const CourseTakePlayer = () => {
             </div>
 
             {/* DISCUSSION SECTION - MATCHING TARGET SCREENSHOT 2 */}
-            <div className="space-y-4">
+            <div id="course-discussions-section" className="space-y-4">
               <div className="flex items-center justify-between">
                 <h3 className="text-xl font-bold text-slate-900">Discuss</h3>
                 <span className="text-xs font-medium text-slate-500">
