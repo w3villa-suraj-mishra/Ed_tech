@@ -117,15 +117,28 @@ const CourseTakePlayer = () => {
           );
 
           if (courseData.courseContent && courseData.courseContent.length > 0) {
+            const completedSet = new Set((courseData.completedVideos || []).map(String));
+
+            // If course has 0 completed videos (fresh course purchase or reset), clear any old localStorage
+            if (completedSet.size === 0) {
+              try {
+                localStorage.removeItem(`lastWatched_${courseId}`);
+                (courseData.courseContent || []).forEach((sec) => {
+                  sec.subSection?.forEach((lec) => {
+                    localStorage.removeItem(`lastWatchedTime_${courseId}_${lec._id}`);
+                  });
+                });
+              } catch (e) {}
+            }
+
             // Restore last watched lecture from localStorage, or first uncompleted lecture
             const savedLectureId = (() => {
               try {
-                return localStorage.getItem(`lastWatched_${courseId}`);
+                return completedSet.size > 0 ? localStorage.getItem(`lastWatched_${courseId}`) : null;
               } catch (e) {
                 return null;
               }
             })();
-            const completedSet = new Set((courseData.completedVideos || []).map(String));
 
             let targetSec = null;
             let targetSecIdx = 0;
@@ -407,12 +420,12 @@ const CourseTakePlayer = () => {
             <FiMenu size={20} />
           </button>
 
-          <h1 className="font-bold text-xs sm:text-base text-slate-900 truncate max-w-[85px] xs:max-w-[130px] sm:max-w-xs md:max-w-md">
+          <h1 className="font-bold text-xs sm:text-base text-slate-900 truncate max-w-[140px] xs:max-w-[200px] sm:max-w-sm md:max-w-lg">
             {courseEntireData?.courseName || "Course Player"}
           </h1>
         </div>
 
-        <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
+        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
           <button
             onClick={() => {
               const discussEl = document.getElementById("course-discussions-section");
@@ -425,20 +438,6 @@ const CourseTakePlayer = () => {
           >
             <FaComments size={14} />
             <span className="hidden md:inline">Discuss ({comments.length})</span>
-          </button>
-
-          <button
-            onClick={handlePrevious}
-            disabled={isFirstLecture}
-            title="Previous Lecture"
-            className={`flex items-center gap-1 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-bold transition shrink-0 ${
-              isFirstLecture
-                ? "text-slate-300 cursor-not-allowed"
-                : "text-indigo-600 hover:bg-indigo-50"
-            }`}
-          >
-            <FiChevronLeft size={16} />
-            <span className="hidden sm:inline">Previous</span>
           </button>
 
           <button

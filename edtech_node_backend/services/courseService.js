@@ -84,19 +84,6 @@ const formatCourse = async (course, currentUserId = null) => {
   result.rating = reviewsCount > 0 ? (totalRating / reviewsCount).toFixed(1) : "0.0";
   result.reviewsCount = reviewsCount;
 
-  const completedVideos = [];
-  if (currentUserId && coursePlain.courseProgresses) {
-    coursePlain.courseProgresses.forEach((progress) => {
-      const pUserId = progress.userId || progress.user_id;
-      if (String(pUserId) === String(currentUserId)) {
-        const videos = progress.courseProgressVideos || progress.course_progress_videos || [];
-        videos.forEach((video) => {
-          completedVideos.push(video.subSectionId || video.sub_section_id);
-        });
-      }
-    });
-  }
-
   // Check instructor or admin privileges
   let isInstructorOrAdmin = false;
   let userEnrollment = null;
@@ -125,6 +112,22 @@ const formatCourse = async (course, currentUserId = null) => {
     if (userEnrollment && userEnrollment.plan === 'silver' && userEnrollment.expiresAt && new Date(userEnrollment.expiresAt) <= new Date()) {
       await userEnrollment.update({ status: 'expired' });
     }
+  }
+
+  const completedVideos = [];
+  if (currentUserId && coursePlain.courseProgresses) {
+    const enrollmentActivatedTime = userEnrollment?.activatedAt ? new Date(userEnrollment.activatedAt).getTime() : 0;
+    coursePlain.courseProgresses.forEach((progress) => {
+      const pUserId = progress.userId || progress.user_id;
+      if (String(pUserId) === String(currentUserId)) {
+        const videos = progress.courseProgressVideos || progress.course_progress_videos || [];
+        videos.forEach((video) => {
+          if (!enrollmentActivatedTime || !video.createdAt || new Date(video.createdAt).getTime() >= enrollmentActivatedTime) {
+            completedVideos.push(video.subSectionId || video.sub_section_id);
+          }
+        });
+      }
+    });
   }
 
   result.userEnrollment = userEnrollment ? {

@@ -107,11 +107,20 @@ const profileController = {
 
           // Find progress record for this course
           const progRecord = userProgresses.find(p => p.courseId === courseData.id);
-          const completedVideosCount = progRecord?.courseProgressVideos ? progRecord.courseProgressVideos.length : 0;
+          let completedVideosCount = progRecord?.courseProgressVideos ? progRecord.courseProgressVideos.length : 0;
+
+          // If user re-enrolled freshly, ensure videos completed before the current enrollment are not counted
+          if (entry.activatedAt && progRecord?.courseProgressVideos) {
+            const enrollmentTime = new Date(entry.activatedAt).getTime();
+            const validVideos = progRecord.courseProgressVideos.filter(v => {
+              return !v.createdAt || new Date(v.createdAt).getTime() >= enrollmentTime;
+            });
+            completedVideosCount = validVideos.length;
+          }
 
           let progressPercentage = 0;
           if (totalLectures > 0) {
-            progressPercentage = Math.round((completedVideosCount / totalLectures) * 100);
+            progressPercentage = Math.min(100, Math.round((completedVideosCount / totalLectures) * 100));
           } else if (completedVideosCount > 0) {
             progressPercentage = 100;
           }

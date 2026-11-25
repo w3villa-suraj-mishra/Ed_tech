@@ -212,7 +212,22 @@ const deleteUserAndRelationsQuery = async (userId) => {
     if (Profile) await Profile.destroy({ where: { userId }, transaction });
     if (Enrollment) await Enrollment.destroy({ where: { userId }, transaction });
     if (RatingAndReview) await RatingAndReview.destroy({ where: { userId }, transaction });
-    if (CourseProgress) await CourseProgress.destroy({ where: { userId }, transaction });
+    if (CourseProgress) {
+      try {
+        const { CourseProgressVideo, CourseCertificate } = require('../models');
+        const progresses = await CourseProgress.findAll({ where: { userId }, transaction });
+        const progIds = progresses.map(p => p.id);
+        if (progIds.length > 0 && CourseProgressVideo) {
+          await CourseProgressVideo.destroy({ where: { courseProgressId: progIds }, transaction }).catch(() => {});
+        }
+        await CourseProgress.destroy({ where: { userId }, transaction }).catch(() => {});
+        if (CourseCertificate) {
+          await CourseCertificate.destroy({ where: { userId }, transaction }).catch(() => {});
+        }
+      } catch (cpErr) {
+        await CourseProgress.destroy({ where: { userId }, transaction }).catch(() => {});
+      }
+    }
     if (LiveChatMessage) await LiveChatMessage.destroy({ where: { userId }, transaction });
     if (Course) await Course.destroy({ where: { instructorId: userId }, transaction });
 
@@ -370,7 +385,34 @@ const findEnrollmentByIdQuery = async (id) => {
 };
 
 const deleteEnrollmentQuery = async (id) => {
-  return await Enrollment.destroy({ where: { id } });
+  const enrollment = await Enrollment.findByPk(id);
+  if (enrollment) {
+    const { userId, courseId } = enrollment;
+    try {
+      const { CourseProgress, CourseProgressVideo, CourseCertificate, PracticeAttempt, AssignmentSubmission } = require('../models');
+      if (CourseProgress) {
+        const progresses = await CourseProgress.findAll({ where: { userId, courseId } });
+        const progIds = progresses.map(p => p.id);
+        if (progIds.length > 0 && CourseProgressVideo) {
+          await CourseProgressVideo.destroy({ where: { courseProgressId: progIds } }).catch(() => {});
+        }
+        await CourseProgress.destroy({ where: { userId, courseId } }).catch(() => {});
+      }
+      if (CourseCertificate) {
+        await CourseCertificate.destroy({ where: { userId, courseId } }).catch(() => {});
+      }
+      if (PracticeAttempt) {
+        await PracticeAttempt.destroy({ where: { userId, courseId } }).catch(() => {});
+      }
+      if (AssignmentSubmission) {
+        await AssignmentSubmission.destroy({ where: { userId } }).catch(() => {});
+      }
+    } catch (cleanErr) {
+      console.warn('Error cleaning course progress on enrollment delete:', cleanErr.message);
+    }
+    return await Enrollment.destroy({ where: { id } });
+  }
+  return 0;
 };
 
 const findReviewsPaginatedQuery = async ({ where, limit, offset }) => {

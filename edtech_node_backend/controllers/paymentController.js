@@ -444,13 +444,32 @@ const activateEnrollments = async ({ userId, courseIds, plan = PLAN_TYPES.GOLD, 
         });
       }
 
-      // Initialize CourseProgress if not already created
+      // Initialize or reset CourseProgress - start from fresh!
       try {
+        const { CourseProgressVideo, CourseCertificate } = require('../models');
         if (CourseProgress) {
-          await CourseProgress.findOrCreate({
-            where: { userId, courseId: parsedCourseId },
-            defaults: { userId, courseId: parsedCourseId }
+          // If previous progress records exist (e.g. from previous enrollment), clear old completed videos
+          const existingProgresses = await CourseProgress.findAll({
+            where: { userId, courseId: parsedCourseId }
           });
+          const progIds = existingProgresses.map(p => p.id);
+          if (progIds.length > 0 && CourseProgressVideo) {
+            await CourseProgressVideo.destroy({
+              where: { courseProgressId: progIds }
+            }).catch(() => {});
+          }
+          if (CourseCertificate) {
+            await CourseCertificate.destroy({
+              where: { userId, courseId: parsedCourseId }
+            }).catch(() => {});
+          }
+
+          if (existingProgresses.length === 0) {
+            await CourseProgress.create({
+              userId,
+              courseId: parsedCourseId
+            });
+          }
         }
       } catch (progErr) {
         logger.warn(`CourseProgress auto-init warning for user ${userId}, course ${parsedCourseId}: ${progErr.message}`);
