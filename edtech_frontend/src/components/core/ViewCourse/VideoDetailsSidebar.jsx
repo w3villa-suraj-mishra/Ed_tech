@@ -33,8 +33,9 @@ const VideoDetailsSidebar = ({ setReviewModal }) => {
     }
   }, [activeLecture]);
 
+  const uniqueCompleted = Array.from(new Set((completedLectures || []).map(String)));
   const progress = totalNoOfLectures > 0
-    ? Math.round((completedLectures.length / totalNoOfLectures) * 100)
+    ? Math.min(100, Math.max(0, Math.round((uniqueCompleted.length / totalNoOfLectures) * 100)))
     : 0;
 
   return (

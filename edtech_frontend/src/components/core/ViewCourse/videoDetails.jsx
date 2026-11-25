@@ -153,6 +153,7 @@ const VideoDetails = () => {
 
   // -- Mark as complete --
   const handleLectureCompletion = async () => {
+    if ((completedLectures || []).map(String).includes(String(subSectionId))) return;
     setLoading(true);
     const res = await markLectureAsComplete({ courseId, subSectionId }, token);
     if (res) dispatch(updateCompletedLectures(subSectionId));

@@ -40,6 +40,7 @@ const CourseTakePlayer = () => {
 
   const [loading, setLoading] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [completingLecture, setCompletingLecture] = useState(false);
   const [activeSectionId, setActiveSectionId] = useState("");
   const [currentLecture, setCurrentLecture] = useState(null);
   const [currentSectionIndex, setCurrentSectionIndex] = useState(0);
@@ -294,18 +295,26 @@ const CourseTakePlayer = () => {
 
   // Complete and Continue handler
   const handleCompleteAndContinue = async () => {
-    if (!currentLecture) return;
+    if (!currentLecture || completingLecture) return;
 
-    try {
-      const res = await markLectureAsComplete(
-        { courseId, subSectionId: currentLecture._id },
-        token
-      );
-      if (res) {
-        dispatch(updateCompletedLectures(String(currentLecture._id)));
+    const lectureIdStr = String(currentLecture._id);
+    const alreadyCompleted = (completedLectures || []).map(String).includes(lectureIdStr);
+
+    if (!alreadyCompleted) {
+      try {
+        setCompletingLecture(true);
+        const res = await markLectureAsComplete(
+          { courseId, subSectionId: currentLecture._id },
+          token
+        );
+        if (res) {
+          dispatch(updateCompletedLectures(lectureIdStr));
+        }
+      } catch (err) {
+        console.error("Failed to mark completed:", err);
+      } finally {
+        setCompletingLecture(false);
       }
-    } catch (err) {
-      console.error("Failed to mark completed:", err);
     }
 
     const currentSubSections =
@@ -369,9 +378,10 @@ const CourseTakePlayer = () => {
 
   const isFirstLecture = currentSectionIndex === 0 && currentLectureIndex === 0;
 
+  const uniqueCompletedCount = new Set((completedLectures || []).map(String)).size;
   const progressPercentage =
     totalNoOfLectures > 0
-      ? Math.round((completedLectures.length / totalNoOfLectures) * 100)
+      ? Math.min(100, Math.max(0, Math.round((uniqueCompletedCount / totalNoOfLectures) * 100)))
       : 0;
 
   if (loading) {
@@ -387,22 +397,22 @@ const CourseTakePlayer = () => {
   return (
     <div className="h-screen bg-white text-slate-800 flex flex-col font-['Inter',sans-serif] overflow-hidden">
       {/* TOP HEADER */}
-      <header className="h-16 border-b border-slate-200 bg-white flex items-center justify-between px-6 z-20 shrink-0 select-none">
-        <div className="flex items-center gap-4">
+      <header className="h-16 border-b border-slate-200 bg-white flex items-center justify-between px-3 sm:px-6 z-20 shrink-0 select-none gap-2">
+        <div className="flex items-center gap-2 sm:gap-4 min-w-0">
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="p-2 rounded-lg hover:bg-slate-100 text-indigo-700 transition"
+            className="p-2 rounded-lg hover:bg-slate-100 text-indigo-700 transition shrink-0"
             title="Toggle Curriculum Sidebar"
           >
             <FiMenu size={20} />
           </button>
 
-          <h1 className="font-bold text-base text-slate-900 line-clamp-1 max-w-md">
+          <h1 className="font-bold text-xs sm:text-base text-slate-900 truncate max-w-[85px] xs:max-w-[130px] sm:max-w-xs md:max-w-md">
             {courseEntireData?.courseName || "Course Player"}
           </h1>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
           <button
             onClick={() => {
               const discussEl = document.getElementById("course-discussions-section");
@@ -410,29 +420,46 @@ const CourseTakePlayer = () => {
                 discussEl.scrollIntoView({ behavior: "smooth" });
               }
             }}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-indigo-600 hover:bg-indigo-50 transition"
+            className="flex items-center gap-1 p-2 sm:px-3 sm:py-1.5 rounded-lg text-xs font-semibold text-indigo-600 hover:bg-indigo-50 transition shrink-0"
+            title={`Discuss (${comments.length})`}
           >
             <FaComments size={14} />
-            <span>Discuss ({comments.length})</span>
+            <span className="hidden md:inline">Discuss ({comments.length})</span>
           </button>
 
           <button
             onClick={handlePrevious}
             disabled={isFirstLecture}
-            className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold transition ${
+            title="Previous Lecture"
+            className={`flex items-center gap-1 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-bold transition shrink-0 ${
               isFirstLecture
                 ? "text-slate-300 cursor-not-allowed"
                 : "text-indigo-600 hover:bg-indigo-50"
             }`}
           >
-            <FiChevronLeft size={16} /> Previous
+            <FiChevronLeft size={16} />
+            <span className="hidden sm:inline">Previous</span>
           </button>
 
           <button
             onClick={handleCompleteAndContinue}
-            className="flex items-center gap-1 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold transition shadow-sm"
+            disabled={completingLecture}
+            title="Complete and Continue to next lecture"
+            className={`flex items-center gap-1 px-3 sm:px-4 py-1.5 sm:py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold transition shadow-sm shrink-0 whitespace-nowrap ${
+              completingLecture ? "opacity-75 cursor-not-allowed" : ""
+            }`}
           >
-            Complete and Continue <FiChevronRight size={16} />
+            <span>
+              {completingLecture ? (
+                "Saving..."
+              ) : (
+                <>
+                  <span className="hidden sm:inline">Complete &amp; </span>
+                  <span>Continue</span>
+                </>
+              )}
+            </span>
+            <FiChevronRight size={16} />
           </button>
         </div>
       </header>
@@ -574,23 +601,13 @@ const CourseTakePlayer = () => {
                                   <FiLock className="text-amber-500 shrink-0" size={14} />
                                 ) : (
                                   <span
-                                    onClick={async (e) => {
-                                      e.stopPropagation();
-                                      const res = await markLectureAsComplete(
-                                        { courseId, subSectionId: lecture._id },
-                                        token
-                                      );
-                                      if (res) {
-                                        dispatch(updateCompletedLectures(String(lecture._id)));
-                                      }
-                                    }}
-                                    className="cursor-pointer hover:scale-110 transition"
-                                    title={completed ? "Completed" : "Click to mark as complete"}
+                                    className="shrink-0 flex items-center select-none"
+                                    title={completed ? "Completed" : "Not completed"}
                                   >
                                     {completed ? (
                                       <FiCheckCircle className="text-emerald-500 shrink-0" size={14} />
                                     ) : (
-                                      <FiCircle className="text-slate-300 hover:text-emerald-500 shrink-0" size={14} />
+                                      <FiCircle className="text-slate-300 shrink-0" size={14} />
                                     )}
                                   </span>
                                 )}
@@ -706,7 +723,7 @@ const CourseTakePlayer = () => {
               </button>
             </div>
           ) : currentLecture?.videoUrl ? (
-            <div className="w-full max-w-5xl mx-auto px-4 md:px-8 py-4 flex items-center justify-center">
+            <div className="w-full max-w-5xl mx-auto px-4 md:px-8 py-4 flex flex-col items-center justify-center space-y-3">
               <div className="w-full bg-black rounded-xl overflow-hidden shadow-lg border border-slate-200 flex items-center justify-center">
                 <video
                   key={currentLecture._id}
@@ -742,6 +759,34 @@ const CourseTakePlayer = () => {
                     } catch (err) {}
                   }}
                 />
+              </div>
+
+              {/* MOBILE QUICK NAVIGATION BAR UNDER VIDEO */}
+              <div className="flex sm:hidden items-center justify-between w-full pt-1 px-1">
+                <button
+                  type="button"
+                  onClick={handlePrevious}
+                  disabled={isFirstLecture}
+                  className={`flex items-center gap-1 px-3 py-2 rounded-lg text-xs font-bold border transition ${
+                    isFirstLecture
+                      ? "text-slate-300 border-slate-200 cursor-not-allowed"
+                      : "text-indigo-600 border-indigo-200 hover:bg-indigo-50"
+                  }`}
+                >
+                  <FiChevronLeft size={16} /> Previous
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleCompleteAndContinue}
+                  disabled={completingLecture}
+                  className={`flex items-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold shadow-sm transition ${
+                    completingLecture ? "opacity-75 cursor-not-allowed" : ""
+                  }`}
+                >
+                  <span>{completingLecture ? "Saving..." : "Complete & Continue"}</span>
+                  <FiChevronRight size={16} />
+                </button>
               </div>
             </div>
           ) : (
