@@ -102,7 +102,7 @@ export default function CoursesTable({ courses, setCourses }) {
         await deleteCourse({ courseId: id }, token);
       }
     }
-    const result = await fetchInstructorCourses(token, { status: 'Published', page: 1, limit: 100 });
+    const result = await fetchInstructorCourses(token, { page: 1, limit: 100 });
     if (result) {
       setCourses(result);
     }
@@ -123,7 +123,7 @@ export default function CoursesTable({ courses, setCourses }) {
     setLoadingMoreCourses(true);
     try {
       const nextPage = (Number(courses?.currentPage) || 1) + 1;
-      const nextCourses = await fetchInstructorCourses(token, { status: 'Published', page: nextPage, limit: 100 });
+      const nextCourses = await fetchInstructorCourses(token, { page: nextPage, limit: 100 });
       setCourses((current) => {
         const coursesById = new Map(current.map((course) => [course.id || course._id, course]));
         nextCourses.forEach((course) => coursesById.set(course.id || course._id, course));

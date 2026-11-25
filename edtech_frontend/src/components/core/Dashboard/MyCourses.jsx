@@ -20,7 +20,7 @@ const MyCourses = () => {
     let active = true
     const fetchCourses = async () => {
       setLoading(true)
-      const result = await fetchInstructorCourses(token, { status: 'Published', page: 1, limit: 100 })
+      const result = await fetchInstructorCourses(token, { page: 1, limit: 100 })
       if (active) {
         setCourses(result)
         setLoading(false)
