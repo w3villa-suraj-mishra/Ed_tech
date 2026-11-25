@@ -448,16 +448,16 @@ const CourseTakePlayer = () => {
                   {progressPercentage}% completed
                 </p>
                 <div className="flex items-center gap-2">
-                  {progressPercentage < 100 && (
-                    <button
-                      type="button"
-                      onClick={handleCompleteAll}
-                      className="text-[11px] font-bold text-indigo-600 hover:text-indigo-800 transition cursor-pointer"
-                      title="Mark all course lectures as completed"
-                    >
-                      ✓ Complete All
-                    </button>
-                  )}
+                  {/* {progressPercentage < 100 && (
+                    // <button
+                    //   type="button"
+                    //   onClick={handleCompleteAll}
+                    //   className="text-[11px] font-bold text-indigo-600 hover:text-indigo-800 transition cursor-pointer"
+                    //   title="Mark all course lectures as completed"
+                    // >
+                    //   ✓ Complete All
+                    // </button>
+                  )} */}
                   <button
                     type="button"
                     onClick={() => setSidebarOpen(false)}
