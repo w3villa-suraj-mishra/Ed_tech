@@ -49,9 +49,9 @@ export default function CoursesTable({ courses, setCourses }) {
     return () => document.removeEventListener('mousedown', handleOutsideClick);
   }, []);
 
-  // Only show published courses in this user-facing course list.
+  // Show both draft and published courses in the instructor dashboard.
   const allCourses = Array.from(new Map((courses || [])
-    .filter((course) => course.status === 'Published' || course.status === COURSE_STATUS.PUBLISHED)
+    .filter((course) => ['Draft', 'Published'].includes(course.status))
     .map((course) => ({
       ...course,
       id: course.id || course._id,
@@ -189,7 +189,7 @@ export default function CoursesTable({ courses, setCourses }) {
       {/* 2. THREE-COLUMN CARDS GRID */}
       {totalCourses === 0 && (
         <div className="mt-6 rounded-2xl border border-slate-200 bg-white px-6 py-12 text-center text-sm text-slate-500">
-          {allCourses.length === 0 ? 'No published courses yet.' : 'No courses match your search.'}
+          {allCourses.length === 0 ? 'No courses yet.' : 'No courses match your search.'}
         </div>
       )}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pt-6">
